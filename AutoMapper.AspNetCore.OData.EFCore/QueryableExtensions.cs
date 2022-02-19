@@ -51,6 +51,7 @@ namespace AutoMapper.AspNet.OData
         public static async Task<IQueryable<TModel>> GetQueryAsync<TModel, TData>(this IQueryable<TData> query, IMapper mapper, ODataQueryOptions<TModel> options, QuerySettings querySettings = null)
             where TModel : class
         {
+            options.GetGroupByExpression(querySettings?.ODataSettings);
             Expression<Func<TModel, bool>> filter = options.ToFilterExpression<TModel>(
                      querySettings?.ODataSettings?.HandleNullPropagation ?? HandleNullPropagationOption.False,
                      querySettings?.ODataSettings?.TimeZone);

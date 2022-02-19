@@ -668,7 +668,31 @@ Result Message:	System.NotSupportedException : The type 'Domain.OData.CoreBuildi
                         }
                     }
                 }
+                ,
+                new Category
+                {
+                    CategoryID = 3,
+                    CategoryName = "CategoryOne",
+                    Products =  new Product[]
+                    {
+                        new Product
+                        {
+                            AlternateAddresses = new Address[0],
+                            SupplierAddress = new Address { City = "C" }
+                        }
+                    }
+                }
             }.AsQueryable();
+
+        [Fact]
+        public async void ApplyTests()
+        {
+            await GetAsync<CategoryModel, Category>
+                (
+                    "/CategoryModel?$apply=filter(CategoryName eq 'CategoryOne')",
+                    GetCategories()
+                );
+        }
 
         [Fact]
         public async void FilteringOnRoot_AndChildCollection_WithMatches()

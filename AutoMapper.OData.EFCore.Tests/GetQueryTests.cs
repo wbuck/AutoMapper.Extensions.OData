@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -708,12 +709,35 @@ namespace AutoMapper.OData.EFCore.Tests
                     {
                         new Product
                         {
+                            ProductName = "ProductOne",
+                            AlternateAddresses = new Address[0],
+                            SupplierAddress = new Address { City = "C" }
+                        }
+                    }
+                },
+                new Category
+                {
+                    CategoryID = 3,
+                    CategoryName = "CategoryOne",
+                    Products =  new Product[]
+                    {
+                        new Product
+                        {
+                            ProductName = "ProductTwo",
                             AlternateAddresses = new Address[0],
                             SupplierAddress = new Address { City = "C" }
                         }
                     }
                 }
             }.AsQueryable();
+
+        [Fact]
+        public async void ApplyTests()
+        {
+            var query = "/CategoryModel?$apply=groupby((CategoryName))";
+            var results = await GetAsync<CategoryModel, Category>(query, GetCategories());
+            Debugger.Break();
+        }
 
         [Fact]
         public async void FilteringOnRoot_AndChildCollection_WithMatches()
