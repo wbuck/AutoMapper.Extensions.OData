@@ -59,7 +59,7 @@ namespace AutoMapper.OData.EFCore.Tests.Data
     {
         public int CategoryID { get; set; }
         public string CategoryName { get; set; }
-
+        public string CategoryType { get; set; }
         public Product Product { get; set; }
 
         public ICollection<Product> Products { get; set; }

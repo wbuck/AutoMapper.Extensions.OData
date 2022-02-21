@@ -62,7 +62,7 @@ namespace AutoMapper.OData.EFCore.Tests.Model
         [Key]
         public int CategoryID { get; set; }
         public string CategoryName { get; set; }
-
+        public string CategoryType { get; set; }
         public ProductModel Product { get; set; }
 
         public ICollection<ProductModel> Products { get; set; }

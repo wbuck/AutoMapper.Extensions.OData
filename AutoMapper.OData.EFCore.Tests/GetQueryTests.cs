@@ -679,6 +679,7 @@ namespace AutoMapper.OData.EFCore.Tests
                 {
                     CategoryID = 1,
                     CategoryName = "CategoryOne",
+                    CategoryType = "TypeOne",
                     Products = new Product[]
                     {
                         new Product
@@ -705,6 +706,7 @@ namespace AutoMapper.OData.EFCore.Tests
                 {
                     CategoryID = 2,
                     CategoryName = "CategoryTwo",
+                    CategoryType = "TypeTwo",
                     Products =  new Product[]
                     {
                         new Product
@@ -719,6 +721,7 @@ namespace AutoMapper.OData.EFCore.Tests
                 {
                     CategoryID = 3,
                     CategoryName = "CategoryOne",
+                    CategoryType = "TypeOne",
                     Products =  new Product[]
                     {
                         new Product
@@ -734,7 +737,8 @@ namespace AutoMapper.OData.EFCore.Tests
         [Fact]
         public async void ApplyTests()
         {
-            var query = "/CategoryModel?$apply=groupby((CategoryName))";
+            var query = "/CategoryModel?$apply=groupby((CategoryName, CategoryType))";
+            //var query = "/CategoryModel?$select=CategoryName";
             var results = await GetAsync<CategoryModel, Category>(query, GetCategories());
             Debugger.Break();
         }

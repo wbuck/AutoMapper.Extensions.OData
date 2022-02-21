@@ -138,26 +138,19 @@ namespace AutoMapper.AspNet.OData
                 return null;
             
             var applyClause = options.Apply.ApplyClause;
-            var transformation = applyClause.Transformations
+            var transformations = applyClause.Transformations
                 .Where(t => t.Kind is TransformationNodeKind.GroupBy)
-                .Cast<GroupByTransformationNode>()
-                .FirstOrDefault();
+                .Cast<GroupByTransformationNode>();
+
+            if (!transformations.Any())
+                return null;
 
             var sourceType = typeof(T);
-            var keyType = sourceType.GetProperty(transformation.GroupingProperties.First().Name)?.PropertyType;
+            var keyType = sourceType.GetProperty(transformations.First().GroupingProperties.First().Name)?.PropertyType;
 
             var method = GroupByFuncMethod.MakeGenericMethod(keyType, sourceType);
-            Expression e = (Expression)method.Invoke(null, new object[] { options, oDataSettings });
-
-            Debugger.Break();
-            
-            
-
-
-            return null;
-        }
-
-        
+            return (Expression)method.Invoke(null, new object[] { options, oDataSettings });
+        }        
 
         private static Expression<Func<IQueryable<TSource>, IQueryable<IGrouping<TKey, TSource>>>> GetGroupByFunc<TKey, TSource>(
             ODataQueryOptions<TSource> options, ODataSettings oDataSettings = null)
@@ -170,8 +163,6 @@ namespace AutoMapper.AspNet.OData
             return e;
         }
 
-
-
         public static Expression GetGroupByMethod<T>(this Expression expression, ODataQueryOptions<T> options, ODataSettings oDataSettings = null)
         {
             if (options.Apply?.ApplyClause is null)
@@ -183,9 +174,7 @@ namespace AutoMapper.AspNet.OData
                 .Cast<GroupByTransformationNode>()
                 .FirstOrDefault();
 
-            var e = expression.GetGroupByCall(transformation.GroupingProperties.First().Name);
-
-            return e;
+            return expression.GetGroupByCall(transformation.GroupingProperties.First().Name);
         }
 
         public static Expression GetGroupByCall(this Expression expression, string memberFullName, string selectorParameterName = "a")
