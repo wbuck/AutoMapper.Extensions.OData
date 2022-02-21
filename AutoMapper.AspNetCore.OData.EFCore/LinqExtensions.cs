@@ -3,6 +3,7 @@ using LogicBuilder.Expressions.Utils;
 using LogicBuilder.Expressions.Utils.Expansions;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.OData.UriParser;
+using Microsoft.OData.UriParser.Aggregation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,71 @@ namespace AutoMapper.AspNet.OData
 {
     public static class LinqExtensions
     {
+        private static MethodInfo GroupByFuncMethod { get; } =
+            typeof(LinqExtensions).GetMethods(BindingFlags.Static | BindingFlags.NonPublic)
+                .Where(m => m.Name == nameof(LinqExtensions.GetGroupByFunc))
+                .Single();
+
+        public static Expression GetGroupByExpression<T>(this ODataQueryOptions<T> options, ODataSettings oDataSettings = null)
+        {
+            if (options.Apply?.ApplyClause is null)
+                return null;
+
+            var applyClause = options.Apply.ApplyClause;
+            var transformations = applyClause.Transformations
+                .Where(t => t.Kind is TransformationNodeKind.GroupBy)
+                .Cast<GroupByTransformationNode>();
+
+            if (!transformations.Any())
+                return null;
+
+            var sourceType = typeof(T);
+            var keyType = sourceType.GetProperty(transformations.First().GroupingProperties.First().Name)?.PropertyType;
+
+            var method = GroupByFuncMethod.MakeGenericMethod(keyType, sourceType);
+            return (Expression)method.Invoke(null, new object[] { options, oDataSettings });
+        }
+
+        private static Expression<Func<IQueryable<TSource>, IQueryable<IGrouping<TKey, TSource>>>> GetGroupByFunc<TKey, TSource>(
+            ODataQueryOptions<TSource> options, ODataSettings oDataSettings = null)
+        {
+            ParameterExpression param = Expression.Parameter(typeof(IQueryable<TSource>), "g");
+            var e = Expression.Lambda<Func<IQueryable<TSource>, IQueryable<IGrouping<TKey, TSource>>>>
+            (
+               param.GetGroupByMethod(options, oDataSettings), param
+            );
+            return e;
+        }
+
+        public static Expression GetGroupByMethod<T>(this Expression expression, ODataQueryOptions<T> options, ODataSettings oDataSettings = null)
+        {
+            if (options.Apply?.ApplyClause is null)
+                return null;
+
+            var applyClause = options.Apply.ApplyClause;
+            var transformation = applyClause.Transformations
+                .Where(t => t.Kind is TransformationNodeKind.GroupBy)
+                .Cast<GroupByTransformationNode>()
+                .FirstOrDefault();
+
+            return expression.GetGroupByCall(transformation.GroupingProperties.First().Name);
+        }
+
+        public static Expression GetGroupByCall(this Expression expression, string memberFullName, string selectorParameterName = "a")
+        {
+            Type sourceType = expression.GetUnderlyingElementType();
+            MemberInfo memberInfo = sourceType.GetMemberInfoFromFullName(memberFullName);
+
+            return Expression.Call
+            (
+                expression.Type.IsIQueryable() ? typeof(Queryable) : typeof(Enumerable),
+                nameof(Queryable.GroupBy),
+                new Type[] { sourceType, memberInfo.GetMemberType() },
+                expression,
+                memberFullName.GetTypedSelector(sourceType, selectorParameterName)
+            );
+        }
+
         /// <summary>
         /// Replace source parameter expression to target expression.
         /// </summary>
