@@ -15,6 +15,7 @@ namespace AutoMapper.AspNetCore.OData.CosmosDb;
 
 public static class QueryableExtensions
 {
+    //public static async Task<ICollection<TModel>> GetAsync<>
     public static async Task<IQueryable<TModel>> GetQueryAsync<TModel, TData>(
         this IQueryable<TData> query, 
         IMapper mapper, 
@@ -89,9 +90,11 @@ public static class QueryableExtensions
         if (filter is not null)
             query = query.Where(f);
 
+        var includes = GetIncludes();
+
         return mappedQueryFunc is not null
-                ? mapper.ProjectTo(mappedQueryFunc(query), projectionSettings?.Parameters, GetIncludes())
-                : mapper.ProjectTo(query, projectionSettings?.Parameters, GetIncludes());
+                ? mapper.ProjectTo(mappedQueryFunc(query), projectionSettings?.Parameters, includes)
+                : mapper.ProjectTo(query, projectionSettings?.Parameters, includes);
 
         Expression<Func<TModel, object>>[] GetIncludes() => 
             includeProperties?.ToArray() ?? new Expression<Func<TModel, object>>[] { };
