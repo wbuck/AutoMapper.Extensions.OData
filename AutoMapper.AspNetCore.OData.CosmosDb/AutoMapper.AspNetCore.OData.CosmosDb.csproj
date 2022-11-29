@@ -1,20 +1,53 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+	<TargetFrameworks>netcoreapp3.1;net5.0;net6.0</TargetFrameworks>	
   </PropertyGroup>
 
   <ItemGroup>
-  	<PackageReference Include="AutoMapper.Extensions.ExpressionMapping" Version="6.0.2" />
-  	<PackageReference Include="LogicBuilder.Expressions.Utils" Version="5.0.7" />
-  	<PackageReference Include="Microsoft.AspNetCore.OData" Version="8.0.11" />
-  	<PackageReference Include="MinVer" Version="4.2.0">
+    <Content Remove="C:\Users\WBuckley\.nuget\packages\microsoft.azure.cosmos\3.31.2\contentFiles\any\netstandard2.0\ThirdPartyNotice.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\AsyncSettings.cs" Link="AsyncSettings.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\Constants.cs" Link="Constants.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\CustomMethodCache.cs" Link="CustomMethodCache.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\EdmTypeStructure.cs" Link="EdmTypeStructure.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\FilterHelper.cs" Link="FilterHelper.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\LinqExtensions.cs" Link="LinqExtensions.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\ODataQueryContextExtentions.cs" Link="ODataQueryContextExtentions.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\ODataQueryOptionsExtensions.cs" Link="ODataQueryOptionsExtensions.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\ODataSettings.cs" Link="ODataSettings.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\OrderBySetting.cs" Link="OrderBySetting.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\ProjectionSettings.cs" Link="ProjectionSettings.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\QuerySettings.cs" Link="QuerySettings.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\TypeExtensions.cs" Link="TypeExtensions.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\Visitors\ChildCollectionFilterUpdater.cs" Link="Visitors\ChildCollectionFilterUpdater.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\Visitors\ChildCollectionOrderByUpdater.cs" Link="Visitors\ChildCollectionOrderByUpdater.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\Visitors\FilterAppender.cs" Link="Visitors\FilterAppender.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\Visitors\MethodAppender.cs" Link="Visitors\MethodAppender.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\Visitors\ParameterReplacer.cs" Link="Visitors\ParameterReplacer.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\Visitors\ProjectionVisitor.cs" Link="Visitors\ProjectionVisitor.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+  	<PackageReference Include="AutoMapper.Extensions.ExpressionMapping" Version="[6.0.0,7.0.0)" />
+  	<PackageReference Include="LogicBuilder.Expressions.Utils" Version="[5.0.6,6.0.0)" />
+  	<PackageReference Include="Microsoft.AspNetCore.OData" Version="8.0.6" />
+  	<PackageReference Include="Microsoft.Azure.Cosmos" Version="3.31.2" />
+  	<PackageReference Include="MinVer" Version="2.5.0">
   		<PrivateAssets>all</PrivateAssets>
   		<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
   	</PackageReference>
-  	<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+  	<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+  	<FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Visitors\" />
   </ItemGroup>
 
 </Project>
