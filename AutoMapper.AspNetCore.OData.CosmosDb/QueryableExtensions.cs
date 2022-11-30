@@ -4,11 +4,9 @@ using LogicBuilder.Expressions.Utils.Expansions;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.Azure.Cosmos.Linq;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -69,13 +67,6 @@ public static class QueryableExtensions
         return query.GetQueryable(mapper, options, querySettings, filter);
     }
 
-    private static void ApplyOptions<TModel>(ODataQueryOptions<TModel> options, QuerySettings querySettings)
-    {
-        options.AddExpandOptionsResult();
-        if (querySettings?.ODataSettings?.PageSize.HasValue == true)
-            options.AddNextLinkOptionsResult(querySettings.ODataSettings.PageSize.Value);
-    }
-
     private static IQueryable<TModel> GetQueryable<TModel, TData>(this IQueryable<TData> query,
             IMapper mapper,
             ODataQueryOptions<TModel> options,
@@ -83,7 +74,6 @@ public static class QueryableExtensions
             Expression<Func<TModel, bool>> filter)
             where TModel : class
     {
-
         var expansions = options.SelectExpand.GetExpansions(typeof(TModel));
 
         return query.GetQuery
@@ -122,7 +112,7 @@ public static class QueryableExtensions
             includeProperties?.ToArray() ?? new Expression<Func<TModel, object>>[] { };
     }
 
-    public static void ApplyCountQuery<TModel, TData>(this IQueryable<TData> query,
+    private static void ApplyCountQuery<TModel, TData>(this IQueryable<TData> query,
         IMapper mapper, Expression<Func<TModel, bool>> filter, ODataQueryOptions<TModel> options)
     {
         if (options.Count?.Value == true)
@@ -147,7 +137,7 @@ public static class QueryableExtensions
         return query.Count();
     }
 
-    public static async Task ApplyCountQueryAsync<TModel, TData>(this IQueryable<TData> query,
+    private static async Task ApplyCountQueryAsync<TModel, TData>(this IQueryable<TData> query,
         IMapper mapper, 
         Expression<Func<TModel, bool>> filter,
         ODataQueryOptions<TModel> options,
@@ -182,6 +172,16 @@ public static class QueryableExtensions
         this IQueryable<TModel> query, CancellationToken cancellationToken = default)
     {
         using var iterator = query.ToFeedIterator();
-        return (await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false)).Resource.ToArray();
+        return 
+        (
+            await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false)
+        ).Resource.ToArray();
+    }
+
+    private static void ApplyOptions<TModel>(ODataQueryOptions<TModel> options, QuerySettings querySettings)
+    {
+        options.AddExpandOptionsResult();
+        if (querySettings?.ODataSettings?.PageSize.HasValue == true)
+            options.AddNextLinkOptionsResult(querySettings.ODataSettings.PageSize.Value);
     }
 }
