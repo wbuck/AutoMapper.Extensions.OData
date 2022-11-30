@@ -104,6 +104,8 @@ public static class QueryableExtensions
         if (filter is not null)
             query = query.Where(f);
 
+        var includes = GetIncludes();
+
         return mappedQueryFunc is not null
                 ? mapper.ProjectTo(mappedQueryFunc(query), projectionSettings?.Parameters, GetIncludes())
                 : mapper.ProjectTo(query, projectionSettings?.Parameters, GetIncludes());
