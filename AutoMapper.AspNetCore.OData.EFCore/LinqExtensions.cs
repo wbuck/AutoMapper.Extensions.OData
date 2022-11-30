@@ -522,11 +522,14 @@ namespace AutoMapper.AspNet.OData
             if (selectedItems == null)
                 return new List<List<ODataExpansionOptions>>();
 
-            return selectedItems.OfType<ExpandedNavigationSelectItem>().Aggregate(new List<List<ODataExpansionOptions>>(), (listOfExpansionLists, next) =>
+            return selectedItems.OfType<ExpandedNavigationSelectItem>()
+                .Aggregate(new List<List<ODataExpansionOptions>>(), (listOfExpansionLists, next) =>
             {
                 var pathSegments = new List<ODataExpansionOptions>();
                 var lastParent = parentType;
                 
+                // It's possible to have a path start with complex (non navigation) types.
+                // If this is the case we need to loop through each path segment
                 foreach (var pathSegment in next.PathToNavigationProperty)
                 {
                     Type currentParentType = lastParent.GetCurrentType();
@@ -566,131 +569,21 @@ namespace AutoMapper.AspNet.OData
                     segment is NavigationPropertySegment;
 
                 FilterOptions GetFilter(Type memberType) => HasFilter(memberType)
-                        ? new FilterOptions(next.FilterOption)
-                        : null;
+                    ? new FilterOptions(next.FilterOption)
+                    : null;
 
                 QueryOptions GetQuery(Type memberType) => HasQuery(memberType)
                     ? new QueryOptions(next.OrderByOption, (int?)next.SkipOption, (int?)next.TopOption)
                     : null;
 
                 bool HasFilter(Type memberType)
-                    => memberType.IsList() && next.FilterOption != null;
+                    => memberType.IsList() && next.FilterOption is not null;
 
                 bool HasQuery(Type memberType)
-                    => memberType.IsList() && (next.OrderByOption != null || next.SkipOption.HasValue || next.TopOption.HasValue);
-#if false
-                //Only first segment is necessary because of the new syntax $expand=Builder($expand=City) vs $expand=Builder/City
-                string path = next.PathToNavigationProperty.FirstSegment.Identifier;
-
-                Type currentParentType = parentType.GetCurrentType();
-                Type memberType = currentParentType.GetMemberInfo(path).GetMemberType();
-                Type elementType = memberType.GetCurrentType();
-
-                ODataExpansionOptions exp = new()
-                {
-                    MemberType = memberType,
-                    ParentType = currentParentType,
-                    MemberName = path,
-                    FilterOptions = GetFilter(),
-                    QueryOptions = GetQuery(),
-                    Selects = next.SelectAndExpand.GetSelects()
-                };
-
-                List<List<ODataExpansionOptions>> navigationItems = next.GetNestedExpansions(elementType).Select
-                (
-                    expansions =>
-                    {
-                        expansions.Insert(0, exp);
-                        return expansions;
-                    }
-                ).ToList();
-
-                if (navigationItems.Any())
-                    listOfExpansionLists.AddRange(navigationItems);
-                else
-                    listOfExpansionLists.Add(new List<ODataExpansionOptions> { exp });
-
-                return listOfExpansionLists;
-
-
-                FilterOptions GetFilter()
-                    => HasFilter()
-                        ? new FilterOptions(next.FilterOption)
-                        : null;
-
-                QueryOptions GetQuery()
-                    => HasQuery()
-                        ? new QueryOptions(next.OrderByOption, (int?)next.SkipOption, (int?)next.TopOption)
-                        : null;
-
-                bool HasFilter()
-                    => memberType.IsList() && next.FilterOption != null;
-
-                bool HasQuery()
-                    => memberType.IsList() && (next.OrderByOption != null || next.SkipOption.HasValue || next.TopOption.HasValue);
-
-#endif
+                    => memberType.IsList() && (next.OrderByOption is not null || next.SkipOption.HasValue || next.TopOption.HasValue);
             });
         }
 
-
-
-        private static List<List<ODataExpansionOptions>> GetExpansionsOriginal(this IEnumerable<SelectItem> selectedItems, Type parentType)
-        {
-            if (selectedItems == null)
-                return new List<List<ODataExpansionOptions>>();
-
-            return selectedItems.OfType<ExpandedNavigationSelectItem>().Aggregate(new List<List<ODataExpansionOptions>>(), (listOfExpansionLists, next) =>
-            {
-                string path = next.PathToNavigationProperty.FirstSegment.Identifier;//Only first segment is necessary because of the new syntax $expand=Builder($expand=City) vs $expand=Builder/City
-
-                Type currentParentType = parentType.GetCurrentType();
-                Type memberType = currentParentType.GetMemberInfo(path).GetMemberType();
-                Type elementType = memberType.GetCurrentType();
-
-                ODataExpansionOptions exp = new()
-                {
-                    MemberType = memberType,
-                    ParentType = currentParentType,
-                    MemberName = path,
-                    FilterOptions = GetFilter(),
-                    QueryOptions = GetQuery(),
-                    Selects = next.SelectAndExpand.GetSelects()
-                };
-
-                List<List<ODataExpansionOptions>> navigationItems = next.GetNestedExpansions(elementType).Select
-                (
-                    expansions =>
-                    {
-                        expansions.Insert(0, exp);
-                        return expansions;
-                    }
-                ).ToList();
-
-                if (navigationItems.Any())
-                    listOfExpansionLists.AddRange(navigationItems);
-                else
-                    listOfExpansionLists.Add(new List<ODataExpansionOptions> { exp });
-
-                return listOfExpansionLists;
-
-                FilterOptions GetFilter()
-                    => HasFilter()
-                        ? new FilterOptions(next.FilterOption)
-                        : null;
-
-                QueryOptions GetQuery()
-                    => HasQuery()
-                        ? new QueryOptions(next.OrderByOption, (int?)next.SkipOption, (int?)next.TopOption)
-                        : null;
-
-                bool HasFilter()
-                    => memberType.IsList() && next.FilterOption != null;
-
-                bool HasQuery()
-                    => memberType.IsList() && (next.OrderByOption != null || next.SkipOption.HasValue || next.TopOption.HasValue);
-            });
-        }
 
         [Obsolete("\"LambdaExpression GetFilterExpression(this FilterClause filterClause, Type type, ODataQueryContext context)\"")]
         public static LambdaExpression GetFilterExpression(this FilterClause filterClause, Type type) 
