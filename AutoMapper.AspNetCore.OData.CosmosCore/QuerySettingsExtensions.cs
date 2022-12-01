@@ -1,7 +1,7 @@
-﻿using AutoMapper.AspNet.OData;
-using System.Threading;
+﻿using System.Threading;
 
-namespace AutoMapper.AspNetCore.OData.CosmosDb;
+namespace AutoMapper.AspNet.OData;
+
 internal static class QuerySettingsExtensions
 {
     public static CancellationToken GetCancellationToken(this QuerySettings querySettings) =>

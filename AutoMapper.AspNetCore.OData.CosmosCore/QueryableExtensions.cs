@@ -10,7 +10,7 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AutoMapper.AspNetCore.OData.CosmosDb;
+namespace AutoMapper.AspNet.OData;
 
 public static class QueryableExtensions
 {

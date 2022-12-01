@@ -1,7 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<TargetFrameworks>netcoreapp3.1;net5.0;net6.0</TargetFrameworks>	
+  	<TargetFrameworks>netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
+  	<RootNamespace>AutoMapper.AspNet.OData</RootNamespace>
+  	<PackageId>AutoMapper.AspNetCore.OData.CosmosCore</PackageId>
+  	<Description>Creates LINQ expressions from ODataQueryOptions and executes the query.</Description>
+  	<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+  	<PackageReleaseNotes>Supporting AutoMapper v12.</PackageReleaseNotes>
+  	<PackageTags>linq expressions odata cosmosdb</PackageTags>
+  	<PackageIcon>icon.png</PackageIcon>
+  	<RepositoryUrl>https://github.com/AutoMapper/AutoMapper.Extensions.OData</RepositoryUrl>
+  	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+  	<PackageProjectUrl>https://github.com/AutoMapper/AutoMapper.Extensions.OData</PackageProjectUrl>
+  	<AssemblyOriginatorKeyFile>..\AutoMapper.snk</AssemblyOriginatorKeyFile>
+  	<SignAssembly>true</SignAssembly>
+  	<MinVerTagPrefix>v</MinVerTagPrefix>
+  	<PublishRepositoryUrl>true</PublishRepositoryUrl>
+  	<IncludeSymbols>true</IncludeSymbols>
+  	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  	<EmbedUntrackedSources>true</EmbedUntrackedSources>
+  	<Deterministic>true</Deterministic>
+  	<ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <ItemGroup>
