@@ -43,7 +43,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebAPI.OData.EF6", "WebAPI.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DAL.EF6", "DAL.EF6\DAL.EF6.csproj", "{8139DB48-8A96-405A-9B02-44C4AEF79FD0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoMapper.AspNetCore.OData.CosmosDb", "AutoMapper.AspNetCore.OData.CosmosDb\AutoMapper.AspNetCore.OData.CosmosDb.csproj", "{9BC1AB23-433B-4026-98DC-B6D30141AD37}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoMapper.AspNetCore.OData.CosmosCore", "AutoMapper.AspNetCore.OData.CosmosCore\AutoMapper.AspNetCore.OData.CosmosCore.csproj", "{9BC1AB23-433B-4026-98DC-B6D30141AD37}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
