@@ -529,7 +529,7 @@ namespace AutoMapper.AspNet.OData
                 var lastParent = parentType;
                 
                 // It's possible to have a path start with complex (non navigation) types.
-                // If this is the case we need to loop through each path segment
+                // If this is the case we need to loop through each path segment.                
                 foreach (var pathSegment in next.PathToNavigationProperty)
                 {
                     Type currentParentType = lastParent.GetCurrentType();
