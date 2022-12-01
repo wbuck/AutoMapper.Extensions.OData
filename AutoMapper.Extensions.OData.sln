@@ -43,7 +43,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebAPI.OData.EF6", "WebAPI.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DAL.EF6", "DAL.EF6\DAL.EF6.csproj", "{8139DB48-8A96-405A-9B02-44C4AEF79FD0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoMapper.AspNetCore.OData.Cosmos", "AutoMapper.AspNetCore.OData.Cosmos\AutoMapper.AspNetCore.OData.Cosmos.csproj", "{9BC1AB23-433B-4026-98DC-B6D30141AD37}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoMapper.AspNetCore.OData.Cosmos", "AutoMapper.AspNetCore.OData.Cosmos\AutoMapper.AspNetCore.OData.Cosmos.csproj", "{9BC1AB23-433B-4026-98DC-B6D30141AD37}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoMapper.OData.Cosmos.Tests", "AutoMapper.OData.Cosmos.Tests\AutoMapper.OData.Cosmos.Tests.csproj", "{08987785-944A-4EF6-A023-B84F24DF221E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -101,6 +103,10 @@ Global
 		{9BC1AB23-433B-4026-98DC-B6D30141AD37}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9BC1AB23-433B-4026-98DC-B6D30141AD37}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9BC1AB23-433B-4026-98DC-B6D30141AD37}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08987785-944A-4EF6-A023-B84F24DF221E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08987785-944A-4EF6-A023-B84F24DF221E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08987785-944A-4EF6-A023-B84F24DF221E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08987785-944A-4EF6-A023-B84F24DF221E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -120,6 +126,7 @@ Global
 		{4C069416-CF7B-45C7-8C8F-B3D24DC16D01} = {D2A273B8-0229-4121-8189-175960E7749D}
 		{8139DB48-8A96-405A-9B02-44C4AEF79FD0} = {D2A273B8-0229-4121-8189-175960E7749D}
 		{9BC1AB23-433B-4026-98DC-B6D30141AD37} = {0574DFF6-39C8-43E6-8E91-92D03699BF35}
+		{08987785-944A-4EF6-A023-B84F24DF221E} = {3E35C7A6-722E-46FE-AFE0-2EFDF668DB44}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8A39B99E-1717-408D-9655-27AFFFB4798C}

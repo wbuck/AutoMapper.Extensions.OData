@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "AutoMapper.OData.Cosmos.Tests": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:61769;http://localhost:61770"
+    }
+  }
+}
