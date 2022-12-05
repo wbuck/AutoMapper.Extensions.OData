@@ -532,18 +532,21 @@ namespace AutoMapper.AspNet.OData
                 // If this is the case we need to loop through each path segment.                
                 foreach (var pathSegment in next.PathToNavigationProperty)
                 {
+                    
                     Type currentParentType = lastParent.GetCurrentType();
                     Type memberType = currentParentType.GetMemberInfo(pathSegment.Identifier).GetMemberType();
                     Type elementType = memberType.GetCurrentType();
+                    
+                    var isNavigation = IsNavigationProperty(pathSegment);
 
                     pathSegments.Add(new()
                     {
                         MemberType = memberType,
                         ParentType = currentParentType,
                         MemberName = pathSegment.Identifier,
-                        FilterOptions = IsNavigationProperty(pathSegment) ? GetFilter(memberType) : null,
-                        QueryOptions = IsNavigationProperty(pathSegment) ? GetQuery(memberType) : null,
-                        Selects = IsNavigationProperty(pathSegment) ? next.SelectAndExpand.GetSelects() : new()
+                        FilterOptions = isNavigation ? GetFilter(memberType) : null,
+                        QueryOptions = isNavigation ? GetQuery(memberType) : null,
+                        Selects = isNavigation ? next.SelectAndExpand.GetSelects() : new()
                     });
 
                     lastParent = elementType;                    

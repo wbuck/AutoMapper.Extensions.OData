@@ -8,6 +8,12 @@ namespace AutoMapper.AspNet.OData
 {
     internal static class ODataQueryContextExtentions
     {
+        public static IEnumerable<TEdmType> GetEdmSchemaElementOfType<TEdmType>(this ODataQueryContext context) 
+            where TEdmType : IEdmSchemaElement
+        {
+            return context.Model.SchemaElements.OfType<TEdmType>();
+        }
+
         public static OrderBySetting FindSortableProperties(this ODataQueryContext context, Type type)
         {
             context = context ?? throw new ArgumentNullException(nameof(context));

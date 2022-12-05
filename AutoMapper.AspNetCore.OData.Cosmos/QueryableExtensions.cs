@@ -1,5 +1,6 @@
 ﻿using AutoMapper.AspNet.OData;
 using AutoMapper.Extensions.ExpressionMapping;
+//using LogicBuilder.Expressions.Utils;
 using LogicBuilder.Expressions.Utils.Expansions;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.Azure.Cosmos.Linq;
@@ -74,17 +75,20 @@ public static class QueryableExtensions
             Expression<Func<TModel, bool>> filter)
             where TModel : class
     {
-        var expansions = options.SelectExpand.GetExpansions(typeof(TModel));
+        var expansions = options.GetExpansions();
+        //var expansions = options.SelectExpand.GetExpansions(typeof(TModel));
+
+        var includes = expansions
+            .Select(list => new List<Expansion>(list))
+            .BuildIncludes<TModel>(options.SelectExpand.GetSelects())
+            .ToList();
 
         return query.GetQuery
         (
             mapper,
             filter,
             options.GetQueryableExpression(querySettings?.ODataSettings),
-            expansions
-                .Select(list => new List<Expansion>(list))
-                .BuildIncludes<TModel>(options.SelectExpand.GetSelects())
-                .ToList(),
+            includes,
             querySettings?.ProjectionSettings
         ).UpdateQueryableExpression(expansions, options.Context);
     }
