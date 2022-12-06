@@ -3,4 +3,5 @@
 public sealed record FakeComplex
 {
     public string FirstName { get; init; } = null!;
+    public AnotherFakeComplexType? AnotherFakeType { get; init; }
 }

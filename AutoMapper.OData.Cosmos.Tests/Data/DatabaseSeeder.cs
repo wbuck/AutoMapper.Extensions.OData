@@ -16,13 +16,28 @@ public static class DatabaseSeeder
                 Id = Guid.NewGuid(),
                 ForestId = forest1,
                 Name = "Forest1",
-                FakeType = new() { FirstName = "Blair" },
+                FakeType = new()
+                {
+                    FirstName = "Blair" ,
+                    AnotherFakeType = new() { Number = 69 }
+                },
                 AdObjects = new List<AdObject>
                 {
                     new()
                     {
-                        //Id = Guid.NewGuid(),
                         DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(12)),
+                        FakeObjectOne = new()
+                        {
+                            Value = Random.Shared.Next(0, 1000),
+                            InternalFakeObject = new()
+                            {
+                                MyValue = $"My number is: {Random.Shared.Next(0, 1000)}"
+                            }
+                        },
+                        FakeObjectTwo = new()
+                        {
+                            Value = Random.Shared.Next(0, 1000),
+                        },
                         Dc = new()
                        {
                            Id = Guid.NewGuid(),
@@ -53,22 +68,41 @@ public static class DatabaseSeeder
                                    //Id = Guid.NewGuid(),
                                    Name = "dnsHostName",
                                    Value = "dc1.contoso.com",
-                                   FakeComplex = new() { FirstName = "Complex test1" }
+                                   FakeComplex = new() 
+                                   { 
+                                       FirstName = "Complex test1" ,
+                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
+                                   }
                                },
                                new()
                                {
                                    //Id = Guid.NewGuid(),
                                    Name = "operatingSystem",
                                    Value = "Windows 2019",
-                                   FakeComplex = new() { FirstName = "Complex test2" }
+                                   FakeComplex = new() 
+                                   { 
+                                       FirstName = "Complex test2",
+                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
+                                   }
                                }
                            }
                        }
                     },
                     new()
                     {
-                        //Id = Guid.NewGuid(),
                         DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(15)),
+                        FakeObjectOne = new()
+                        {
+                            Value = Random.Shared.Next(0, 1000),
+                            InternalFakeObject = new()
+                            {
+                                MyValue = $"My number is: {Random.Shared.Next(0, 1000)}"
+                            }
+                        },
+                        FakeObjectTwo = new()
+                        {
+                            Value = Random.Shared.Next(0, 1000),
+                        },
                         Dc = new()
                         {
                            Id = Guid.NewGuid(),
@@ -99,22 +133,41 @@ public static class DatabaseSeeder
                                    //Id = Guid.NewGuid(),
                                    Name = "dnsHostName",
                                    Value = "dc2.contoso.com",
-                                   FakeComplex = new() { FirstName = "Complex tes3" }
+                                   FakeComplex = new() 
+                                   { 
+                                       FirstName = "Complex tes3",
+                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
+                                   }
                                },
                                new()
                                {
                                    //Id = Guid.NewGuid(),
                                    Name = "operatingSystem",
                                    Value = "Windows 2016",
-                                   FakeComplex = new() { FirstName = "Complex test4" }
+                                   FakeComplex = new() 
+                                   {
+                                       FirstName = "Complex test4",
+                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
+                                   }
                                }
                            }
                        }
                     },
                     new()
-                    {
-                       //Id = Guid.NewGuid(),
+                    {                       
                        DateAdded = DateTime.Now,
+                       FakeObjectOne = new()
+                        {
+                            Value = Random.Shared.Next(0, 1000),
+                            InternalFakeObject = new()
+                            {
+                                MyValue = $"My number is: {Random.Shared.Next(0, 1000)}"
+                            }
+                        },
+                        FakeObjectTwo = new()
+                        {
+                            Value = Random.Shared.Next(0, 1000),
+                        },
                        Dc = new()
                        {
                            Id = Guid.NewGuid(),
@@ -137,22 +190,41 @@ public static class DatabaseSeeder
                                    //Id = Guid.NewGuid(),
                                    Name = "dnsHostName",
                                    Value = "dc3.contoso.com",
-                                   FakeComplex = new() { FirstName = "Complex test5" }
+                                   FakeComplex = new() 
+                                   { 
+                                       FirstName = "Complex test5",
+                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
+                                   }
                                },
                                new()
                                {
                                    //Id = Guid.NewGuid(),
                                    Name = "operatingSystem",
                                    Value = "Windows 2012R2",
-                                   FakeComplex = new() { FirstName = "Complex test6" }
+                                   FakeComplex = new() 
+                                   { 
+                                       FirstName = "Complex test6",
+                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
+                                   }
                                }
                            }
                        }
                     },
                     new()
-                    {
-                        //Id = Guid.NewGuid(),
+                    {                        
                        DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(20)),
+                       FakeObjectOne = new()
+                        {
+                            Value = Random.Shared.Next(0, 1000),
+                            InternalFakeObject = new()
+                            {
+                                MyValue = $"My number is: {Random.Shared.Next(0, 1000)}"
+                            }
+                        },
+                        FakeObjectTwo = new()
+                        {
+                            Value = Random.Shared.Next(0, 1000),
+                        },
                        Dc = new()
                        {
                            Id = Guid.NewGuid(),
@@ -183,14 +255,22 @@ public static class DatabaseSeeder
                                    //Id = Guid.NewGuid(),
                                    Name = "dnsHostName",
                                    Value = "dc4.contoso.com",
-                                   FakeComplex = new() { FirstName = "Complex test7" }
+                                   FakeComplex = new() 
+                                   {
+                                       FirstName = "Complex test7",
+                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
+                                   }
                                },
                                new()
                                {
                                    //Id = Guid.NewGuid(),
                                    Name = "sAMAccountName",
                                    Value = "DC4",
-                                   FakeComplex = new() { FirstName = "Complex test8" }
+                                   FakeComplex = new() 
+                                   { 
+                                       FirstName = "Complex test8",
+                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
+                                   }
                                }
                            }
                        }
@@ -202,13 +282,28 @@ public static class DatabaseSeeder
                 Id = Guid.NewGuid(),
                 Name = "Forest2",
                 ForestId = forest2,
-                FakeType = new() { FirstName = "Piper" },
+                FakeType = new() 
+                { 
+                    FirstName = "Piper",
+                    AnotherFakeType = new() { Number = 42 }
+                },
                 AdObjects = new List<AdObject>
                 {
                     new()
-                    {
-                        //Id = Guid.NewGuid(),
+                    {                        
                        DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(50)),
+                       FakeObjectOne = new()
+                        {
+                            Value = Random.Shared.Next(0, 1000),
+                            InternalFakeObject = new()
+                            {
+                                MyValue = $"My number is: {Random.Shared.Next(0, 1000)}"
+                            }
+                        },
+                        FakeObjectTwo = new()
+                        {
+                            Value = Random.Shared.Next(0, 1000),
+                        },
                        Dc = new()
                        {
                            Id = Guid.NewGuid(),
@@ -241,8 +336,19 @@ public static class DatabaseSeeder
                     },
                     new()
                     {
-                        //Id = Guid.NewGuid(),
                        DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(15)),
+                       FakeObjectOne = new()
+                        {
+                            Value = Random.Shared.Next(0, 1000),
+                            InternalFakeObject = new()
+                            {
+                                MyValue = $"My number is: {Random.Shared.Next(0, 1000)}"
+                            }
+                        },
+                        FakeObjectTwo = new()
+                        {
+                            Value = Random.Shared.Next(0, 1000),
+                        },
                        Dc = new()
                        {
                            Id = Guid.NewGuid(),
@@ -295,9 +401,20 @@ public static class DatabaseSeeder
                        }
                     },
                     new()
-                    {
-                        //Id = Guid.NewGuid(),
+                    {                        
                        DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(1)),
+                       FakeObjectOne = new()
+                        {
+                            Value = Random.Shared.Next(0, 1000),
+                            InternalFakeObject = new()
+                            {
+                                MyValue = $"My number is: {Random.Shared.Next(0, 1000)}"
+                            }
+                        },
+                        FakeObjectTwo = new()
+                        {
+                            Value = Random.Shared.Next(0, 1000),
+                        },
                        Dc = new()
                        {
                            Id = Guid.NewGuid(),
@@ -310,7 +427,11 @@ public static class DatabaseSeeder
                                    //Id = Guid.NewGuid(),
                                    Name = "dnsHostName",
                                    Value = "dc3.google.com",
-                                   FakeComplex = new() { FirstName = "Complex test9" }
+                                   FakeComplex = new() 
+                                   { 
+                                       FirstName = "Complex test9",
+                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
+                                   }
                                },
                                new()
                                {
@@ -323,9 +444,20 @@ public static class DatabaseSeeder
                        }
                     },
                     new()
-                    {
-                        //Id = Guid.NewGuid(),
+                    {                        
                        DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(20)),
+                       FakeObjectOne = new()
+                        {
+                            Value = Random.Shared.Next(0, 1000),
+                            InternalFakeObject = new()
+                            {
+                                MyValue = $"My number is: {Random.Shared.Next(0, 1000)}"
+                            }
+                        },
+                        FakeObjectTwo = new()
+                        {
+                            Value = Random.Shared.Next(0, 1000),
+                        },
                        Dc = new()
                        {
                            Id = Guid.NewGuid(),
@@ -356,14 +488,22 @@ public static class DatabaseSeeder
                                    //Id = Guid.NewGuid(),
                                    Name = "dnsHostName",
                                    Value = "dc4.google.com",
-                                   FakeComplex = new() { FirstName = "Complex test11" }
+                                   FakeComplex = new() 
+                                   { 
+                                       FirstName = "Complex test11",
+                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
+                                   }
                                },
                                new()
                                {
                                    //Id = Guid.NewGuid(),
                                    Name = "operatingSystem",
                                    Value = "Windows 2008",
-                                   FakeComplex = new() { FirstName = "Complex test12" }
+                                   FakeComplex = new() 
+                                   { 
+                                       FirstName = "Complex test12",
+                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
+                                   }
                                }
                            }
                        }

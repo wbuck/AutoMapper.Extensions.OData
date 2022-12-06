@@ -1,18 +1,14 @@
 ﻿#nullable enable
 
 using LogicBuilder.Expressions.Utils;
-using LogicBuilder.Expressions.Utils.Expansions;
 using Microsoft.AspNetCore.OData.Query;
-using Microsoft.Extensions.FileSystemGlobbing.Internal;
 using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 
 namespace AutoMapper.AspNet.OData;
@@ -35,34 +31,31 @@ internal static class ExpansionHelper
         this IEnumerable<SelectItem> selectedItems, IReadOnlyList<string> complexTypeNames)
     {
         Type parentType = typeof(TModel);
-
-        List<ODataExpansionOptions>? rootIncludes = null;
+        List<List<ODataExpansionOptions>>? rootIncludes = null;
 
         // If there are no selects or only selects for expanded entities,
         // we need to expand the complex types on the root entity.
         if (!selectedItems.Any() || !selectedItems.Any(s => s is PathSelectItem))
         {
-            // These types will be expanded later, ignore them for now.
-            var typesToIgnore = selectedItems
-                .OfType<ExpandedNavigationSelectItem>()
-                .SelectMany(s => s.PathToNavigationProperty)
-                .Select(s => s.Identifier)
-                .ToArray();
-
-            var parentComplexMembers = parentType
-                .GetComplexMembers(complexTypeNames)
-                .Where(m => !typesToIgnore.Contains(m.Name));
-
             rootIncludes = new();
+            rootIncludes.ExpandComplex(null, parentType, complexTypeNames, null);
 
-            foreach (var nextMember in parentComplexMembers)
-                rootIncludes.ExpandComplexTypeHierarchy(nextMember, complexTypeNames);
+            // These types will be expanded later, ignore them for now.
+            //var typesToIgnore = selectedItems
+            //    .OfType<ExpandedNavigationSelectItem>()
+            //    .SelectMany(s => s.PathToNavigationProperty)
+            //    .Select(s => s.Identifier)
+            //    .ToArray();
+            //
+            //var parentComplexMembers = parentType
+            //    .GetComplexMembers(complexTypeNames)
+            //    .Where(m => !typesToIgnore.Contains(m.Name));
         }
 
         var expansions = selectedItems.GetExpansions(parentType, complexTypeNames);
 
         if (rootIncludes is not null)
-            expansions.Insert(0, rootIncludes);
+            expansions.InsertRange(0, rootIncludes);
 
         return expansions;
     }
@@ -75,7 +68,7 @@ internal static class ExpansionHelper
             Type currentParentType = parentType;
             List<ODataExpansionOptions> includes = new();
 
-            foreach (var pathSegment in next.GetPathSegments())
+            foreach (var (pathSegment, index) in next.GetPathSegments().Select((p, i) => (p, i)))
             {
                 Type memberType = currentParentType.GetMemberInfo(pathSegment.Identifier).GetMemberType();
                 Type elementType = memberType.GetCurrentType();
@@ -88,14 +81,13 @@ internal static class ExpansionHelper
                     MemberType = memberType,
                     ParentType = currentParentType,
                     MemberName = pathSegment.Identifier,
-                    FilterOptions = GetFilter(),
-                    QueryOptions = GetQuery(),
+                    FilterOptions = GetFilter()!,
+                    QueryOptions = GetQuery()!,
                     Selects = GetSelects()
                 });
 
-                foreach (var member in elementType.GetComplexMembers(complexTypeNames, includes.Last().Selects))                
-                    includes.ExpandComplexTypeHierarchy(member, complexTypeNames);                
-
+                // Add any complex type expansions.
+                expansions.ExpandComplex(new(includes), elementType, complexTypeNames, includes.Last().Selects);            
                 currentParentType = elementType;
 
 
@@ -114,7 +106,7 @@ internal static class ExpansionHelper
                     if (TryGetNavigationSelectItem(out var item)
                         && (item.OrderByOption is not null || item.SkipOption.HasValue || item.TopOption.HasValue))
                     {
-                        return new QueryOptions(item.OrderByOption, (int?)item.SkipOption, (int?)item.TopOption);
+                        return new QueryOptions(item.OrderByOption!, (int?)item.SkipOption, (int?)item.TopOption);
                     }
                     return null;
                 }
@@ -160,7 +152,83 @@ internal static class ExpansionHelper
         });
     }
 
-    private static void ExpandComplexTypeHierarchy(this List<ODataExpansionOptions> expansions, MemberInfo complexMember, IEnumerable<string> complexTypeNames)
+    private static void ExpandComplex(
+        this List<List<ODataExpansionOptions>> expansions, List<ODataExpansionOptions>? currentExpansions, Type parentType, IEnumerable<string> complexTypeNames, List<string>? selects)
+    {
+        int start = currentExpansions is null ? 0 : 1;
+        ExpandComplexInternal(expansions, currentExpansions, parentType, complexTypeNames, start, start, selects);
+
+        static void ExpandComplexInternal(List<List<ODataExpansionOptions>> expansions, List<ODataExpansionOptions>? currentExpansions,
+            Type parentType, IEnumerable<string> complexTypeNames, int depth, in int start, List<string>? selects)
+        {
+            currentExpansions = currentExpansions is null ? new() : currentExpansions;
+            var members = parentType.GetComplexMembers(complexTypeNames, selects);
+
+            for (int i = 0; i < members.Count; ++i)
+            {
+                var member = members[i];
+                var memberType = member.GetMemberType().GetCurrentType();
+
+                var nextExpansions = AddExpansion(member, memberType, i == 0 ? currentExpansions : new(currentExpansions.Take(depth)));
+                ExpandComplexInternal(expansions, nextExpansions, memberType, complexTypeNames, depth + 1, start, selects);
+
+                if (!nextExpansions.Equals(currentExpansions) || depth == start)
+                    expansions.Add(nextExpansions);
+            }            
+        }
+
+        static List<ODataExpansionOptions> AddExpansion(MemberInfo member, Type memberType, List<ODataExpansionOptions> expansions)
+        {
+            expansions.Add(new()
+            {
+                MemberName = member.Name,
+                MemberType = memberType,
+                ParentType = member.DeclaringType,
+                Selects = new()
+            });
+            return expansions;
+        }
+    }
+
+#if false
+
+    private static void ExpandComplex(
+        this List<List<ODataExpansionOptions>> expansions, List<ODataExpansionOptions>? currentExpansions, Type parentType, IEnumerable<string> complexTypeNames, int depth, int start = 0)
+    {        
+        currentExpansions = currentExpansions is null ? new() : currentExpansions;
+        var members = parentType.GetComplexMembers(complexTypeNames);
+
+        for (int i = 0; i < members.Count; ++i)
+        {
+            var member = members[i];
+            var memberType = member.GetMemberType().GetCurrentType();
+
+            var nextExpansions = AddExpansion(member, memberType, i == 0 ? currentExpansions : new(currentExpansions.Take(depth)));
+            expansions.ExpandComplex(nextExpansions, memberType, complexTypeNames, depth + 1);
+
+            if (!nextExpansions.Equals(currentExpansions) || depth == start)
+                expansions.Add(nextExpansions);
+        }
+
+        
+
+        static List<ODataExpansionOptions> AddExpansion(MemberInfo member, Type memberType, List<ODataExpansionOptions> expansions)
+        {
+            expansions.Add(new()
+            {
+                MemberName = member.Name,
+                MemberType = memberType,
+                ParentType = member.DeclaringType,
+                Selects = new()
+            });
+            return expansions;
+        }
+
+    }
+
+#endif
+
+    private static void ExpandComplexTypeHierarchy2(this List<ODataExpansionOptions> expansions, MemberInfo complexMember, IEnumerable<string> complexTypeNames)
     {
         var actualType = complexMember.GetMemberType().GetCurrentType();
 
@@ -173,7 +241,7 @@ internal static class ExpansionHelper
         });
 
         foreach (var nextMember in actualType.GetComplexMembers(complexTypeNames))
-            expansions.ExpandComplexTypeHierarchy(nextMember, complexTypeNames);
+            expansions.ExpandComplexTypeHierarchy2(nextMember, complexTypeNames);
     }
 
     private static List<List<ODataExpansionOptions>> GetNestedExpansions(this ExpandedNavigationSelectItem node, Type parentType, IReadOnlyList<string> complexTypeNames)
