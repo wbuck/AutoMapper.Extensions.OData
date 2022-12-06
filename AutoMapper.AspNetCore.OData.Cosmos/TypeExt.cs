@@ -1,6 +1,8 @@
 ﻿#nullable enable
 
+using AutoMapper.Execution;
 using LogicBuilder.Expressions.Utils;
+using Microsoft.AspNetCore.OData.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,13 +26,16 @@ internal static class TypeExt
                 info.MemberType == MemberTypes.Field || info.MemberType == MemberTypes.Property)
             .ToArray();
 
-    public static IReadOnlyList<MemberInfo> GetComplexMembers(this Type type, IEnumerable<string> complexTypeNames)
+    public static IReadOnlyList<MemberInfo> GetComplexMembers(this Type type, IEnumerable<string> complexTypeNames, IReadOnlyList<string>? selects = null)
     {
         MemberInfo[] members = type.GetPropertiesOrFields();
         List<MemberInfo> complexMembers = new(members.Length);
 
         foreach (var member in members)
         {
+            if (selects is not null && selects.Any() && !selects.Contains(member.Name))
+                continue;
+
             var memberType = member.GetMemberType().GetCurrentType();
 
             if (!member.IsListOfLiteralTypes() && !memberType.IsLiteralType() &&

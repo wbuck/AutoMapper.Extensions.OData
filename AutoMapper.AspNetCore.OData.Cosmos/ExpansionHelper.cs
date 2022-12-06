@@ -9,6 +9,7 @@ using Microsoft.OData.UriParser;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -45,13 +46,15 @@ internal static class ExpansionHelper
             Type currentParentType = parentType;
             List<ODataExpansionOptions> includes = new();
 
-            foreach (var pathSegment in GetPathSegments(next))
+            foreach (var pathSegment in next.GetPathSegments())
             {
                 Type memberType = currentParentType.GetMemberInfo(pathSegment.Identifier).GetMemberType();
                 Type elementType = memberType.GetCurrentType();
 
                 if (elementType.IsLiteralType())                
                     continue;
+
+                var selectedMembers = GetSelects();
 
                 includes.Add(new()
                 {
@@ -60,10 +63,10 @@ internal static class ExpansionHelper
                     MemberName = pathSegment.Identifier,
                     FilterOptions = GetFilter(),
                     QueryOptions = GetQuery(),
-                    Selects = GetSelects()
+                    Selects = selectedMembers
                 });
 
-                foreach (var member in elementType.GetComplexMembers(complexTypeNames))                
+                foreach (var member in elementType.GetComplexMembers(complexTypeNames, selectedMembers))                
                     includes.ExpandComplexTypeHierarchy(member, complexTypeNames);                
 
                 currentParentType = elementType;
@@ -89,7 +92,7 @@ internal static class ExpansionHelper
 
                 List<string> GetSelects()
                 {
-                    if (next is ExpandedNavigationSelectItem item)
+                    if (TryGetNavigationSelectItem(out var item))
                         return item.SelectAndExpand.GetSelects();
 
                     return new();
@@ -97,19 +100,30 @@ internal static class ExpansionHelper
 
                 bool HasFilter()
                 {
-                    if (next is ExpandedNavigationSelectItem item)
+                    if (TryGetNavigationSelectItem(out var item))                    
                         return memberType.IsList() && item.FilterOption is not null;
-
+                                          
                     return false;
                 }
 
                 bool HasQuery()
-                {
-                    if (next is ExpandedNavigationSelectItem item)
+                {                    
+                    if (TryGetNavigationSelectItem(out var item))
                     {
                         return memberType.IsList() && 
                             (item.OrderByOption is not null || item.SkipOption.HasValue || item.TopOption.HasValue);
                     }
+                    return false;
+                }
+
+                bool TryGetNavigationSelectItem([MaybeNullWhen(false)] out ExpandedNavigationSelectItem item)
+                {
+                    if (pathSegment is NavigationPropertySegment)
+                    {
+                        item = (ExpandedNavigationSelectItem)next;
+                        return true;
+                    }
+                    item = null;
                     return false;
                 }
             }
@@ -171,7 +185,7 @@ internal static class ExpansionHelper
             .ToList();
     }
 
-    private static IEnumerable<ODataPathSegment> GetPathSegments(SelectItem selectItem) => 
+    private static IEnumerable<ODataPathSegment> GetPathSegments(this SelectItem selectItem) => 
         selectItem switch
         {
             PathSelectItem item => item.SelectedPath,

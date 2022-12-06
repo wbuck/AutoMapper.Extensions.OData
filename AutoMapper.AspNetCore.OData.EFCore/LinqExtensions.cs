@@ -5,12 +5,9 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.OData.UriParser;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace AutoMapper.AspNet.OData
 {
@@ -522,41 +519,29 @@ namespace AutoMapper.AspNet.OData
             if (selectedItems == null)
                 return new List<List<ODataExpansionOptions>>();
 
-            return selectedItems.OfType<ExpandedNavigationSelectItem>()
-                .Aggregate(new List<List<ODataExpansionOptions>>(), (listOfExpansionLists, next) =>
+            return selectedItems.OfType<ExpandedNavigationSelectItem>().Aggregate(new List<List<ODataExpansionOptions>>(), (listOfExpansionLists, next) =>
             {
-                var pathSegments = new List<ODataExpansionOptions>();
-                var lastParent = parentType;
-                
-                // It's possible to have a path start with complex (non navigation) types.
-                // If this is the case we need to loop through each path segment.                
-                foreach (var pathSegment in next.PathToNavigationProperty)
+                string path = next.PathToNavigationProperty.FirstSegment.Identifier;//Only first segment is necessary because of the new syntax $expand=Builder($expand=City) vs $expand=Builder/City
+
+                Type currentParentType = parentType.GetCurrentType();
+                Type memberType = currentParentType.GetMemberInfo(path).GetMemberType();
+                Type elementType = memberType.GetCurrentType();
+
+                ODataExpansionOptions exp = new()
                 {
-                    
-                    Type currentParentType = lastParent.GetCurrentType();
-                    Type memberType = currentParentType.GetMemberInfo(pathSegment.Identifier).GetMemberType();
-                    Type elementType = memberType.GetCurrentType();
-                    
-                    var isNavigation = IsNavigationProperty(pathSegment);
+                    MemberType = memberType,
+                    ParentType = currentParentType,
+                    MemberName = path,
+                    FilterOptions = GetFilter(),
+                    QueryOptions = GetQuery(),
+                    Selects = next.SelectAndExpand.GetSelects()
+                };
 
-                    pathSegments.Add(new()
-                    {
-                        MemberType = memberType,
-                        ParentType = currentParentType,
-                        MemberName = pathSegment.Identifier,
-                        FilterOptions = isNavigation ? GetFilter(memberType) : null,
-                        QueryOptions = isNavigation ? GetQuery(memberType) : null,
-                        Selects = isNavigation ? next.SelectAndExpand.GetSelects() : new()
-                    });
-
-                    lastParent = elementType;                    
-                }
-
-                List<List<ODataExpansionOptions>> navigationItems = next.GetNestedExpansions(lastParent).Select
+                List<List<ODataExpansionOptions>> navigationItems = next.GetNestedExpansions(elementType).Select
                 (
                     expansions =>
                     {
-                        expansions.InsertRange(0, pathSegments);                        
+                        expansions.Insert(0, exp);
                         return expansions;
                     }
                 ).ToList();
@@ -564,29 +549,27 @@ namespace AutoMapper.AspNet.OData
                 if (navigationItems.Any())
                     listOfExpansionLists.AddRange(navigationItems);
                 else
-                    listOfExpansionLists.Add(pathSegments);
+                    listOfExpansionLists.Add(new List<ODataExpansionOptions> { exp });
 
                 return listOfExpansionLists;
 
-                static bool IsNavigationProperty(ODataPathSegment segment) =>
-                    segment is NavigationPropertySegment;
+                FilterOptions GetFilter()
+                    => HasFilter()
+                        ? new FilterOptions(next.FilterOption)
+                        : null;
 
-                FilterOptions GetFilter(Type memberType) => HasFilter(memberType)
-                    ? new FilterOptions(next.FilterOption)
-                    : null;
+                QueryOptions GetQuery()
+                    => HasQuery()
+                        ? new QueryOptions(next.OrderByOption, (int?)next.SkipOption, (int?)next.TopOption)
+                        : null;
 
-                QueryOptions GetQuery(Type memberType) => HasQuery(memberType)
-                    ? new QueryOptions(next.OrderByOption, (int?)next.SkipOption, (int?)next.TopOption)
-                    : null;
+                bool HasFilter()
+                    => memberType.IsList() && next.FilterOption != null;
 
-                bool HasFilter(Type memberType)
-                    => memberType.IsList() && next.FilterOption is not null;
-
-                bool HasQuery(Type memberType)
-                    => memberType.IsList() && (next.OrderByOption is not null || next.SkipOption.HasValue || next.TopOption.HasValue);
+                bool HasQuery()
+                    => memberType.IsList() && (next.OrderByOption != null || next.SkipOption.HasValue || next.TopOption.HasValue);
             });
         }
-
 
         [Obsolete("\"LambdaExpression GetFilterExpression(this FilterClause filterClause, Type type, ODataQueryContext context)\"")]
         public static LambdaExpression GetFilterExpression(this FilterClause filterClause, Type type) 

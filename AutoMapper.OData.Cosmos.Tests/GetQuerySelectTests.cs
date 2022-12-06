@@ -53,7 +53,7 @@ public sealed class GetQuerySelectTests
         //const string query = "/forest?$select=ForestName, ForestId, FakeType&$expand=AdObjects/Dc&$orderby=ForestName";
         // string query = "/forest?$select=ForestName&$expand=AdObjects($expand=Dc($expand=Attributes))&$orderby=ForestName";
         //const string query = "/forest?$expand=AdObjects/Dc&$orderby=ForestName";
-        const string query = "/forest?$select=ForestName, ForestId&$expand=AdObjects/Dc&$orderby=ForestName";
+        const string query = "/forest?$expand=AdObjects/Dc&$orderby=ForestName";
         var queryable = this.dbContainer.GetContainer().GetItemLinqQueryable<Forest>().AsQueryable();
 
         //var list = new List<Forest>().AsQueryable();
