@@ -6,4 +6,6 @@ internal sealed record BackupModel
     public Guid ForestId { get; init; }
     public string PathToBackup { get; init; } = default!;
     public DateTimeOffset DateCreated { get; init; }
+    public CredentialsModel? Credentials { get; init; }
+    public NetworkInformationModel? NetworkInformation { get; init; }
 }

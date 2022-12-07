@@ -51,14 +51,32 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = DateTime.Now,
-                                   Path = "/path/to/dc1/backup1.vhdx"
+                                   Path = "/path/to/dc1/backup1.vhdx",
+                                   Credentials = new()
+                                   {
+                                       Username = "bill@microsoft.com",
+                                       Password = "mypassword"
+                                   },
+                                   NetworkInformation = new()
+                                   {
+                                       Address = "www.microsoft.com"
+                                   }
                                },
                                new Backup
                                {
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(10)),
-                                   Path = "/path/to/dc1/backup2.vhdx"
+                                   Path = "/path/to/dc1/backup2.vhdx",
+                                   Credentials = new()
+                                   {
+                                       Username = "ted@microsoft.com",
+                                       Password = "mypassword1"
+                                   },
+                                   NetworkInformation = new()
+                                   {
+                                       Address = "www.microsoft.com"
+                                   }
                                }
                            },
                            Attributes = new List<ObjectAttribute>
@@ -116,7 +134,16 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(5)),
-                                   Path = "/path/to/dc2/backup1.vhdx"
+                                   Path = "/path/to/dc2/backup1.vhdx",
+                                   Credentials = new()
+                                   {
+                                       Username = "susan@amazon.com",
+                                       Password = "mypassword2"
+                                   },
+                                   NetworkInformation = new()
+                                   {
+                                       Address = "www.amazon.com"
+                                   }
                                },
                                new Backup
                                {
@@ -180,7 +207,16 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = DateTime.Now,
-                                   Path = "/path/to/dc3/backup1.vhdx"
+                                   Path = "/path/to/dc3/backup1.vhdx",
+                                   Credentials = new()
+                                   {
+                                       Username = "rebecca@meta.com",
+                                       Password = "mypassword3"
+                                   },
+                                   NetworkInformation = new()
+                                   {
+                                       Address = "www.facebook.com"
+                                   }
                                }
                            },
                            Attributes = new List<ObjectAttribute>
@@ -238,14 +274,32 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(5)),
-                                   Path = "/path/to/dc4/backup1.vhdx"
+                                   Path = "/path/to/dc4/backup1.vhdx",
+                                   Credentials = new()
+                                   {
+                                       Username = "piper@contoso.com",
+                                       Password = "mypassword4"
+                                   },
+                                   NetworkInformation = new()
+                                   {
+                                       Address = "www.contoso.com"
+                                   }
                                },
                                new Backup
                                {
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(1)),
-                                   Path = "/path/to/dc4/backup2.vhdx"
+                                   Path = "/path/to/dc4/backup2.vhdx",
+                                   Credentials = new()
+                                   {
+                                       Username = "adam@shopify.ca",
+                                       Password = "mypassword5"
+                                   },
+                                   NetworkInformation = new()
+                                   {
+                                       Address = "www.shopify.com"
+                                   }
                                }
                            },
                            Attributes = new List<ObjectAttribute>
@@ -316,7 +370,16 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest2,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(25)),
-                                   Path = "/path/to/dc1/backup1.vhdx"
+                                   Path = "/path/to/dc1/backup1.vhdx",
+                                   Credentials = new()
+                                   {
+                                       Username = "eric@contoso.ca",
+                                       Password = "mypassword6"
+                                   },
+                                   NetworkInformation = new()
+                                   {
+                                       Address = "www.contoso.ca"
+                                   }
                                }
                            },                           
                            Attributes = new List<ObjectAttribute>
@@ -368,21 +431,48 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest2,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(10)),
-                                   Path = "/path/to/dc2/backup1.vhdx"
+                                   Path = "/path/to/dc2/backup1.vhdx",
+                                   Credentials = new()
+                                   {
+                                       Username = "amanda@contoso.ca",
+                                       Password = "mypassword7"
+                                   },
+                                   NetworkInformation = new()
+                                   {
+                                       Address = "www.contoso.ca"
+                                   }
                                },
                                new Backup
                                {
                                    Id = Guid.NewGuid(),
                                    ForestId = forest2,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(5)),
-                                   Path = "/path/to/dc2/backup2.vhdx"
+                                   Path = "/path/to/dc2/backup2.vhdx",
+                                   Credentials = new()
+                                   {
+                                       Username = "jessica@contoso.ca",
+                                       Password = "mypassword7"
+                                   },
+                                   NetworkInformation = new()
+                                   {
+                                       Address = "www.contoso.ca"
+                                   }
                                },
                                new Backup
                                {
                                    Id = Guid.NewGuid(),
                                    ForestId = forest2,
                                    DateCreated = DateTime.Now,
-                                   Path = "/path/to/dc2/backup3.vhdx"
+                                   Path = "/path/to/dc2/backup3.vhdx",
+                                   Credentials = new()
+                                   {
+                                       Username = "angela@contoso.ca",
+                                       Password = "mypassword8"
+                                   },
+                                   NetworkInformation = new()
+                                   {
+                                       Address = "www.contoso.ca"
+                                   }
                                }
                            },
                            Attributes = new List<ObjectAttribute>
@@ -471,14 +561,32 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest2,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(5)),
-                                   Path = "/path/to/dc4/backup1.vhdx"
+                                   Path = "/path/to/dc4/backup1.vhdx",
+                                   Credentials = new()
+                                   {
+                                       Username = "peter@contoso.ca",
+                                       Password = "mypassword8"
+                                   },
+                                   NetworkInformation = new()
+                                   {
+                                       Address = "www.contoso.ca"
+                                   }
                                },
                                new Backup
                                {
                                    Id = Guid.NewGuid(),
                                    ForestId = forest2,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(1)),
-                                   Path = "/path/to/dc4/backup2.vhdx"
+                                   Path = "/path/to/dc4/backup2.vhdx",
+                                   Credentials = new()
+                                   {
+                                       Username = "richard@contoso.ca",
+                                       Password = "mypassword9"
+                                   },
+                                   NetworkInformation = new()
+                                   {
+                                       Address = "www.contoso.ca"
+                                   }
                                }
                            },
                            Attributes = new List<ObjectAttribute>

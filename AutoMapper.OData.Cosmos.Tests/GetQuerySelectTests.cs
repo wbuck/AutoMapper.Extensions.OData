@@ -14,6 +14,7 @@ using Microsoft.Azure.Cosmos.Linq;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
 using Microsoft.OData.UriParser;
+using System.ComponentModel.DataAnnotations;
 
 namespace AutoMapper.OData.Cosmos.Tests;
 
@@ -50,9 +51,9 @@ public sealed class GetQuerySelectTests
 	{
         //&$expand=Buildings&$orderby=Name
         //const string query = "/forest?$expand=AdObjects/Dc&$orderby=ForestName";
-        const string query = "/forest?$select=ForestName, ForestId, FakeType&$expand=AdObjects/Dc($select=FullyQualifiedDomainName)&$orderby=ForestName";
+        //const string query = "/forest?$select=ForestName, ForestId, FakeType&$expand=AdObjects/Dc($expand=Backups)&$orderby=ForestName";
         //string query = "/forest?$select=ForestName&$expand=AdObjects($expand=Dc($expand=Attributes))&$orderby=ForestName";
-        //const string query = "/forest?$expand=AdObjects/Dc&$orderby=ForestName";
+        const string query = "/forest?$expand=AdObjects/Dc&$orderby=ForestName";
         //const string query = "/forest";
         var queryable = this.dbContainer.GetContainer().GetItemLinqQueryable<Forest>().AsQueryable();
 
@@ -125,7 +126,7 @@ public static class ODataHelpers
         builder.EntitySet<DomainControllerModel>(nameof(DomainControllerModel), config =>
         {
             config.CollectionProperty(e => e.FsmoRoles);
-            config.Expand(SelectExpandType.Automatic, nameof(DomainControllerModel.FsmoRoles));
+            config.ComplexProperty(e => e.Attributes);
         });
 
     private static void ConfigureAdObjectComplexType(ODataConventionModelBuilder builder) =>
@@ -143,7 +144,10 @@ public static class ODataHelpers
             builder.Namespace = customNamespace;
 
         builder.EntitySet<T>(typeof(T).Name);
-        ConfigureDcEntitySet(builder);
+
+        //ConfigureDcEntitySet(builder);
+        //builder.AddComplexType(typeof(ObjectAttributeModel));
+        //builder.ComplexType<ObjectAttributeModel>();
 
         IEdmModel model = builder.GetEdmModel();
         IEdmEntitySet entitySet = model.EntityContainer.FindEntitySet(typeof(T).Name);
