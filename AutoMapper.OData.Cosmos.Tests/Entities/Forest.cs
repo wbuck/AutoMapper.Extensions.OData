@@ -8,8 +8,10 @@ public sealed record Forest
     public Guid ForestId { get; init; }
     public string Name { get; init; } = default!;
     public Credentials? ForestWideCredentials { get; init; } = default!;
-    public ICollection<AdObject> AdObjects { get; init; } = 
-        new List<AdObject>();
+    public ICollection<DomainControllerEntry> DomainControllers { get; init; } = 
+        new List<DomainControllerEntry>();
+    public ICollection<int> Values { get; init; } =
+        new List<int>();
 
     [JsonProperty("_etag")]
     public string ETag { get; init; } = default!;

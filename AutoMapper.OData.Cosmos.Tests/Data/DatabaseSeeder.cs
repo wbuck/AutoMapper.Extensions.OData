@@ -2,9 +2,9 @@
 
 namespace AutoMapper.OData.Cosmos.Tests.Data;
 
-public static class DatabaseSeeder
+internal static class DatabaseSeeder
 {
-    public static ICollection<Forest> GenerateData() 
+    public static ICollection<Forest> GenerateData()
     {
         var forest1 = Guid.NewGuid();
         var forest2 = Guid.NewGuid();
@@ -15,35 +15,36 @@ public static class DatabaseSeeder
             {
                 Id = Guid.NewGuid(),
                 ForestId = forest1,
-                Name = "Forest1",
+                Name = "Abernathy Forest",
                 ForestWideCredentials = new()
                 {
-                    Username = "Forest1Administrator",
-                    Password = "forestCredentials"
+                    Username = "AbernathyAdministrator",
+                    Password = "^1ScfqS8s939I%xU"
                 },
-                AdObjects = new List<AdObject>
+                DomainControllers = new List<DomainControllerEntry>
                 {
                     new()
                     {
                         DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(12)),
-                        FakeObjectOne = new()
+                        DcCredentials = new()
                         {
-                            Value = Random.Shared.Next(0, 1000),
-                            InternalFakeObject = new()
-                            {
-                                MyValue = $"My number is: {Random.Shared.Next(0, 1000)}"
-                            }
+                            Username = "administrator",
+                            Password = "ch8d7F7YI6v6!BRx"
                         },
-                        FakeObjectTwo = new()
+                        DcNetworkInformation = new()
                         {
-                            Value = Random.Shared.Next(0, 1000),
+                            Address = "http://www.abernathy.com/"
                         },
                         Dc = new()
-                       {
+                        {
                            Id = Guid.NewGuid(),
                            ForestId = forest1,
-                           Fqdn = "dc1.contoso.com",
-                           FsmoRoles = new List<FsmoRole> { FsmoRole.PdcEmulator, FsmoRole.DomainNamingMaster },
+                           Fqdn = "dc1.abernathy.com",
+                           FsmoRoles = new List<FsmoRole>
+                           {
+                               FsmoRole.PdcEmulator,
+                               FsmoRole.DomainNamingMaster
+                           },
                            Backups = new List<Backup>
                            {
                                new Backup
@@ -51,15 +52,17 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = DateTime.Now,
-                                   Path = "/path/to/dc1/backup1.vhdx",
-                                   Credentials = new()
+                                   Location = new()
                                    {
-                                       Username = "bill@microsoft.com",
-                                       Password = "mypassword"
-                                   },
-                                   NetworkInformation = new()
-                                   {
-                                       Address = "www.microsoft.com"
+                                       Credentials = new()
+                                       {
+                                            Username = "admin@abernathy.com",
+                                            Password = "q70Z%T2i$T8Tomm*"
+                                       },
+                                       NetworkInformation = new()
+                                       {
+                                            Address = "Azure blob storage"
+                                       }
                                    }
                                },
                                new Backup
@@ -67,15 +70,17 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(10)),
-                                   Path = "/path/to/dc1/backup2.vhdx",
-                                   Credentials = new()
+                                   Location = new()
                                    {
-                                       Username = "ted@microsoft.com",
-                                       Password = "mypassword1"
-                                   },
-                                   NetworkInformation = new()
-                                   {
-                                       Address = "www.microsoft.com"
+                                       Credentials = new()
+                                       {
+                                            Username = "admin@abernathy.com",
+                                            Password = "#w#28N0iiT&#!u*T"
+                                       },
+                                       NetworkInformation = new()
+                                       {
+                                            Address = "/path/to/secure/storage"
+                                       }
                                    }
                                }
                            },
@@ -83,25 +88,13 @@ public static class DatabaseSeeder
                            {
                                new()
                                {
-                                   //Id = Guid.NewGuid(),
                                    Name = "dnsHostName",
-                                   Value = "dc1.contoso.com",
-                                   FakeComplex = new() 
-                                   { 
-                                       FirstName = "Complex test1" ,
-                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
-                                   }
+                                   Value = "dc1.abernathy.com"
                                },
                                new()
-                               {
-                                   //Id = Guid.NewGuid(),
+                               {                                   
                                    Name = "operatingSystem",
-                                   Value = "Windows 2019",
-                                   FakeComplex = new() 
-                                   { 
-                                       FirstName = "Complex test2",
-                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
-                                   }
+                                   Value = "Windows 2019"
                                }
                            }
                        }
@@ -109,24 +102,25 @@ public static class DatabaseSeeder
                     new()
                     {
                         DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(15)),
-                        FakeObjectOne = new()
+                        DcCredentials = new()
                         {
-                            Value = Random.Shared.Next(0, 1000),
-                            InternalFakeObject = new()
-                            {
-                                MyValue = $"My number is: {Random.Shared.Next(0, 1000)}"
-                            }
+                            Username = "administrator",
+                            Password = "cS6Xxs7z3Q4xS^KU"
                         },
-                        FakeObjectTwo = new()
+                        DcNetworkInformation = new()
                         {
-                            Value = Random.Shared.Next(0, 1000),
+                            Address = "http://www.abernathy.com/"
                         },
                         Dc = new()
                         {
                            Id = Guid.NewGuid(),
                            ForestId = forest1,
-                           Fqdn = "dc2.contoso.com",
-                           FsmoRoles = new List<FsmoRole> { FsmoRole.RidMaster, FsmoRole.InfrastructureMaster },
+                           Fqdn = "dc2.abernathy.com",
+                           FsmoRoles = new List<FsmoRole> 
+                           { 
+                               FsmoRole.RidMaster, 
+                               FsmoRole.InfrastructureMaster 
+                           },
                            Backups = new List<Backup>
                            {
                                new Backup
@@ -134,15 +128,17 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(5)),
-                                   Path = "/path/to/dc2/backup1.vhdx",
-                                   Credentials = new()
+                                   Location = new()
                                    {
-                                       Username = "susan@amazon.com",
-                                       Password = "mypassword2"
-                                   },
-                                   NetworkInformation = new()
-                                   {
-                                       Address = "www.amazon.com"
+                                       Credentials = new()
+                                       {
+                                            Username = "admin@abernathy.com",
+                                            Password = "47NIb!nOx!Smz5Bk"
+                                       },
+                                       NetworkInformation = new()
+                                       {
+                                            Address = "Azure blob storage"
+                                       }
                                    }
                                },
                                new Backup
@@ -150,56 +146,52 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(1)),
-                                   Path = "/path/to/dc2/backup2.vhdx"
+                                   Location = new()
+                                   {
+                                       Credentials = new()
+                                       {
+                                            Username = "admin@abernathy.com",
+                                            Password = "um4WnuW$5k5gpD3G"
+                                       },
+                                       NetworkInformation = new()
+                                       {
+                                            Address = "/path/to/secure/storage"
+                                       }
+                                   }
                                }
                            },
                            Attributes = new List<ObjectAttribute>
                            {
                                new()
                                {
-                                   //Id = Guid.NewGuid(),
-                                   Name = "dnsHostName",
-                                   Value = "dc2.contoso.com",
-                                   FakeComplex = new() 
-                                   { 
-                                       FirstName = "Complex tes3",
-                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
-                                   }
+                                   Name = "dc2.abernathy.com",
+                                   Value = "dc2.contoso.com"
                                },
                                new()
                                {
-                                   //Id = Guid.NewGuid(),
                                    Name = "operatingSystem",
-                                   Value = "Windows 2016",
-                                   FakeComplex = new() 
-                                   {
-                                       FirstName = "Complex test4",
-                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
-                                   }
+                                   Value = "Windows 2016"
                                }
                            }
                        }
                     },
                     new()
-                    {                       
+                    {
                        DateAdded = DateTime.Now,
-                       FakeObjectOne = new()
-                        {
-                            Value = Random.Shared.Next(0, 1000),
-                            InternalFakeObject = new()
-                            {
-                                MyValue = $"My number is: {Random.Shared.Next(0, 1000)}"
-                            }
-                        },
-                        FakeObjectTwo = new()
-                        {
-                            Value = Random.Shared.Next(0, 1000),
-                        },
+                       DcCredentials = new()
+                       {
+                           Username = "administrator",
+                           Password = ""
+                       },
+                       DcNetworkInformation = new()
+                       {
+                           Address = "http://www.abernathy.com/"
+                       },
                        Dc = new()
                        {
                            Id = Guid.NewGuid(),
                            ForestId = forest1,
-                           Fqdn = "dc3.contoso.com",
+                           Fqdn = "dc3.abernathy.com",
                            Backups = new List<Backup>
                            {
                                new Backup
@@ -207,66 +199,56 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = DateTime.Now,
-                                   Path = "/path/to/dc3/backup1.vhdx",
-                                   Credentials = new()
+                                   Location = new()
                                    {
-                                       Username = "rebecca@meta.com",
-                                       Password = "mypassword3"
-                                   },
-                                   NetworkInformation = new()
-                                   {
-                                       Address = "www.facebook.com"
+                                       Credentials = new()
+                                       {
+                                            Username = "admin@abernathy.com",
+                                            Password = "bfMUNc3g^T8N&@Wq"
+                                       },
+                                       NetworkInformation = new()
+                                       {
+                                            Address = "Azure blob storage"
+                                       }
                                    }
                                }
                            },
                            Attributes = new List<ObjectAttribute>
                            {
                                new()
-                               {
-                                   //Id = Guid.NewGuid(),
+                               {                                
                                    Name = "dnsHostName",
-                                   Value = "dc3.contoso.com",
-                                   FakeComplex = new() 
-                                   { 
-                                       FirstName = "Complex test5",
-                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
-                                   }
+                                   Value = "dc3.abernathy.com"
                                },
                                new()
-                               {
-                                   //Id = Guid.NewGuid(),
+                               {                                   
                                    Name = "operatingSystem",
-                                   Value = "Windows 2012R2",
-                                   FakeComplex = new() 
-                                   { 
-                                       FirstName = "Complex test6",
-                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
-                                   }
+                                   Value = "Windows 2012R2"
                                }
                            }
                        }
                     },
                     new()
-                    {                        
+                    {
                        DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(20)),
-                       FakeObjectOne = new()
-                        {
-                            Value = Random.Shared.Next(0, 1000),
-                            InternalFakeObject = new()
-                            {
-                                MyValue = $"My number is: {Random.Shared.Next(0, 1000)}"
-                            }
-                        },
-                        FakeObjectTwo = new()
-                        {
-                            Value = Random.Shared.Next(0, 1000),
-                        },
+                       DcCredentials = new()
+                       {
+                           Username = "administrator",
+                           Password = "r7j&eaN5OLWx*27S"
+                       },
+                       DcNetworkInformation = new()
+                       {
+                           Address = "http://www.abernathy.com/"
+                       },
                        Dc = new()
                        {
                            Id = Guid.NewGuid(),
                            ForestId = forest1,
-                           Fqdn = "dc4.contoso.com",
-                           FsmoRoles = new List<FsmoRole> { FsmoRole.SchemaMaster },
+                           Fqdn = "dc4.abernathy.com",
+                           FsmoRoles = new List<FsmoRole> 
+                           { 
+                               FsmoRole.SchemaMaster 
+                           },
                            Backups = new List<Backup>
                            {
                                new Backup
@@ -274,15 +256,17 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(5)),
-                                   Path = "/path/to/dc4/backup1.vhdx",
-                                   Credentials = new()
+                                   Location = new()
                                    {
-                                       Username = "piper@contoso.com",
-                                       Password = "mypassword4"
-                                   },
-                                   NetworkInformation = new()
-                                   {
-                                       Address = "www.contoso.com"
+                                       Credentials = new()
+                                       {
+                                            Username = "admin@abernathy.com",
+                                            Password = "bfMUNc3g^T8N&@Wq"
+                                       },
+                                       NetworkInformation = new()
+                                       {
+                                            Address = "/path/to/secure/storage"
+                                       }
                                    }
                                },
                                new Backup
@@ -290,41 +274,31 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(1)),
-                                   Path = "/path/to/dc4/backup2.vhdx",
-                                   Credentials = new()
+                                   Location = new()
                                    {
-                                       Username = "adam@shopify.ca",
-                                       Password = "mypassword5"
-                                   },
-                                   NetworkInformation = new()
-                                   {
-                                       Address = "www.shopify.com"
+                                       Credentials = new()
+                                       {
+                                            Username = "admin@abernathy.com",
+                                            Password = "O4jeuZx03tw8&nDm"
+                                       },
+                                       NetworkInformation = new()
+                                       {
+                                            Address = "/path/to/secure/storage"
+                                       }
                                    }
                                }
                            },
                            Attributes = new List<ObjectAttribute>
                            {
                                new()
-                               {
-                                   //Id = Guid.NewGuid(),
+                               {                                   
                                    Name = "dnsHostName",
-                                   Value = "dc4.contoso.com",
-                                   FakeComplex = new() 
-                                   {
-                                       FirstName = "Complex test7",
-                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
-                                   }
+                                   Value = "dc4.abernathy.com"
                                },
                                new()
-                               {
-                                   //Id = Guid.NewGuid(),
+                               {                                   
                                    Name = "sAMAccountName",
-                                   Value = "DC4",
-                                   FakeComplex = new() 
-                                   { 
-                                       FirstName = "Complex test8",
-                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
-                                   }
+                                   Value = "DC4"
                                }
                            }
                        }
@@ -334,35 +308,32 @@ public static class DatabaseSeeder
             new()
             {
                 Id = Guid.NewGuid(),
-                Name = "Forest2",
+                Name = "Rolfson Forest",
                 ForestId = forest2,
                 ForestWideCredentials = new()
                 {
-                    Username = "Forest2Administrator",
-                    Password = "forestCredentials"
+                    Username = "RolfsonAdministrator",
+                    Password = "zH1s6Y@1O069$^E0"
                 },
-                AdObjects = new List<AdObject>
+                DomainControllers = new List<DomainControllerEntry>
                 {
                     new()
-                    {                        
+                    {
                        DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(50)),
-                       FakeObjectOne = new()
-                        {
-                            Value = Random.Shared.Next(0, 1000),
-                            InternalFakeObject = new()
-                            {
-                                MyValue = $"My number is: {Random.Shared.Next(0, 1000)}"
-                            }
-                        },
-                        FakeObjectTwo = new()
-                        {
-                            Value = Random.Shared.Next(0, 1000),
-                        },
+                       DcCredentials = new()
+                       {
+                           Username = "administrator",
+                           Password = "ch8d7F7YI6v6!BRx"
+                       },
+                       DcNetworkInformation = new()
+                       {
+                           Address = "http://www.rolfson.com/"
+                       },
                        Dc = new()
                        {
                            Id = Guid.NewGuid(),
                            ForestId = forest2,
-                           Fqdn = "dc1.google.com",
+                           Fqdn = "dc1.rolfson.com",
                            Backups = new List<Backup>
                            {
                                new Backup
@@ -370,24 +341,26 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest2,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(25)),
-                                   Path = "/path/to/dc1/backup1.vhdx",
-                                   Credentials = new()
+                                   Location = new()
                                    {
-                                       Username = "eric@contoso.ca",
-                                       Password = "mypassword6"
-                                   },
-                                   NetworkInformation = new()
-                                   {
-                                       Address = "www.contoso.ca"
+                                       Credentials = new()
+                                       {
+                                            Username = "admin@rolfson.com",
+                                            Password = "q70Z%T2i$T8Tomm*"
+                                       },
+                                       NetworkInformation = new()
+                                       {
+                                            Address = "Azure blob storage"
+                                       }
                                    }
                                }
-                           },                           
+                           },
                            Attributes = new List<ObjectAttribute>
                            {
                                new()
                                {
                                    Name = "dnsHostName",
-                                   Value = "dc1.google.com"
+                                   Value = "dc1.rolfson.com"
                                },
                                new()
                                {
@@ -400,23 +373,20 @@ public static class DatabaseSeeder
                     new()
                     {
                        DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(15)),
-                       FakeObjectOne = new()
-                        {
-                            Value = Random.Shared.Next(0, 1000),
-                            InternalFakeObject = new()
-                            {
-                                MyValue = $"My number is: {Random.Shared.Next(0, 1000)}"
-                            }
-                        },
-                        FakeObjectTwo = new()
-                        {
-                            Value = Random.Shared.Next(0, 1000),
-                        },
+                       DcCredentials = new()
+                       {
+                           Username = "administrator",
+                           Password = "YHLNQc^ZKPu%6H4Z"
+                       },
+                       DcNetworkInformation = new()
+                       {
+                           Address = "http://www.rolfson.com/"
+                       },
                        Dc = new()
                        {
                            Id = Guid.NewGuid(),
                            ForestId = forest2,
-                           Fqdn = "dc2.google.com",
+                           Fqdn = "dc2.rolfson.com",
                            FsmoRoles = new List<FsmoRole>
                            {
                                FsmoRole.PdcEmulator,
@@ -431,15 +401,17 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest2,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(10)),
-                                   Path = "/path/to/dc2/backup1.vhdx",
-                                   Credentials = new()
+                                   Location = new()
                                    {
-                                       Username = "amanda@contoso.ca",
-                                       Password = "mypassword7"
-                                   },
-                                   NetworkInformation = new()
-                                   {
-                                       Address = "www.contoso.ca"
+                                       Credentials = new()
+                                       {
+                                            Username = "admin@rolfson.com",
+                                            Password = "47x*$L4VRDz3sx*9"
+                                       },
+                                       NetworkInformation = new()
+                                       {
+                                            Address = "path/to/secure/storage"
+                                       }
                                    }
                                },
                                new Backup
@@ -447,15 +419,17 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest2,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(5)),
-                                   Path = "/path/to/dc2/backup2.vhdx",
-                                   Credentials = new()
+                                   Location = new()
                                    {
-                                       Username = "jessica@contoso.ca",
-                                       Password = "mypassword7"
-                                   },
-                                   NetworkInformation = new()
-                                   {
-                                       Address = "www.contoso.ca"
+                                       Credentials = new()
+                                       {
+                                            Username = "admin@rolfson.com",
+                                            Password = "8seGmape^4ZEF#2m"
+                                       },
+                                       NetworkInformation = new()
+                                       {
+                                            Address = "path/to/secure/storage"
+                                       }
                                    }
                                },
                                new Backup
@@ -463,15 +437,17 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest2,
                                    DateCreated = DateTime.Now,
-                                   Path = "/path/to/dc2/backup3.vhdx",
-                                   Credentials = new()
+                                   Location = new()
                                    {
-                                       Username = "angela@contoso.ca",
-                                       Password = "mypassword8"
-                                   },
-                                   NetworkInformation = new()
-                                   {
-                                       Address = "www.contoso.ca"
+                                       Credentials = new()
+                                       {
+                                            Username = "admin@rolfson.com",
+                                            Password = "6o%&Xk1&6Zz3&#eP"
+                                       },
+                                       NetworkInformation = new()
+                                       {
+                                            Address = "Azure blob storage"
+                                       }
                                    }
                                }
                            },
@@ -480,7 +456,7 @@ public static class DatabaseSeeder
                                new()
                                {
                                    Name = "dnsHostName",
-                                   Value = "dc2.google.com"
+                                   Value = "dc2.rolfson.com"
                                },
                                new()
                                {
@@ -491,69 +467,58 @@ public static class DatabaseSeeder
                        }
                     },
                     new()
-                    {                        
+                    {
                        DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(1)),
-                       FakeObjectOne = new()
-                        {
-                            Value = Random.Shared.Next(0, 1000),
-                            InternalFakeObject = new()
-                            {
-                                MyValue = $"My number is: {Random.Shared.Next(0, 1000)}"
-                            }
-                        },
-                        FakeObjectTwo = new()
-                        {
-                            Value = Random.Shared.Next(0, 1000),
-                        },
+                       DcCredentials = new()
+                       {
+                           Username = "administrator",
+                           Password = "U0^8WP^a2PWeh#sV"
+                       },
+                       DcNetworkInformation = new()
+                       {
+                           Address = "http://www.rolfson.com/"
+                       },
                        Dc = new()
                        {
                            Id = Guid.NewGuid(),
                            ForestId = forest2,
-                           Fqdn = "dc3.google.com",
+                           Fqdn = "dc3.rolfson.com",
                            Attributes = new List<ObjectAttribute>
                            {
                                new()
                                {
-                                   //Id = Guid.NewGuid(),
                                    Name = "dnsHostName",
-                                   Value = "dc3.google.com",
-                                   FakeComplex = new() 
-                                   { 
-                                       FirstName = "Complex test9",
-                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
-                                   }
+                                   Value = "dc3.rolfson.com"
                                },
                                new()
-                               {
-                                   //Id = Guid.NewGuid(),
+                               {                                   
                                    Name = "operatingSystem",
-                                   Value = "Windows 2022",
-                                   FakeComplex = new() { FirstName = "Complex test10" }
+                                   Value = "Windows 2022"
                                }
                            }
                        }
                     },
                     new()
-                    {                        
+                    {
                        DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(20)),
-                       FakeObjectOne = new()
-                        {
-                            Value = Random.Shared.Next(0, 1000),
-                            InternalFakeObject = new()
-                            {
-                                MyValue = $"My number is: {Random.Shared.Next(0, 1000)}"
-                            }
-                        },
-                        FakeObjectTwo = new()
-                        {
-                            Value = Random.Shared.Next(0, 1000),
-                        },
+                       DcCredentials = new()
+                       {
+                           Username = "administrator",
+                           Password = "x5@v#7T4lC@3Xj4EU0^8WP^a2PWeh#sV"
+                       },
+                       DcNetworkInformation = new()
+                       {
+                           Address = "http://www.rolfson.com/"
+                       },
                        Dc = new()
                        {
                            Id = Guid.NewGuid(),
                            ForestId = forest2,
-                           Fqdn = "dc4.google.com",
-                           FsmoRoles = new List<FsmoRole> { FsmoRole.RidMaster },
+                           Fqdn = "dc4.rolfson.com",
+                           FsmoRoles = new List<FsmoRole> 
+                           { 
+                               FsmoRole.RidMaster 
+                           },
                            Backups = new List<Backup>
                            {
                                new Backup
@@ -561,15 +526,17 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest2,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(5)),
-                                   Path = "/path/to/dc4/backup1.vhdx",
-                                   Credentials = new()
+                                   Location = new()
                                    {
-                                       Username = "peter@contoso.ca",
-                                       Password = "mypassword8"
-                                   },
-                                   NetworkInformation = new()
-                                   {
-                                       Address = "www.contoso.ca"
+                                       Credentials = new()
+                                       {
+                                            Username = "admin@rolfson.com",
+                                            Password = "ndFhEj@K8&5z&uBM"
+                                       },
+                                       NetworkInformation = new()
+                                       {
+                                            Address = "path/to/secure/storage"
+                                       }
                                    }
                                },
                                new Backup
@@ -577,41 +544,31 @@ public static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest2,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(1)),
-                                   Path = "/path/to/dc4/backup2.vhdx",
-                                   Credentials = new()
+                                   Location = new()
                                    {
-                                       Username = "richard@contoso.ca",
-                                       Password = "mypassword9"
-                                   },
-                                   NetworkInformation = new()
-                                   {
-                                       Address = "www.contoso.ca"
+                                       Credentials = new()
+                                       {
+                                            Username = "admin@rolfson.com",
+                                            Password = "ndFhEj@K8&5z&uBM"
+                                       },
+                                       NetworkInformation = new()
+                                       {
+                                            Address = "Azure blob storage"
+                                       }
                                    }
                                }
                            },
                            Attributes = new List<ObjectAttribute>
                            {
                                new()
-                               {
-                                   //Id = Guid.NewGuid(),
+                               {                                   
                                    Name = "dnsHostName",
-                                   Value = "dc4.google.com",
-                                   FakeComplex = new() 
-                                   { 
-                                       FirstName = "Complex test11",
-                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
-                                   }
+                                   Value = "dc4.rolfson.com"
                                },
                                new()
                                {
-                                   //Id = Guid.NewGuid(),
                                    Name = "operatingSystem",
-                                   Value = "Windows 2008",
-                                   FakeComplex = new() 
-                                   { 
-                                       FirstName = "Complex test12",
-                                       AnotherFakeType = new() { Number = Random.Shared.Next(0, 1000) }
-                                   }
+                                   Value = "Windows 2008"
                                }
                            }
                        }
@@ -619,5 +576,5 @@ public static class DatabaseSeeder
                 }
             },
         };
-}
+    }
 }

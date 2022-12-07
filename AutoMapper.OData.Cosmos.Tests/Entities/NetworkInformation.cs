@@ -2,5 +2,5 @@
 
 public sealed record NetworkInformation
 {
-    public string Address { get; init; } = null!;
+    public string Address { get; init; } = default!;
 }

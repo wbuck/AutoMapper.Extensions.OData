@@ -7,8 +7,9 @@ internal sealed class BackupMapping : Profile
 {
 	public BackupMapping()
 	{
-		CreateMap<Backup, BackupModel>()
-			.ForMember(dest => dest.PathToBackup, opts => opts.MapFrom(src => src.Path))            
+		CreateMap<BackupLocation, BackupLocationModel>()
+            .ForAllMembers(opts => opts.ExplicitExpansion());
+        CreateMap<Backup, BackupModel>()           
             .ForAllMembers(opts => opts.ExplicitExpansion());
     }
 }

@@ -63,10 +63,10 @@ public sealed class GetQuerySelectTests
         static void Test(ICollection<ForestModel> collection)
         {
             Assert.Equal(2, collection.Count);
-            Assert.Equal(4, collection.First().AdObjects.Count);
-            Assert.Equal(4, collection.Last().AdObjects.Count);
-            Assert.All(collection.First().AdObjects.Select(obj => obj.Dc), dc => Assert.NotNull(dc));
-            Assert.All(collection.Last().AdObjects.Select(obj => obj.Dc), dc => Assert.NotNull(dc));
+            Assert.Equal(4, collection.First().DomainControllers.Count);
+            Assert.Equal(4, collection.Last().DomainControllers.Count);
+            Assert.All(collection.First().DomainControllers.Select(obj => obj.Dc), dc => Assert.NotNull(dc));
+            Assert.All(collection.Last().DomainControllers.Select(obj => obj.Dc), dc => Assert.NotNull(dc));
             Assert.Equal("Forest1", collection.First().ForestName);
             Assert.Equal("Forest2", collection.Last().ForestName);
             Assert.Null(collection.First().ForestWideCredentials);
