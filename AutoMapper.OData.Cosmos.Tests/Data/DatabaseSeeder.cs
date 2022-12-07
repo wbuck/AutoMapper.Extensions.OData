@@ -16,10 +16,10 @@ public static class DatabaseSeeder
                 Id = Guid.NewGuid(),
                 ForestId = forest1,
                 Name = "Forest1",
-                FakeType = new()
+                ForestWideCredentials = new()
                 {
-                    FirstName = "Blair" ,
-                    AnotherFakeType = new() { Number = 69 }
+                    Username = "Forest1Administrator",
+                    Password = "forestCredentials"
                 },
                 AdObjects = new List<AdObject>
                 {
@@ -336,10 +336,10 @@ public static class DatabaseSeeder
                 Id = Guid.NewGuid(),
                 Name = "Forest2",
                 ForestId = forest2,
-                FakeType = new() 
-                { 
-                    FirstName = "Piper",
-                    AnotherFakeType = new() { Number = 42 }
+                ForestWideCredentials = new()
+                {
+                    Username = "Forest2Administrator",
+                    Password = "forestCredentials"
                 },
                 AdObjects = new List<AdObject>
                 {

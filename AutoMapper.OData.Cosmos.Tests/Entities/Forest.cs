@@ -7,7 +7,7 @@ public sealed record Forest
     public Guid Id { get; init; }
     public Guid ForestId { get; init; }
     public string Name { get; init; } = default!;
-    public FakeComplex FakeType { get; init; } = default!;
+    public Credentials? ForestWideCredentials { get; init; } = default!;
     public ICollection<AdObject> AdObjects { get; init; } = 
         new List<AdObject>();
 

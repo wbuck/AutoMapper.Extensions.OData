@@ -46,44 +46,69 @@ public sealed class GetQuerySelectTests
         serviceProvider = services.BuildServiceProvider();
     }
 
-	[Fact]
-	public async Task FirstTest()
-	{
-        //&$expand=Buildings&$orderby=Name
-        //const string query = "/forest?$expand=AdObjects/Dc&$orderby=ForestName";
-        //const string query = "/forest?$select=ForestName, ForestId, FakeType&$expand=AdObjects/Dc($expand=Backups)&$orderby=ForestName";
-        //string query = "/forest?$select=ForestName&$expand=AdObjects($expand=Dc($expand=Attributes))&$orderby=ForestName";
-        const string query = "/forest?$expand=AdObjects/Dc&$orderby=ForestName";
-        //const string query = "/forest";
-        var queryable = this.dbContainer.GetContainer().GetItemLinqQueryable<Forest>().AsQueryable();
+    //string query = "/opstenant?$select=Name&$expand=Buildings&$orderby=Name"
+    //const string query = "/forest?$expand=AdObjects/Dc&$orderby=ForestName";
+    //const string query = "/forest?$select=ForestName, ForestId, FakeType&$expand=AdObjects/Dc($expand=Backups)&$orderby=ForestName";
+    //string query = "/forest?$select=ForestName&$expand=AdObjects($expand=Dc($expand=Attributes))&$orderby=ForestName";
 
-        //var list = new List<Forest>().AsQueryable();
-        // Forest -> AdObject -> ObjectAttribute
-       // var q = list.Select(v => v.AdObjects.Select(a => a.Dc.Attributes.Select(c => c.Value)));
-       
+    [Fact]
+	public async Task ForestSelectForestNameExpandDomainControllersOrderByForestNameAscending()
+	{        
+        const string query = "/forest?$select=ForestName&$expand=AdObjects/Dc&$orderby=ForestName";
 
-        //Test(Get<OpsTenant, TMandator>(query));
-        Test(await GetAsync<ForestModel, Forest>(query, queryable));
-        //Test(await GetUsingCustomNameSpace<OpsTenant, TMandator>(query));
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
 
-        void Test(ICollection<ForestModel> collection)
+        static void Test(ICollection<ForestModel> collection)
         {
             Assert.Equal(2, collection.Count);
-            //Assert.Equal(2, collection.First().Buildings.Count);
-            //Assert.Equal("One", collection.First().Name);
-            //Assert.Equal(default, collection.First().Identity);
+            Assert.Equal(4, collection.First().AdObjects.Count);
+            Assert.Equal(4, collection.Last().AdObjects.Count);
+            Assert.All(collection.First().AdObjects.Select(obj => obj.Dc), dc => Assert.NotNull(dc));
+            Assert.All(collection.Last().AdObjects.Select(obj => obj.Dc), dc => Assert.NotNull(dc));
+            Assert.Equal("Forest1", collection.First().ForestName);
+            Assert.Equal("Forest2", collection.Last().ForestName);
+            Assert.Null(collection.First().ForestWideCredentials);
+            Assert.Null(collection.Last().ForestWideCredentials);
         }
-
-        //var query = this.dbContainer.GetContainer().GetItemLinqQueryable<Forest>()
-		//	.Where(f => f.Name.Contains("Forest1", StringComparison.OrdinalIgnoreCase));
-        //
-		//using var it = query.ToFeedIterator();
-		//var response = await it.ReadNextAsync().ConfigureAwait(false);
-		//Assert.NotNull(response);
 	}
 
+    private Task<ICollection<TModel>> GetUsingCustomNameSpace<TModel, TData>(string query,
+            ODataQueryOptions<TModel>? options = null, QuerySettings? querySettings = null) 
+        where TModel : class 
+        where TData : class
+    {
+        return GetAsync<TModel, TData>(query, options, querySettings, "com.FooBar");
+    }
+
+    private ICollection<TModel> Get<TModel, TData>(string query, ODataQueryOptions<TModel>? options = null) 
+        where TModel : class 
+        where TData : class
+    {
+        return
+        (
+            DoGet
+            (
+                this.dbContainer.GetContainer().GetItemLinqQueryable<TData>(allowSynchronousQueryExecution: true).AsQueryable(),
+                serviceProvider.GetRequiredService<IMapper>()
+            )
+        ).ToList();
+
+        ICollection<TModel> DoGet(IQueryable<TData> dataQueryable, IMapper mapper)
+        {
+            return dataQueryable.Get
+            (
+                mapper,
+                options ?? GetODataQueryOptions<TModel>(query),
+                new QuerySettings { ODataSettings = new ODataSettings { HandleNullPropagation = HandleNullPropagationOption.False } }
+            );
+        }
+    }
+
+
     private async Task<ICollection<TModel>> GetAsync<TModel, TData>(
-        string query, IQueryable<TData> dataQueryable, ODataQueryOptions<TModel>? options = null, QuerySettings? querySettings = null, string? customNamespace = null) 
+        string query, ODataQueryOptions<TModel>? options = null, QuerySettings? querySettings = null, string? customNamespace = null) 
         where TModel : class 
         where TData : class
     {
@@ -91,17 +116,18 @@ public sealed class GetQuerySelectTests
         (
             await DoGet
             (
+                this.dbContainer.GetContainer().GetItemLinqQueryable<TData>().AsQueryable(),
                 serviceProvider.GetRequiredService<IMapper>()
             )
         ).ToList();
 
-        async Task<ICollection<TModel>> DoGet(IMapper mapper)
+        async Task<ICollection<TModel>> DoGet(IQueryable<TData> dataQueryable, IMapper mapper)
         {
             return await dataQueryable.GetAsync
             (
                 mapper, 
                 options ?? GetODataQueryOptions<TModel>(query, customNamespace), 
-                querySettings
+                querySettings!
             );
         }
     }

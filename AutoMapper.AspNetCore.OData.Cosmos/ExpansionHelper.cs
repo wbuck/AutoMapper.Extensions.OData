@@ -215,11 +215,11 @@ internal static class ExpansionHelper
             }            
         }
 
-        static List<ODataExpansionOptions> ResetExpansions(List<ODataExpansionOptions> expansions, MemberInfo member) =>
-            (expansions[0].MemberType.GetCurrentType() == member.DeclaringType) switch
+        static List<ODataExpansionOptions> ResetExpansions(List<ODataExpansionOptions> expansions, MemberInfo member) =>            
+            expansions.FindIndex(e => e.MemberType.GetCurrentType() == member.DeclaringType) switch
             {
-                true => new(expansions.Take(1)),
-                false => new()
+                var index when index >= 0 => new(expansions.Take(index + 1)),
+                _ => new()
             };
 
         static List<ODataExpansionOptions> AddExpansion(MemberInfo member, Type memberType, List<ODataExpansionOptions> expansions)
@@ -255,6 +255,7 @@ internal static class ExpansionHelper
             .Select(item => item.SelectedPath.FirstSegment.Identifier)//Only first segment is necessary because of the new syntax $expand=Builder($expand=City) vs $expand=Builder/City
             .ToList();
     }
+
 
     private static IEnumerable<ODataPathSegment> GetPathSegments(this SelectItem selectItem) => 
         selectItem switch
