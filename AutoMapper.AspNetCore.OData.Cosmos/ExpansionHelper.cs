@@ -205,7 +205,7 @@ internal static class ExpansionHelper
 
                 var nextExpansions = AddExpansion
                 (
-                    member, memberType, i == 0 ? currentExpansions : currentExpansions.ResetToMatchingParentType(member)
+                    member, memberType, i == 0 ? currentExpansions : ResetExpansions(currentExpansions, member)
                 );
 
                 ExpandComplexInternal(expansions, nextExpansions, memberType, complexTypeNames, depth + 1);
@@ -213,7 +213,14 @@ internal static class ExpansionHelper
                 if (!nextExpansions.Equals(currentExpansions) || depth == 0)
                     expansions.Add(nextExpansions);
             }            
-        }        
+        }
+
+        static List<ODataExpansionOptions> ResetExpansions(List<ODataExpansionOptions> expansions, MemberInfo member) =>
+            (expansions[0].MemberType.GetCurrentType() == member.DeclaringType) switch
+            {
+                true => new(expansions.Take(1)),
+                false => new()
+            };
 
         static List<ODataExpansionOptions> AddExpansion(MemberInfo member, Type memberType, List<ODataExpansionOptions> expansions)
         {
@@ -248,13 +255,6 @@ internal static class ExpansionHelper
             .Select(item => item.SelectedPath.FirstSegment.Identifier)//Only first segment is necessary because of the new syntax $expand=Builder($expand=City) vs $expand=Builder/City
             .ToList();
     }
-
-    private static List<ODataExpansionOptions> ResetToMatchingParentType(this List<ODataExpansionOptions> currentExpansions, MemberInfo member) =>
-        currentExpansions.FindIndex(e => e.MemberType.GetCurrentType() == member.DeclaringType) switch
-        {
-            var index when index >= 0 => new(currentExpansions.Take(index + 1)),
-            _ => new()
-        };
 
     private static IEnumerable<ODataPathSegment> GetPathSegments(this SelectItem selectItem) => 
         selectItem switch
