@@ -39,7 +39,7 @@ internal static class TypeExt
             var memberType = member.GetMemberType().GetCurrentType();
 
             if (!member.IsListOfLiteralTypes() && !memberType.IsLiteralType() &&
-                complexTypeNames.Contains(memberType.FullName, StringComparer.Ordinal))
+                complexTypeNames.Contains(memberType.Name, StringComparer.Ordinal))
             {
                 complexMembers.Add(member);
             }

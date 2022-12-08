@@ -15,6 +15,7 @@ using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
 using Microsoft.OData.UriParser;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace AutoMapper.OData.Cosmos.Tests;
 
@@ -54,7 +55,7 @@ public sealed class GetQuerySelectTests
     [Fact]
 	public async Task ForestSelectForestNameExpandDomainControllersOrderByForestNameAscending()
 	{        
-        const string query = "/forest?$select=ForestName&$expand=AdObjects/Dc&$orderby=ForestName";
+        const string query = "/forest?$select=ForestName&$expand=DomainControllers/Dc&$orderby=ForestName";
 
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
@@ -63,16 +64,43 @@ public sealed class GetQuerySelectTests
         static void Test(ICollection<ForestModel> collection)
         {
             Assert.Equal(2, collection.Count);
-            Assert.Equal(4, collection.First().DomainControllers.Count);
-            Assert.Equal(4, collection.Last().DomainControllers.Count);
-            Assert.All(collection.First().DomainControllers.Select(obj => obj.Dc), dc => Assert.NotNull(dc));
-            Assert.All(collection.Last().DomainControllers.Select(obj => obj.Dc), dc => Assert.NotNull(dc));
-            Assert.Equal("Forest1", collection.First().ForestName);
-            Assert.Equal("Forest2", collection.Last().ForestName);
-            Assert.Null(collection.First().ForestWideCredentials);
-            Assert.Null(collection.Last().ForestWideCredentials);
+            AssertModel(collection.First(), "Abernathy Forest");
+            AssertModel(collection.Last(), "Rolfson Forest");
+        }
+
+        static void AssertModel(ForestModel model, string forestName)
+        {
+            Assert.Equal(4, model.DomainControllers.Count);
+            Assert.All(model.DomainControllers.Select(entry => entry.DcCredentials), creds => Assert.NotNull(creds));
+            Assert.All(model.DomainControllers.Select(entry => entry.DcNetworkInformation), loc => Assert.NotNull(loc));
+            Assert.All(model.DomainControllers.Select(entry => entry.Dc), dc => Assert.NotNull(dc));
+            Assert.All(model.DomainControllers.Select(entry => entry.Dc.FsmoRoles), roles => Assert.NotEmpty(roles));
+            Assert.All(model.DomainControllers.Select(entry => entry.Dc.Backups), backups => Assert.Empty(backups));
+            Assert.All(model.DomainControllers.Select(entry => entry.Dc.Attributes), attributes => Assert.NotEmpty(attributes));
+            Assert.Equal(forestName, model.ForestName);
+            Assert.Null(model.ForestWideCredentials);
         }
 	}
+
+    [Fact]
+    public async void OpsTenantExpandBuildingsFilterEqAndOrderBy_FirstBuildingHasValues()
+    {
+        string query = "/forest?$top=5&$select=DomainControllers/Dc&$expand=DomainControllers/Dc($select=FullyQualifiedDomainName)&$filter=ForestName eq 'Rolfson Forest'&$orderby=ForestName desc";
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Debugger.Break();
+            Assert.Equal(1, collection.Count);
+            Assert.Equal(4, collection.First().DomainControllers.Count);
+            //Assert.NotNull(collection.First().Buildings.First().Name);
+            //Assert.NotEqual(default, collection.First().Buildings.First().Identity);
+            //Assert.Equal(default, collection.First().Identity);
+            //Assert.Null(collection.First().Name);
+        }
+    }
 
     private Task<ICollection<TModel>> GetUsingCustomNameSpace<TModel, TData>(string query,
             ODataQueryOptions<TModel>? options = null, QuerySettings? querySettings = null) 

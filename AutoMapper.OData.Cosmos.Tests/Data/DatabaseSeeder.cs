@@ -118,8 +118,7 @@ internal static class DatabaseSeeder
                            Fqdn = "dc2.abernathy.com",
                            FsmoRoles = new List<FsmoRole> 
                            { 
-                               FsmoRole.RidMaster, 
-                               FsmoRole.InfrastructureMaster 
+                               FsmoRole.RidMaster                                
                            },
                            Backups = new List<Backup>
                            {
@@ -192,6 +191,10 @@ internal static class DatabaseSeeder
                            Id = Guid.NewGuid(),
                            ForestId = forest1,
                            Fqdn = "dc3.abernathy.com",
+                           FsmoRoles = new List<FsmoRole>
+                           {
+                               FsmoRole.InfrastructureMaster
+                           },
                            Backups = new List<Backup>
                            {
                                new Backup
@@ -334,6 +337,10 @@ internal static class DatabaseSeeder
                            Id = Guid.NewGuid(),
                            ForestId = forest2,
                            Fqdn = "dc1.rolfson.com",
+                           FsmoRoles = new List<FsmoRole>
+                           {
+                               FsmoRole.PdcEmulator
+                           },
                            Backups = new List<Backup>
                            {
                                new Backup
@@ -389,10 +396,7 @@ internal static class DatabaseSeeder
                            Fqdn = "dc2.rolfson.com",
                            FsmoRoles = new List<FsmoRole>
                            {
-                               FsmoRole.PdcEmulator,
-                               FsmoRole.SchemaMaster,
-                               FsmoRole.InfrastructureMaster,
-                               FsmoRole.DomainNamingMaster
+                               FsmoRole.SchemaMaster
                            },
                            Backups = new List<Backup>
                            {
@@ -483,6 +487,11 @@ internal static class DatabaseSeeder
                            Id = Guid.NewGuid(),
                            ForestId = forest2,
                            Fqdn = "dc3.rolfson.com",
+                           FsmoRoles = new List<FsmoRole>
+                           {
+                               FsmoRole.InfrastructureMaster,
+                               FsmoRole.RidMaster
+                           },
                            Attributes = new List<ObjectAttribute>
                            {
                                new()
@@ -517,7 +526,7 @@ internal static class DatabaseSeeder
                            Fqdn = "dc4.rolfson.com",
                            FsmoRoles = new List<FsmoRole> 
                            { 
-                               FsmoRole.RidMaster 
+                               FsmoRole.DomainNamingMaster
                            },
                            Backups = new List<Backup>
                            {
