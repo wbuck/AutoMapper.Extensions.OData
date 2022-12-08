@@ -8,6 +8,7 @@ internal static class DatabaseSeeder
     {
         var forest1 = Guid.NewGuid();
         var forest2 = Guid.NewGuid();
+        var forest3 = Guid.NewGuid();
 
         return new List<Forest>
         {
@@ -582,6 +583,173 @@ internal static class DatabaseSeeder
                            }
                        }
                     },
+                }
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Name = "Zulauf Forest",
+                ForestId = forest3,
+                ForestWideCredentials = new()
+                {
+                    Username = "ZulaufAdministrator",
+                    Password = "zH1s6Y@1O069$^E0"
+                },
+                DomainControllers = new List<DomainControllerEntry>
+                {
+                    new()
+                    {
+                       DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(50)),
+                       DcCredentials = new()
+                       {
+                           Username = "administrator",
+                           Password = "^dn@W2yXE10qE3bI"
+                       },
+                       DcNetworkInformation = new()
+                       {
+                           Address = "http://zulauf.net/"
+                       },
+                       Dc = new()
+                       {
+                           Id = Guid.NewGuid(),
+                           ForestId = forest3,
+                           Fqdn = "dc1.zulauf.net",
+                           FsmoRoles = new List<FsmoRole>
+                           {
+                               FsmoRole.PdcEmulator,
+                               FsmoRole.RidMaster,
+                               FsmoRole.InfrastructureMaster
+                           },
+                           Backups = new List<Backup>
+                           {
+                               new Backup
+                               {
+                                   Id = Guid.NewGuid(),
+                                   ForestId = forest3,
+                                   DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(25)),
+                                   Location = new()
+                                   {
+                                       Credentials = new()
+                                       {
+                                            Username = "admin@zulauf.net",
+                                            Password = "Z0nI4&%XJ"
+                                       },
+                                       NetworkInformation = new()
+                                       {
+                                            Address = "Azure blob storage"
+                                       }
+                                   }
+                               }
+                           },
+                           Attributes = new List<ObjectAttribute>
+                           {
+                               new()
+                               {
+                                   Name = "dnsHostName",
+                                   Value = "dc1.zulauf.net"
+                               },
+                               new()
+                               {
+                                   Name = "operatingSystem",
+                                   Value = "Windows 2022"
+                               }
+                           }
+                       }
+                    },
+                    new()
+                    {
+                       DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(15)),
+                       DcCredentials = new()
+                       {
+                           Username = "administrator",
+                           Password = "lYq9c*8aB"
+                       },
+                       DcNetworkInformation = new()
+                       {
+                           Address = "http://zulauf.net/"
+                       },
+                       Dc = new()
+                       {
+                           Id = Guid.NewGuid(),
+                           ForestId = forest3,
+                           Fqdn = "dc2.zulauf.net",
+                           FsmoRoles = new List<FsmoRole>
+                           {
+                               FsmoRole.SchemaMaster,
+                               FsmoRole.DomainNamingMaster
+                           },
+                           Backups = new List<Backup>
+                           {
+                               new Backup
+                               {
+                                   Id = Guid.NewGuid(),
+                                   ForestId = forest3,
+                                   DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(10)),
+                                   Location = new()
+                                   {
+                                       Credentials = new()
+                                       {
+                                            Username = "admin@zulauf.net",
+                                            Password = "0v1sXz^TN"
+                                       },
+                                       NetworkInformation = new()
+                                       {
+                                            Address = "path/to/secure/storage"
+                                       }
+                                   }
+                               },
+                               new Backup
+                               {
+                                   Id = Guid.NewGuid(),
+                                   ForestId = forest3,
+                                   DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(5)),
+                                   Location = new()
+                                   {
+                                       Credentials = new()
+                                       {
+                                            Username = "admin@zulauf.net",
+                                            Password = "f@6N3UOhX"
+                                       },
+                                       NetworkInformation = new()
+                                       {
+                                            Address = "path/to/secure/storage"
+                                       }
+                                   }
+                               },
+                               new Backup
+                               {
+                                   Id = Guid.NewGuid(),
+                                   ForestId = forest3,
+                                   DateCreated = DateTime.Now,
+                                   Location = new()
+                                   {
+                                       Credentials = new()
+                                       {
+                                            Username = "admin@zulauf.net",
+                                            Password = "k&$d4Kfx2"
+                                       },
+                                       NetworkInformation = new()
+                                       {
+                                            Address = "Azure blob storage"
+                                       }
+                                   }
+                               }
+                           },
+                           Attributes = new List<ObjectAttribute>
+                           {
+                               new()
+                               {
+                                   Name = "dnsHostName",
+                                   Value = "dc2.zulauf.net"
+                               },
+                               new()
+                               {
+                                   Name = "operatingSystem",
+                                   Value = "Windows 2022"
+                               }
+                           }
+                       }
+                    }
                 }
             },
         };
