@@ -49,7 +49,42 @@ public sealed class GetQuerySelectTests
     }
 
     [Fact]
-	public async Task SelectForestNameExpandDomainControllersOrderByForestNameAscending()
+    public async Task FetchAllForestDocumentsWithNoSelectsOrFilters()
+    {
+        const string query = "/forest?$orderby=ForestName";
+
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, collection.Count);
+
+            foreach (var (model, forestName) in
+                collection.Zip(new[] { "Abernathy Forest", "Rolfson Forest", "Zulauf Forest" }))
+            {
+                AssertModel(model, forestName);
+            }
+        }
+
+        static void AssertModel(ForestModel model, string forestName)
+        {
+            Assert.NotEqual(default, model.ForestId);
+            Assert.NotEqual(default, model.Id);
+            Assert.NotEmpty(model.DomainControllers);
+            Assert.All(model.DomainControllers.Select(entry => entry.DcCredentials), creds => Assert.NotNull(creds));
+            Assert.All(model.DomainControllers.Select(entry => entry.DcNetworkInformation), loc => Assert.NotNull(loc));
+            Assert.All(model.DomainControllers.Select(entry => entry.Dc), dc => Assert.Null(dc));
+            Assert.Equal(forestName, model.ForestName);
+            Assert.NotNull(model.ForestWideCredentials);
+            Assert.NotNull(model.ForestWideCredentials.Username);
+            Assert.NotNull(model.ForestWideCredentials.Password);
+        }
+    }
+
+    [Fact]
+	public async Task ForestSelectForestNameExpandDomainControllersOrderByForestNameAscending_DcShouldBeExpanded_ComplexTypesShouldBeExpanded()
 	{        
         const string query = "/forest?$select=ForestName&$expand=DomainControllers/Dc&$orderby=ForestName";
 
@@ -83,7 +118,7 @@ public sealed class GetQuerySelectTests
 	}
 
     [Fact]
-    public async Task TopAndSelectAndExpandDomainControllersFilterAndOrderByForestName()
+    public async Task ForestTopWithSelectAndExpandDomainControllersFilterEqAndOrderByForestName_DcShouldBeExpanded_ComplexTypesShouldBeExpanded_ShouldReturnSingleForest()
     {
         const string query = "/forest?$top=5&$select=DomainControllers/Dc&$expand=DomainControllers/Dc&$filter=ForestName eq 'Rolfson Forest'&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
@@ -147,18 +182,14 @@ public sealed class GetQuerySelectTests
         {
             Assert.Equal(1, collection.Count);
             Assert.Equal(4, collection.First().DomainControllers.Count);
-            //Assert.Equal(default, collection.First().ForestId);
-            //Assert.Equal(default, collection.First().Id);
-            //Assert.Null(collection.First().ForestName);
-            //Assert.Null(collection.First().ForestWideCredentials);
-            //Assert.Equal(4, collection.First().DomainControllers.Count);
-            //Assert.All(collection.First().DomainControllers.Select(entry => entry.DcCredentials), creds => Assert.NotNull(creds));
-            //Assert.All(collection.First().DomainControllers.Select(entry => entry.DcNetworkInformation), loc => Assert.NotNull(loc));
-            //Assert.All(collection.First().DomainControllers.Select(entry => entry.DcNetworkInformation), loc => Assert.Equal("http://www.rolfson.com/", loc!.Address));
-            //Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc), dc => Assert.NotNull(dc));
-            //Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.FsmoRoles), roles => Assert.NotEmpty(roles));
-            //Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.Backups), backups => Assert.Empty(backups));
-            //Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.Attributes), attributes => Assert.NotEmpty(attributes));
+            Assert.Equal("Abernathy Forest", collection.First().ForestName);
+            Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.FsmoRoles), roles => Assert.NotEmpty(roles));
+            Assert.Equal(7, collection.First().DomainControllers.SelectMany(entry => entry.Dc.Backups).Count());
+            Assert.All(collection.First().DomainControllers.SelectMany(entry => entry.Dc.Backups), backup => Assert.NotNull(backup.Location));
+            Assert.All(collection.First().DomainControllers.SelectMany(entry => entry.Dc.Backups), backup => Assert.NotNull(backup.Location.Credentials));
+            Assert.All(collection.First().DomainControllers.SelectMany(entry => entry.Dc.Backups), backup => Assert.NotNull(backup.Location.NetworkInformation));
+            Assert.All(collection.First().DomainControllers.SelectMany(entry => entry.Dc.Backups), backup => Assert.Equal("admin@abernathy.com", backup.Location.Credentials!.Username));
+            Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.Attributes), attributes => Assert.Empty(attributes));
         }
     }
 
@@ -236,19 +267,6 @@ public static class ODataHelpers
 {
     private const string BaseAddress = "http://localhost:16324";
 
-    private static void ConfigureDcEntitySet(ODataConventionModelBuilder builder) =>
-        builder.EntitySet<DomainControllerModel>(nameof(DomainControllerModel), config =>
-        {
-            config.CollectionProperty(e => e.FsmoRoles);
-            config.ComplexProperty(e => e.Attributes);
-        });
-
-    private static void ConfigureAdObjectComplexType(ODataConventionModelBuilder builder) =>
-        builder.EntitySet<DomainControllerModel>(nameof(DomainControllerModel), config =>
-        {
-            config.Expand(SelectExpandType.Automatic, nameof(DomainControllerModel.FsmoRoles));
-        });
-
     public static ODataQueryOptions<T> GetODataQueryOptions<T>(string queryString, IServiceProvider serviceProvider, string? customNamespace = null) 
         where T : class
     {
@@ -258,10 +276,6 @@ public static class ODataHelpers
             builder.Namespace = customNamespace;
 
         builder.EntitySet<T>(typeof(T).Name);
-
-        //ConfigureDcEntitySet(builder);
-        //builder.AddComplexType(typeof(ObjectAttributeModel));
-        //builder.ComplexType<ObjectAttributeModel>();
 
         IEdmModel model = builder.GetEdmModel();
         IEdmEntitySet entitySet = model.EntityContainer.FindEntitySet(typeof(T).Name);
