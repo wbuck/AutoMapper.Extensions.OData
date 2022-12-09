@@ -85,34 +85,32 @@ internal static class TypeExt
     /// }
     /// ]]>
     /// </example>
-    public static List<List<ODataExpansionOptions>> ExpandComplexTypes(this Type parentType, IEnumerable<string> complexTypeNames)
+    public static List<List<ODataExpansionOptions>> ExpandComplexTypes(this Type parentType, IEnumerable<string> complexTypeNames) =>
+        ExpandComplexInternal(new(), new(), parentType, complexTypeNames);
+
+    private static List<List<ODataExpansionOptions>> ExpandComplexInternal(
+        List<List<ODataExpansionOptions>> expansions, List<ODataExpansionOptions> currentExpansions, 
+        Type parentType, IEnumerable<string> complexTypeNames, int depth = 0)
     {
-        List<List<ODataExpansionOptions>> expansions = new();
-        return ExpandComplexInternal(expansions, new(), parentType, complexTypeNames);
+        var members = parentType.GetComplexMembers(complexTypeNames);
 
-        static List<List<ODataExpansionOptions>> ExpandComplexInternal(List<List<ODataExpansionOptions>> expansions, List<ODataExpansionOptions> currentExpansions,
-            Type parentType, IEnumerable<string> complexTypeNames, int depth = 0)
+        for (int i = 0; i < members.Count; ++i)
         {
-            var members = parentType.GetComplexMembers(complexTypeNames);
+            var member = members[i];
+            var memberType = member.GetMemberType().GetCurrentType();
 
-            for (int i = 0; i < members.Count; ++i)
-            {
-                var member = members[i];
-                var memberType = member.GetMemberType().GetCurrentType();
+            var nextExpansions = AddExpansion
+            (
+                member, memberType, i == 0 ? currentExpansions : new(currentExpansions.Take(depth))
+            );
 
-                var nextExpansions = AddExpansion
-                (
-                    member, memberType, i == 0 ? currentExpansions : new(currentExpansions.Take(depth))
-                );
+            ExpandComplexInternal(expansions, nextExpansions, memberType, complexTypeNames, depth + 1);
 
-                ExpandComplexInternal(expansions, nextExpansions, memberType, complexTypeNames, depth + 1);
-
-                if (!nextExpansions.Equals(currentExpansions) || depth == 0)
-                    expansions.Add(nextExpansions);
-            }
-
-            return expansions;
+            if (!nextExpansions.Equals(currentExpansions) || depth == 0)
+                expansions.Add(nextExpansions);
         }
+
+        return expansions;
 
         static List<ODataExpansionOptions> AddExpansion(MemberInfo member, Type memberType, List<ODataExpansionOptions> expansions)
         {
