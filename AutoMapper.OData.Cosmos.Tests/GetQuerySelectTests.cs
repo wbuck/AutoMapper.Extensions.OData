@@ -48,13 +48,8 @@ public sealed class GetQuerySelectTests
         serviceProvider = services.BuildServiceProvider();
     }
 
-    //string query = "/opstenant?$select=Name&$expand=Buildings&$orderby=Name"
-    //const string query = "/forest?$expand=AdObjects/Dc&$orderby=ForestName";
-    //const string query = "/forest?$select=ForestName, ForestId, FakeType&$expand=AdObjects/Dc($expand=Backups)&$orderby=ForestName";
-    //string query = "/forest?$select=ForestName&$expand=AdObjects($expand=Dc($expand=Attributes))&$orderby=ForestName";
-
     [Fact]
-	public async Task ForestSelectForestNameExpandDomainControllersOrderByForestNameAscending()
+	public async Task SelectForestNameExpandDomainControllersOrderByForestNameAscending()
 	{        
         const string query = "/forest?$select=ForestName&$expand=DomainControllers/Dc&$orderby=ForestName";
 
@@ -88,9 +83,9 @@ public sealed class GetQuerySelectTests
 	}
 
     [Fact]
-    public async void ForestExpandAndSelectDcFilterEqAndOrderByForestNameShouldReturnForestWithMemberDefaultedExceptForDomainControllers()
+    public async Task TopAndSelectAndExpandDomainControllersFilterAndOrderByForestName()
     {
-        string query = "/forest?$top=5&$select=DomainControllers/Dc&$expand=DomainControllers/Dc&$filter=ForestName eq 'Rolfson Forest'&$orderby=ForestName desc";
+        const string query = "/forest?$top=5&$select=DomainControllers/Dc&$expand=DomainControllers/Dc&$filter=ForestName eq 'Rolfson Forest'&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
@@ -114,7 +109,7 @@ public sealed class GetQuerySelectTests
     }
 
     [Fact]
-    public async void BuildingSelectNameExpandBuilder_BuilderNameShouldBeSam()
+    public async void TopWithSelectAndFilterForestNameExpandDomainControllersSelectFullyQualifiedDomainName()
     {
         string query = "/forest?$top=5&$select=ForestName&$expand=DomainControllers/Dc($select=FullyQualifiedDomainName)&$filter=ForestName eq 'Zulauf Forest'";
         Test(Get<ForestModel, Forest>(query));
@@ -137,6 +132,33 @@ public sealed class GetQuerySelectTests
             Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.FsmoRoles), roles => Assert.Empty(roles));
             Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.Backups), backups => Assert.Empty(backups));
             Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.Attributes), attributes => Assert.Empty(attributes));
+        }
+    }
+
+    [Fact]
+    public async Task TopWithSelectAndExpandDomainControllersExpandBackupsFilterAndOrderByForestName()
+    {
+        const string query = "/forest?$select=ForestName, DomainControllers/Dc&$expand=DomainControllers/Dc($select=FsmoRoles&$expand=Backups)&$filter=contains(ForestName, 'Abernathy Forest')";
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(1, collection.Count);
+            Assert.Equal(4, collection.First().DomainControllers.Count);
+            //Assert.Equal(default, collection.First().ForestId);
+            //Assert.Equal(default, collection.First().Id);
+            //Assert.Null(collection.First().ForestName);
+            //Assert.Null(collection.First().ForestWideCredentials);
+            //Assert.Equal(4, collection.First().DomainControllers.Count);
+            //Assert.All(collection.First().DomainControllers.Select(entry => entry.DcCredentials), creds => Assert.NotNull(creds));
+            //Assert.All(collection.First().DomainControllers.Select(entry => entry.DcNetworkInformation), loc => Assert.NotNull(loc));
+            //Assert.All(collection.First().DomainControllers.Select(entry => entry.DcNetworkInformation), loc => Assert.Equal("http://www.rolfson.com/", loc!.Address));
+            //Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc), dc => Assert.NotNull(dc));
+            //Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.FsmoRoles), roles => Assert.NotEmpty(roles));
+            //Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.Backups), backups => Assert.Empty(backups));
+            //Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.Attributes), attributes => Assert.NotEmpty(attributes));
         }
     }
 

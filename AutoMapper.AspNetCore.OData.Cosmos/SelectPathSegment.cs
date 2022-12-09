@@ -9,12 +9,12 @@ using System.Linq;
 
 namespace AutoMapper.AspNet.OData;
 
-internal readonly struct PathSegment
+internal readonly struct SelectPathSegment
 {
     private readonly SelectItem selectItem;
     private readonly ODataPathSegment pathSegment;
 
-    public PathSegment(SelectItem selectItem, ODataPathSegment pathSegment)
+    public SelectPathSegment(SelectItem selectItem, ODataPathSegment pathSegment)
     {
         this.selectItem = selectItem;
         this.pathSegment = pathSegment;
@@ -46,6 +46,17 @@ internal readonly struct PathSegment
         return null;
     }
 
+    public bool HasSelects()
+    {
+        if (TryGetExpandedNavigationSelectItem(out var item) && item.SelectAndExpand is not null)
+        {
+            return item.SelectAndExpand.SelectedItems
+                .OfType<PathSelectItem>()
+                .Any();
+        }
+        return false;
+    }
+
     public List<string> GetSelects()
     {
         if (TryGetExpandedNavigationSelectItem(out var item))
@@ -66,14 +77,12 @@ internal readonly struct PathSegment
         return false;
     }
 
-    public static implicit operator ODataPathSegment(PathSegment pathSegment) => 
-        pathSegment.pathSegment;
-
-    private static List<string> GetSelects(SelectExpandClause clause)
+    private static List<string> GetSelects(SelectExpandClause? clause)
     {
-        if (clause == null)
+        if (clause is null)
             return new List<string>();
 
+        // TODO: - This may have to be changed!
         return clause.SelectedItems
             .OfType<PathSelectItem>()
             .Select(item => item.SelectedPath.FirstSegment.Identifier)

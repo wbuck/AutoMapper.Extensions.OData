@@ -6,6 +6,7 @@ using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 
@@ -32,7 +33,7 @@ internal static class ExpansionHelper
         // If there are no selects or only selects for expanded entities,
         // we need to expand the complex types on the root entity.
         if (!selectedItems.Any() || !selectedItems.Any(s => s is PathSelectItem))        
-            rootIncludes = ExpandComplex(parentType, complexTypeNames);
+            rootIncludes = parentType.ExpandComplexTypes(complexTypeNames);
 
         var pathSegments = selectedItems.ToExpansionSegments();
         var expansions = pathSegments.GetExpansions(parentType, complexTypeNames);
@@ -44,7 +45,7 @@ internal static class ExpansionHelper
     }
 
     private static List<List<ODataExpansionOptions>> GetExpansions(
-        this ISet<ExpansionSegments> selectedItems, Type parentType, IReadOnlyList<string> complexTypeNames)
+        this IImmutableSet<SelectPathSegments> selectedItems, Type parentType, IReadOnlyList<string> complexTypeNames)
     {
         return selectedItems.Aggregate(new List<List<ODataExpansionOptions>>(), (expansions, pathSegments) =>
         {
@@ -69,9 +70,9 @@ internal static class ExpansionHelper
                     Selects = pathSegment.GetSelects()
                 });
 
-                if (!pathSegment.IsNavigationPropertySegment || (pathSegment.IsNavigationPropertySegment && !includes.Last().Selects.Any()))
+                if (!pathSegment.IsNavigationPropertySegment || (pathSegment.IsNavigationPropertySegment && !pathSegment.HasSelects()))
                 {
-                    var complexExpansions = ExpandComplex(elementType, complexTypeNames).Select
+                    var complexExpansions = elementType.ExpandComplexTypes(complexTypeNames).Select
                     (
                         expansions =>
                         {
@@ -87,8 +88,7 @@ internal static class ExpansionHelper
                 currentParentType = elementType;
             }
 
-            ExpandedNavigationSelectItem? navigationItem = pathSegments;
-            var navigationItems = navigationItem?.GetNestedExpansions(currentParentType, complexTypeNames).Select
+            var navigationItems = pathSegments.GetNestedExpansions(currentParentType, complexTypeNames).Select
             (
                 expansions =>
                 {
@@ -108,105 +108,17 @@ internal static class ExpansionHelper
         });
     }
 
-
-    /// <summary>
-    /// Finds all of the complex types in the object hierarchy and builds paths from the base object 
-    /// (the object whose declaring type is the same as 'parentType') to the complex type. 
-    /// These paths are then used to include those complex objects in the SQL query.
-    /// </summary>
-    /// 
-    /// <remarks>   
-    /// Given the classes below with the 'parentType' set to typeof(Entity)
-    /// the following include paths will be returned:
-    /// 
-    /// [0]: FirstComplex/SecondComplex/ThirdComplex
-    /// [1]: FirstComplex/FourthComplex    
-    /// 
-    /// The first segment of both paths (FirstComplex) is the "base object"
-    /// whose declaring type is equal to typeof(Entity).
-    /// </remarks>
-    /// 
-    /// <example>        
-    /// <![CDATA[
-    /// class FourthComplex {}
-    /// 
-    /// class ThirdComplex {}
-    /// 
-    /// class SecondComplex
-    /// {
-    ///     public ThirdComplex ThirdComplex {get; set;} 
-    /// }
-    /// 
-    /// class FirstComplex
-    /// {
-    ///     public SecondComplex SecondComplex {get; set;}
-    ///     public FourthComplex FourthComplex {get; set;}
-    /// }
-    /// 
-    /// class Entity 
-    /// {
-    ///     public Guid Id {get; set;}
-    ///     public FirstComplex FirstComplex {get; set;}
-    /// }
-    /// ]]>
-    /// </example>
-    private static List<List<ODataExpansionOptions>> ExpandComplex(Type parentType, IEnumerable<string> complexTypeNames)
+    private static List<List<ODataExpansionOptions>> GetNestedExpansions(in this SelectPathSegments pathSegments, Type parentType, IReadOnlyList<string> complexTypeNames)
     {
-        List<List<ODataExpansionOptions>> expansions = new();
-        return ExpandComplexInternal(expansions, new(), parentType, complexTypeNames);
-
-        static List<List<ODataExpansionOptions>> ExpandComplexInternal(List<List<ODataExpansionOptions>> expansions, List<ODataExpansionOptions> currentExpansions,
-            Type parentType, IEnumerable<string> complexTypeNames, int depth = 0)
-        {
-            var members = parentType.GetComplexMembers(complexTypeNames);            
-
-            for (int i = 0; i < members.Count; ++i)
-            {
-                var member = members[i];
-                var memberType = member.GetMemberType().GetCurrentType();
-
-                var nextExpansions = AddExpansion
-                (
-                    member, memberType, i == 0 ? currentExpansions : new(currentExpansions.Take(depth))
-                );
-
-                ExpandComplexInternal(expansions, nextExpansions, memberType, complexTypeNames, depth + 1);
-
-                if (!nextExpansions.Equals(currentExpansions) || depth == 0)
-                    expansions.Add(nextExpansions);
-            }
-
-            return expansions;
-        }
-
-        static List<ODataExpansionOptions> AddExpansion(MemberInfo member, Type memberType, List<ODataExpansionOptions> expansions)
-        {
-            expansions.Add(new()
-            {
-                MemberName = member.Name,
-                MemberType = memberType,
-                ParentType = member.DeclaringType,
-                Selects = new()
-            });
-            return expansions;
-        }
+        var selects = pathSegments.GetNestedExpansionSegments();
+        return selects.GetExpansions(parentType, complexTypeNames);
     }
 
-    private static List<List<ODataExpansionOptions>> GetNestedExpansions(this ExpandedNavigationSelectItem node, Type parentType, IReadOnlyList<string> complexTypeNames)
-    {
-        if (node is null)
-            return new();
-
-        var pathSegments = node.SelectAndExpand.SelectedItems.ToExpansionSegments();
-        return pathSegments.GetExpansions(parentType, complexTypeNames);
-    }
-
-    private static ISet<ExpansionSegments> ToExpansionSegments(
+    private static IImmutableSet<SelectPathSegments> ToExpansionSegments(
         this IEnumerable<SelectItem> selectItems) => selectItems
-            .Where(s => s is ExpandedNavigationSelectItem)
-            .Concat(selectItems.OfType<PathSelectItem>())
-            .Select(s => new ExpansionSegments(s))
-            .ToHashSet();
+            .OrderByDescending(s => s is ExpandedNavigationSelectItem)
+            .Select(s => new SelectPathSegments(s))
+            .ToImmutableHashSet();
 
     private static IEnumerable<SelectItem> GetSelectedItems<TModel>(this ODataQueryOptions<TModel> options) =>
         options.SelectExpand?.SelectExpandClause?.SelectedItems ?? Enumerable.Empty<SelectItem>();
