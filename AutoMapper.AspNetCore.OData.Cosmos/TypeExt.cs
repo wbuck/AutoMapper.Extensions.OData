@@ -32,9 +32,9 @@ internal static class TypeExt
     public static IEdmComplexType? GetComplexType(this IEdmModel edmModel, Type rootType) =>
         edmModel.SchemaElements.OfType<IEdmComplexType>().FirstOrDefault(c => c.Name.Equals(rootType.Name, StringComparison.Ordinal));
 
-    public static IReadOnlyList<MemberInfo> GetComplexMembers(this IEdmModel edmModel, Type rootType)
+    public static IReadOnlyList<MemberInfo> GetComplexMembers(this IEdmModel edmModel, Type parentType)
     {
-        MemberInfo[] members = rootType.GetPropertiesOrFields();
+        MemberInfo[] members = parentType.GetPropertiesOrFields();
         List<MemberInfo> complexMembers = new(members.Length);
 
         var complexTypes = edmModel.SchemaElements.OfType<IEdmComplexType>();
@@ -163,19 +163,20 @@ internal static class TypeExt
         return GetComplexTypeSelects(new(), new(), parentType, edmModel);
     }
 
-    private static IEnumerable<List<PathSegment>> GetLiteralSelects(this Type memberType, IEdmModel edmModel, List<PathSegment> pathSegments) =>    
-        memberType.GetLiteralTypeMembers().Select(member => new List<PathSegment>(pathSegments) 
-        {
-            new
-            (
-                false,
-                member.Name,
-                memberType.DeclaringType!,
-                memberType,
-                EdmTypeKind.Primitive,
-                edmModel
-            )
-        });
+    public static List<List<PathSegment>> GetLiteralSelects(this Type parentType, IEdmModel edmModel, List<PathSegment>? pathSegments = null) =>
+        parentType.GetLiteralTypeMembers()
+            .Select(member => new List<PathSegment>(pathSegments ?? Enumerable.Empty<PathSegment>())
+            {
+                new
+                (
+                    false,
+                    member.Name,
+                    parentType,
+                    member.GetMemberType(),
+                    EdmTypeKind.Primitive,
+                    edmModel
+                )
+            }).ToList();
     
 
     private static List<List<PathSegment>> GetComplexTypeSelects(
@@ -190,25 +191,26 @@ internal static class TypeExt
         for (int i = 0; i < members.Count; ++i)
         {
             var member = members[i];
-            var memberType = member.GetMemberType().GetCurrentType();
+            Type memberType = member.GetMemberType();                
 
             List<PathSegment> pathSegments = i == 0 ? currentExpansions : new(currentExpansions.Take(depth));
             pathSegments.Add(new PathSegment
             (
                 false,
                 member.Name,
-                memberType.DeclaringType!,
+                parentType,
                 memberType,
                 EdmTypeKind.Complex,
                 edmModel
             ));
 
-            var memberSelects = memberType.GetLiteralSelects(edmModel, pathSegments);
+            Type elementType = pathSegments.Last().ElementType;
+            var memberSelects = elementType.GetLiteralSelects(edmModel, pathSegments);
 
             if (memberSelects.Any())
                 expansions.AddRange(memberSelects);
 
-            GetComplexTypeSelects(expansions, pathSegments, memberType, edmModel, depth + 1);
+            GetComplexTypeSelects(expansions, pathSegments, elementType, edmModel, depth + 1);
         }
 
         return expansions;
