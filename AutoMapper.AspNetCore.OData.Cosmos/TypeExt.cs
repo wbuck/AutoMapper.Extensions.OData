@@ -1,8 +1,8 @@
 ﻿#nullable enable
 
-using AutoMapper.Execution;
 using LogicBuilder.Expressions.Utils;
-using Microsoft.AspNetCore.OData.Extensions;
+using Microsoft.AspNetCore.OData.Deltas;
+using Microsoft.OData.Edm;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +12,7 @@ namespace AutoMapper.AspNet.OData;
 
 internal static class TypeExt
 {
-    public static MemberInfo[] GetSelectMembersOrAllLiteralMembers(this Type parentType, List<string> selects)
+    public static MemberInfo[] GetSelectMembersOrAllLiteralMembers(this Type parentType, List<string>? selects = null)
     {
         if (selects is null || !selects.Any())
             return parentType.GetLiteralTypeMembers();
@@ -25,6 +25,32 @@ internal static class TypeExt
             .Where(info => 
                 info.MemberType == MemberTypes.Field || info.MemberType == MemberTypes.Property)
             .ToArray();
+
+    public static bool IsComplexType(this Type type, IEnumerable<string> complexTypeNames) =>
+        complexTypeNames.Contains(type.Name, StringComparer.Ordinal);
+
+    public static IEdmComplexType? GetComplexType(this IEdmModel edmModel, Type rootType) =>
+        edmModel.SchemaElements.OfType<IEdmComplexType>().FirstOrDefault(c => c.Name.Equals(rootType.Name, StringComparison.Ordinal));
+
+    public static IReadOnlyList<MemberInfo> GetComplexMembers(this IEdmModel edmModel, Type rootType)
+    {
+        MemberInfo[] members = rootType.GetPropertiesOrFields();
+        List<MemberInfo> complexMembers = new(members.Length);
+
+        var complexTypes = edmModel.SchemaElements.OfType<IEdmComplexType>();
+
+        foreach (var member in members)
+        {
+            var memberType = member.GetMemberType().GetCurrentType();
+
+            if (!member.IsListOfLiteralTypes() && !memberType.IsLiteralType() &&
+                complexTypes.Any(c => c.Name.Equals(memberType.Name, StringComparison.Ordinal)))
+            {
+                complexMembers.Add(member);
+            }
+        }
+        return complexMembers;
+    }
 
     public static IReadOnlyList<MemberInfo> GetComplexMembers(this Type type, IEnumerable<string> complexTypeNames, IReadOnlyList<string>? selects = null)
     {
@@ -85,14 +111,19 @@ internal static class TypeExt
     /// }
     /// ]]>
     /// </example>
-    public static List<List<ODataExpansionOptions>> ExpandComplexTypes(this Type parentType, IEnumerable<string> complexTypeNames) =>
-        ExpandComplexInternal(new(), new(), parentType, complexTypeNames);
+    public static List<List<ODataExpansionOptions>> ExpandComplexTypes(this Type parentType, IEnumerable<string> complexTypeNames, IEnumerable<string> ignoredProperties) =>
+        ExpandComplexInternal(new(), new(), parentType, complexTypeNames, ignoredProperties: ignoredProperties);
 
     private static List<List<ODataExpansionOptions>> ExpandComplexInternal(
         List<List<ODataExpansionOptions>> expansions, List<ODataExpansionOptions> currentExpansions, 
-        Type parentType, IEnumerable<string> complexTypeNames, int depth = 0)
+        Type parentType, IEnumerable<string> complexTypeNames, int depth = 0, IEnumerable<string>? ignoredProperties = null)
     {
         var members = parentType.GetComplexMembers(complexTypeNames);
+
+        if (ignoredProperties is not null)
+        {
+            members = members.Where(m => !ignoredProperties.Contains(m.Name)).ToList();
+        }
 
         for (int i = 0; i < members.Count; ++i)
         {
@@ -125,7 +156,67 @@ internal static class TypeExt
         }
     }
 
-    private static MemberInfo[] GetLiteralTypeMembers(this Type parentType)
+
+#if true
+    public static List<List<PathSegment>> GetComplexTypeSelects(this IEdmModel edmModel, Type parentType)
+    {
+        return GetComplexTypeSelects(new(), new(), parentType, edmModel);
+    }
+
+    private static IEnumerable<List<PathSegment>> GetLiteralSelects(this Type memberType, IEdmModel edmModel, List<PathSegment> pathSegments) =>    
+        memberType.GetLiteralTypeMembers().Select(member => new List<PathSegment>(pathSegments) 
+        {
+            new
+            (
+                false,
+                member.Name,
+                memberType.DeclaringType!,
+                memberType,
+                EdmTypeKind.Primitive,
+                edmModel
+            )
+        });
+    
+
+    private static List<List<PathSegment>> GetComplexTypeSelects(
+        List<List<PathSegment>> expansions, 
+        List<PathSegment> currentExpansions,
+        Type parentType,
+        IEdmModel edmModel, 
+        int depth = 0)
+    {
+        var members = edmModel.GetComplexMembers(parentType);
+
+        for (int i = 0; i < members.Count; ++i)
+        {
+            var member = members[i];
+            var memberType = member.GetMemberType().GetCurrentType();
+
+            List<PathSegment> pathSegments = i == 0 ? currentExpansions : new(currentExpansions.Take(depth));
+            pathSegments.Add(new PathSegment
+            (
+                false,
+                member.Name,
+                memberType.DeclaringType!,
+                memberType,
+                EdmTypeKind.Complex,
+                edmModel
+            ));
+
+            var memberSelects = memberType.GetLiteralSelects(edmModel, pathSegments);
+
+            if (memberSelects.Any())
+                expansions.AddRange(memberSelects);
+
+            GetComplexTypeSelects(expansions, pathSegments, memberType, edmModel, depth + 1);
+        }
+
+        return expansions;
+    }
+
+#endif
+
+    public static MemberInfo[] GetLiteralTypeMembers(this Type parentType)
     {
         if (parentType.IsList())
             return Array.Empty<MemberInfo>();

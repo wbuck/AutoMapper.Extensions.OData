@@ -1,6 +1,6 @@
 ﻿namespace AutoMapper.OData.Cosmos.Tests.Models;
 
-internal sealed record BackupModel
+public sealed record BackupModel
 {
     public Guid Id { get; init; }
     public Guid ForestId { get; init; }

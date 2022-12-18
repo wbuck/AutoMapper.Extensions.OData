@@ -8,6 +8,7 @@ public sealed record Forest
     public Guid ForestId { get; init; }
     public string Name { get; init; } = default!;
     public Credentials? ForestWideCredentials { get; init; } = default!;
+    public Fake Fake { get; init; }
     public ICollection<DomainControllerEntry> DomainControllers { get; init; } = 
         new List<DomainControllerEntry>();
     public ICollection<int> Values { get; init; } =

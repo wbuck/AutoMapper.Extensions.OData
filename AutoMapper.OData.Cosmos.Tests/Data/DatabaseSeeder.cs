@@ -14,6 +14,11 @@ internal static class DatabaseSeeder
         {
             new()
             {
+                Fake = new() 
+                { 
+                    FakeInternal = new() { Name = "Name1", Age = 1 },
+                    FakeDC = new() { Id = Guid.NewGuid(), Fqdn = "Test.me" }
+                },
                 Id = Guid.NewGuid(),
                 ForestId = forest1,
                 Name = "Abernathy Forest",
@@ -38,6 +43,7 @@ internal static class DatabaseSeeder
                         },
                         Dc = new()
                         {
+                            Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
                            Id = Guid.NewGuid(),
                            ForestId = forest1,
                            Fqdn = "dc1.abernathy.com",
@@ -93,7 +99,7 @@ internal static class DatabaseSeeder
                                    Value = "dc1.abernathy.com"
                                },
                                new()
-                               {                                   
+                               {
                                    Name = "operatingSystem",
                                    Value = "Windows 2019"
                                }
@@ -114,6 +120,7 @@ internal static class DatabaseSeeder
                         },
                         Dc = new()
                         {
+                            Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
                            Id = Guid.NewGuid(),
                            ForestId = forest1,
                            Fqdn = "dc2.abernathy.com",
@@ -189,6 +196,7 @@ internal static class DatabaseSeeder
                        },
                        Dc = new()
                        {
+                           Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
                            Id = Guid.NewGuid(),
                            ForestId = forest1,
                            Fqdn = "dc3.abernathy.com",
@@ -246,6 +254,7 @@ internal static class DatabaseSeeder
                        },
                        Dc = new()
                        {
+                           Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
                            Id = Guid.NewGuid(),
                            ForestId = forest1,
                            Fqdn = "dc4.abernathy.com",
@@ -311,6 +320,11 @@ internal static class DatabaseSeeder
             },
             new()
             {
+                Fake = new() 
+                { 
+                    FakeInternal = new() { Name = "Name2", Age = 2 },
+                    FakeDC = new() { Id = Guid.NewGuid(), Fqdn = "Test.me" }
+                },
                 Id = Guid.NewGuid(),
                 Name = "Rolfson Forest",
                 ForestId = forest2,
@@ -335,6 +349,7 @@ internal static class DatabaseSeeder
                        },
                        Dc = new()
                        {
+                           Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
                            Id = Guid.NewGuid(),
                            ForestId = forest2,
                            Fqdn = "dc1.rolfson.com",
@@ -392,6 +407,7 @@ internal static class DatabaseSeeder
                        },
                        Dc = new()
                        {
+                           Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
                            Id = Guid.NewGuid(),
                            ForestId = forest2,
                            Fqdn = "dc2.rolfson.com",
@@ -485,6 +501,7 @@ internal static class DatabaseSeeder
                        },
                        Dc = new()
                        {
+                           Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
                            Id = Guid.NewGuid(),
                            ForestId = forest2,
                            Fqdn = "dc3.rolfson.com",
@@ -522,6 +539,7 @@ internal static class DatabaseSeeder
                        },
                        Dc = new()
                        {
+                           Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
                            Id = Guid.NewGuid(),
                            ForestId = forest2,
                            Fqdn = "dc4.rolfson.com",
@@ -587,6 +605,11 @@ internal static class DatabaseSeeder
             },
             new()
             {
+                Fake = new() 
+                {
+                    FakeInternal = new() { Name = "Name3", Age = 3 },
+                    FakeDC = new() { Id = Guid.NewGuid(), Fqdn = "Test.me" }
+                },
                 Id = Guid.NewGuid(),
                 Name = "Zulauf Forest",
                 ForestId = forest3,
@@ -611,6 +634,7 @@ internal static class DatabaseSeeder
                        },
                        Dc = new()
                        {
+                           Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
                            Id = Guid.NewGuid(),
                            ForestId = forest3,
                            Fqdn = "dc1.zulauf.net",
@@ -670,6 +694,7 @@ internal static class DatabaseSeeder
                        },
                        Dc = new()
                        {
+                           Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
                            Id = Guid.NewGuid(),
                            ForestId = forest3,
                            Fqdn = "dc2.zulauf.net",

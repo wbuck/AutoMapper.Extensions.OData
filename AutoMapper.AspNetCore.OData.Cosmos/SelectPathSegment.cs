@@ -9,22 +9,29 @@ using System.Linq;
 
 namespace AutoMapper.AspNet.OData;
 
-internal readonly struct SelectPathSegment
+internal class SelectPathSegment
 {
-    private readonly SelectItem selectItem;
-    private readonly ODataPathSegment pathSegment;
+    private readonly SelectItem selectItem;    
+    private readonly IReadOnlyCollection<string>? selects;
 
     public SelectPathSegment(SelectItem selectItem, ODataPathSegment pathSegment)
+        : this(selectItem, pathSegment, null)
+    { }
+
+    public SelectPathSegment(SelectItem selectItem, ODataPathSegment pathSegment, IReadOnlyCollection<string>? selects)
     {
         this.selectItem = selectItem;
-        this.pathSegment = pathSegment;
+        this.selects = selects;
+        PathSegment = pathSegment;        
     }
 
-    public string Identifier => 
-        this.pathSegment.Identifier;
+    public ODataPathSegment PathSegment { get; }
 
-    public bool IsNavigationPropertySegment =>
-        this.pathSegment is NavigationPropertySegment;
+    public string Identifier => 
+        PathSegment.Identifier;
+
+    public bool IsNavigationPropertySegment() =>
+        PathSegment is NavigationPropertySegment;
 
     public FilterOptions? GetFilter(Type memberType)
     {
@@ -47,14 +54,14 @@ internal readonly struct SelectPathSegment
     }
 
     public bool HasSelects()
-    {
+    {        
         if (TryGetExpandedNavigationSelectItem(out var item) && item.SelectAndExpand is not null)
         {
             return item.SelectAndExpand.SelectedItems
                 .OfType<PathSelectItem>()
                 .Any();
         }
-        return false;
+        return this.selects is not null && this.selects.Any();
     }
 
     public List<string> GetSelects()
@@ -62,12 +69,15 @@ internal readonly struct SelectPathSegment
         if (TryGetExpandedNavigationSelectItem(out var item))
             return GetSelects(item.SelectAndExpand);
 
+        if (this.selects is not null && this.selects.Any())
+            return this.selects.ToList();
+
         return new();
     }
 
     public bool TryGetExpandedNavigationSelectItem([MaybeNullWhen(false)] out ExpandedNavigationSelectItem item)
     {
-        if (this.pathSegment is NavigationPropertySegment 
+        if (PathSegment is NavigationPropertySegment 
             && this.selectItem is ExpandedNavigationSelectItem navItem)
         {
             item = navItem;

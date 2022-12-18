@@ -13,6 +13,8 @@ using System.Threading.Tasks;
 
 namespace AutoMapper.AspNet.OData;
 
+
+
 public static class QueryableExtensions
 {
     public static ICollection<TModel> Get<TModel, TData>(this IQueryable<TData> query,

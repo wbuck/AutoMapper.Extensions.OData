@@ -49,9 +49,65 @@ public sealed class GetQuerySelectTests
     }
 
     [Fact]
-    public async Task FetchAllForestDocumentsWithNoSelectsOrFilters()
+    public async Task ForestNoSelectsOrFilters_NavigationPropertiesShouldNotBeExpanded_ComplexTypesShouldBeExpanded_ShouldReturnAllDocuments()
     {
         const string query = "/forest?$orderby=ForestName";
+
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, collection.Count);
+
+            foreach (var (model, forestName) in
+                collection.Zip(new[] { "Abernathy Forest", "Rolfson Forest", "Zulauf Forest" }))
+            {
+                AssertModel(model, forestName);
+            }
+        }
+
+        static void AssertModel(ForestModel model, string forestName)
+        {
+            Assert.NotEqual(default, model.ForestId);
+            Assert.NotEqual(default, model.Id);
+            Assert.NotEmpty(model.DomainControllers);
+            Assert.All(model.DomainControllers.Select(entry => entry.DcCredentials), creds => Assert.NotNull(creds));
+            Assert.All(model.DomainControllers.Select(entry => entry.DcNetworkInformation), loc => Assert.NotNull(loc));
+            Assert.All(model.DomainControllers.Select(entry => entry.Dc), dc => Assert.Null(dc));
+            Assert.Equal(forestName, model.ForestName);
+            Assert.NotNull(model.ForestWideCredentials);
+            Assert.NotNull(model.ForestWideCredentials.Username);
+            Assert.NotNull(model.ForestWideCredentials.Password);
+        }
+    }
+
+    [Fact]
+    public async Task ForestNoSelectsOrFilters_NavigationPropertiesShouldNotBeExpanded_ComplexTypesShouldBeExpanded_ShouldReturnAllDocuments2()
+    {
+        //const string query = "/forest?$select=ForestWideCredentials/Username, ForestWideCredentials/Password";
+        //const string query = "/forest?$select=ForestWideCredentials($select=Username), DomainControllers/Dc&$expand=DomainControllers/Dc($select=FullyQualifiedDomainName, Fake/FakeInternal/Age)";
+        //const string query = "/forest?$select=Fake($select=FakeInternal($select=Name, Age)), ForestName, DomainControllers($select=Dc, DateAdded, DcCredentials($select=Username, Password))&$expand=DomainControllers/Dc($select=Backups, FullyQualifiedDomainName;$expand=Backups($select=Location/Credentials/Username))";
+
+        //const string query = "/forest?$select=Fake($select=FakeInternal($select=Name, Age)), ForestName, DomainControllers($select=Dc, DateAdded, DcCredentials)&$expand=DomainControllers/Dc($select=Backups, FullyQualifiedDomainName;$expand=Backups($select=Location))";
+        //const string query = "/forest?$select=Fake/FakeInternal/Name, ForestName, DomainControllers($select=Dc, DateAdded, DcCredentials)&$expand=DomainControllers/Dc($select=Backups, FullyQualifiedDomainName;$expand=Backups($select=Location))";
+
+        //const string query = "/forest?$select=Fake/FakeInternal/Name, Fake/FakeInternal/Age, ForestName, DomainControllers/Dc, DomainControllers/DateAdded, DomainControllers/DcCredentials/Username, DomainControllers/DcCredentials/Password&expand=DomainControllers/Dc($select=Backups, FullyQualifiedDomainName;$expand=Backups($select=Location/Credentials/Username))";
+
+        // fake
+        //const string query = "/forest?$select=Fake/FakeInternal/Name, Fake/FakeInternal/Age, ForestName, DomainControllers/Dc, DomainControllers/DateAdded, DomainControllers/DcCredentials/Username, DomainControllers/DcCredentials/Password&expand=DomainControllers/Dc($select=Complex/Complex2/Backups, Complex/Complex2/Username, FullyQualifiedDomainName;$expand=Complex/Complex2/Backups($select=Location/Credentials/Username))";
+
+        //const string query = "/forest?$select=Fake/FakeInternal/Name, Fake/FakeInternal/Age, ForestName, Values($filter=$it lt 10)";
+        //const string query = "/forest?$select=DomainControllers($filter=DcCredentials/Username eq 'administrator')";
+        //const string query = "/forest?$select=ForestWideCredentials/Username, ForestWideCredentials/Password";
+        //const string query = "/forest?$select=Fake/FakeInternal/Name, Fake/FakeInternal/Age, DomainControllers/Dc";
+
+        //const string query = "/forest?$expand=DomainControllers/Dc($select=Fake($select=FakeInternal($select=Name)), Backups;$expand=Backups)";
+        const string query = "/forest?$expand=DomainControllers/Dc";
+
+        //const string query = "/forest?$select=Fake($select=FakeInternal($select=Name, Age))";
+        //const string query = "/forest?$select=Fake/FakeInternal/Name, Fake/FakeInternal/Age";
 
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
@@ -144,7 +200,7 @@ public sealed class GetQuerySelectTests
     }
 
     [Fact]
-    public async void TopWithSelectAndFilterForestNameExpandDomainControllersSelectFullyQualifiedDomainName()
+    public async void ForestTopWithSelectAndFilterEqForestNameExpandDomainControllersSelectFullyQualifiedDomainName_DcShouldBeExpanded_ShouldReturnSingleForest()
     {
         string query = "/forest?$top=5&$select=ForestName&$expand=DomainControllers/Dc($select=FullyQualifiedDomainName)&$filter=ForestName eq 'Zulauf Forest'";
         Test(Get<ForestModel, Forest>(query));
@@ -171,15 +227,15 @@ public sealed class GetQuerySelectTests
     }
 
     [Fact]
-    public async Task TopWithSelectAndExpandDomainControllersExpandBackupsFilterAndOrderByForestName()
+    public async Task ForestTopWithSelectAndExpandDomainControllersExpandBackupsFilterContainsAndOrderByForestName_DcAndBackupShouldBeExpanded_ShouldReturnSingleForest()
     {
-        const string query = "/forest?$select=ForestName, DomainControllers/Dc&$expand=DomainControllers/Dc($select=FsmoRoles&$expand=Backups)&$filter=contains(ForestName, 'Abernathy Forest')";
+        const string query = "/forest?$select=ForestName, DomainControllers/Dc&$expand=DomainControllers/Dc($select=FsmoRoles;$expand=Backups)&$filter=contains(ForestName, 'Abernathy Forest')";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
 
         static void Test(ICollection<ForestModel> collection)
-        {
+        {            
             Assert.Equal(1, collection.Count);
             Assert.Equal(4, collection.First().DomainControllers.Count);
             Assert.Equal("Abernathy Forest", collection.First().ForestName);
