@@ -14,10 +14,16 @@ internal static class DatabaseSeeder
         {
             new()
             {
-                Fake = new() 
-                { 
-                    FakeInternal = new() { Name = "Name1", Age = 1 },
-                    FakeDC = new() { Id = Guid.NewGuid(), Fqdn = "Test.me" }
+                Values = new List<int> { 100, 1999, 12398 },
+                Metadata = new()
+                {
+                    MetadataType = "Abernathy Metadata",
+                    MetadataKeyValuePairs = new List<MetadataKeyValue>
+                    {
+                        new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                        new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                        new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                    },
                 },
                 Id = Guid.NewGuid(),
                 ForestId = forest1,
@@ -43,7 +49,16 @@ internal static class DatabaseSeeder
                         },
                         Dc = new()
                         {
-                            Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
+                            Metadata = new()
+                            {
+                                MetadataType = "DC1 Abernathy Metadata",
+                                MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                {
+                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                },
+                            },
                            Id = Guid.NewGuid(),
                            ForestId = forest1,
                            Fqdn = "dc1.abernathy.com",
@@ -120,13 +135,22 @@ internal static class DatabaseSeeder
                         },
                         Dc = new()
                         {
-                            Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
+                            Metadata = new()
+                            {
+                                MetadataType = "DC2 Abernathy Metadata",
+                                MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                {
+                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                },
+                            },
                            Id = Guid.NewGuid(),
                            ForestId = forest1,
                            Fqdn = "dc2.abernathy.com",
-                           FsmoRoles = new List<FsmoRole> 
-                           { 
-                               FsmoRole.RidMaster                                
+                           FsmoRoles = new List<FsmoRole>
+                           {
+                               FsmoRole.RidMaster
                            },
                            Backups = new List<Backup>
                            {
@@ -196,7 +220,16 @@ internal static class DatabaseSeeder
                        },
                        Dc = new()
                        {
-                           Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
+                           Metadata = new()
+                            {
+                                MetadataType = "DC3 Abernathy Metadata",
+                                MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                {
+                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                },
+                            },
                            Id = Guid.NewGuid(),
                            ForestId = forest1,
                            Fqdn = "dc3.abernathy.com",
@@ -228,12 +261,12 @@ internal static class DatabaseSeeder
                            Attributes = new List<ObjectAttribute>
                            {
                                new()
-                               {                                
+                               {
                                    Name = "dnsHostName",
                                    Value = "dc3.abernathy.com"
                                },
                                new()
-                               {                                   
+                               {
                                    Name = "operatingSystem",
                                    Value = "Windows 2012R2"
                                }
@@ -254,13 +287,22 @@ internal static class DatabaseSeeder
                        },
                        Dc = new()
                        {
-                           Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
+                           Metadata = new()
+                            {
+                                MetadataType = "DC4 Abernathy Metadata",
+                                MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                {
+                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                },
+                            },
                            Id = Guid.NewGuid(),
                            ForestId = forest1,
                            Fqdn = "dc4.abernathy.com",
-                           FsmoRoles = new List<FsmoRole> 
-                           { 
-                               FsmoRole.SchemaMaster 
+                           FsmoRoles = new List<FsmoRole>
+                           {
+                               FsmoRole.SchemaMaster
                            },
                            Backups = new List<Backup>
                            {
@@ -304,12 +346,12 @@ internal static class DatabaseSeeder
                            Attributes = new List<ObjectAttribute>
                            {
                                new()
-                               {                                   
+                               {
                                    Name = "dnsHostName",
                                    Value = "dc4.abernathy.com"
                                },
                                new()
-                               {                                   
+                               {
                                    Name = "sAMAccountName",
                                    Value = "DC4"
                                }
@@ -320,10 +362,16 @@ internal static class DatabaseSeeder
             },
             new()
             {
-                Fake = new() 
-                { 
-                    FakeInternal = new() { Name = "Name2", Age = 2 },
-                    FakeDC = new() { Id = Guid.NewGuid(), Fqdn = "Test.me" }
+                Values = new List<int> { 42, 2, 908 },
+                Metadata = new()
+                {
+                    MetadataType = "Rolfson Metadata",
+                    MetadataKeyValuePairs = new List<MetadataKeyValue>
+                    {
+                        new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                        new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                        new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                    },
                 },
                 Id = Guid.NewGuid(),
                 Name = "Rolfson Forest",
@@ -349,7 +397,16 @@ internal static class DatabaseSeeder
                        },
                        Dc = new()
                        {
-                           Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
+                           Metadata = new()
+                            {
+                                MetadataType = "DC1 Rolfson Metadata",
+                                MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                {
+                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                },
+                            },
                            Id = Guid.NewGuid(),
                            ForestId = forest2,
                            Fqdn = "dc1.rolfson.com",
@@ -407,7 +464,16 @@ internal static class DatabaseSeeder
                        },
                        Dc = new()
                        {
-                           Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
+                           Metadata = new()
+                            {
+                                MetadataType = "DC2 Rolfson Metadata",
+                                MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                {
+                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                },
+                            },
                            Id = Guid.NewGuid(),
                            ForestId = forest2,
                            Fqdn = "dc2.rolfson.com",
@@ -501,7 +567,16 @@ internal static class DatabaseSeeder
                        },
                        Dc = new()
                        {
-                           Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
+                           Metadata = new()
+                            {
+                                MetadataType = "DC3 Rolfson Metadata",
+                                MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                {
+                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                },
+                            },
                            Id = Guid.NewGuid(),
                            ForestId = forest2,
                            Fqdn = "dc3.rolfson.com",
@@ -518,7 +593,7 @@ internal static class DatabaseSeeder
                                    Value = "dc3.rolfson.com"
                                },
                                new()
-                               {                                   
+                               {
                                    Name = "operatingSystem",
                                    Value = "Windows 2022"
                                }
@@ -539,12 +614,21 @@ internal static class DatabaseSeeder
                        },
                        Dc = new()
                        {
-                           Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
+                           Metadata = new()
+                            {
+                                MetadataType = "DC4 Rolfson Metadata",
+                                MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                {
+                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                },
+                            },
                            Id = Guid.NewGuid(),
                            ForestId = forest2,
                            Fqdn = "dc4.rolfson.com",
-                           FsmoRoles = new List<FsmoRole> 
-                           { 
+                           FsmoRoles = new List<FsmoRole>
+                           {
                                FsmoRole.DomainNamingMaster
                            },
                            Backups = new List<Backup>
@@ -589,7 +673,7 @@ internal static class DatabaseSeeder
                            Attributes = new List<ObjectAttribute>
                            {
                                new()
-                               {                                   
+                               {
                                    Name = "dnsHostName",
                                    Value = "dc4.rolfson.com"
                                },
@@ -605,10 +689,16 @@ internal static class DatabaseSeeder
             },
             new()
             {
-                Fake = new() 
+                Values = new List<int> { 2, 176, 6389 },
+                Metadata = new()
                 {
-                    FakeInternal = new() { Name = "Name3", Age = 3 },
-                    FakeDC = new() { Id = Guid.NewGuid(), Fqdn = "Test.me" }
+                    MetadataType = "Zulauf Metadata",
+                    MetadataKeyValuePairs = new List<MetadataKeyValue>
+                    {
+                        new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                        new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                        new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                    },
                 },
                 Id = Guid.NewGuid(),
                 Name = "Zulauf Forest",
@@ -634,7 +724,16 @@ internal static class DatabaseSeeder
                        },
                        Dc = new()
                        {
-                           Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
+                           Metadata = new()
+                            {
+                                MetadataType = "DC1 Zulauf Metadata",
+                                MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                {
+                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                },
+                            },
                            Id = Guid.NewGuid(),
                            ForestId = forest3,
                            Fqdn = "dc1.zulauf.net",
@@ -694,7 +793,16 @@ internal static class DatabaseSeeder
                        },
                        Dc = new()
                        {
-                           Fake = new() { FakeInternal = new() { Name = "Name1", Age = 1 }},
+                           Metadata = new()
+                            {
+                                MetadataType = "DC2 Zulauf Metadata",
+                                MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                {
+                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                },
+                            },
                            Id = Guid.NewGuid(),
                            ForestId = forest3,
                            Fqdn = "dc2.zulauf.net",

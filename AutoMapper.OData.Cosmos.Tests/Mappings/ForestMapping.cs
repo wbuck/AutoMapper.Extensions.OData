@@ -7,10 +7,10 @@ internal sealed class ForestMapping : Profile
 {
 	public ForestMapping()
 	{
-        CreateMap<FakeInternal, FakeInternalModel>()
+        CreateMap<MetadataKeyValue, MetadataKeyValueModel>()
             .ForAllMembers(opts => opts.ExplicitExpansion());
 
-        CreateMap<Fake, FakeModel>()
+        CreateMap<Metadata, MetadataModel>()
             .ForAllMembers(opts => opts.ExplicitExpansion());
 
         CreateMap<Forest, ForestModel>()

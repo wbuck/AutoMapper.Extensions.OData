@@ -1,6 +1,6 @@
 ﻿namespace AutoMapper.OData.Cosmos.Tests.Models;
 
-internal sealed record DomainControllerEntryModel
+public sealed record DomainControllerEntryModel
 {
     public DateTimeOffset DateAdded { get; init; }
     public DomainControllerModel Dc { get; init; } = default!;

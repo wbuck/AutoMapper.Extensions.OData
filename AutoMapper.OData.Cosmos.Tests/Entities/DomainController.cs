@@ -1,11 +1,10 @@
 ﻿namespace AutoMapper.OData.Cosmos.Tests.Entities;
 
-public sealed record DomainController
-{
-    public Guid Id { get; init; } = default;
+public sealed record DomainController : EntityBase
+{    
     public Guid ForestId { get; init; }
     public string Fqdn { get; init; } = default!;
-    public Fake Fake { get; init; }
+    public Metadata Metadata { get; init; } = default!;
     public ICollection<ObjectAttribute> Attributes { get; init; } 
         = new List<ObjectAttribute>();
     public ICollection<Backup> Backups { get; init; } 
