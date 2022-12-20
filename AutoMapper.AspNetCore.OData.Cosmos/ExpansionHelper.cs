@@ -30,6 +30,20 @@ internal static partial class ExpansionHelper
         return selects.ToList().BuildSelectPaths(parentType, edmModel, new(), new());
     }
 
+    private static List<PathSegment> ToNewList(this IEnumerable<PathSegment> pathSegments, IEdmModel edmModel) =>
+        new(pathSegments.Select
+        (
+            p => new PathSegment
+            (
+                p.IsExpansionSegment,
+                p.Member,
+                p.ParentType,
+                p.MemberType,
+                p.EdmTypeKind,
+                edmModel
+            ))
+        );
+
     public static List<List<PathSegment>> GetExpansions<TModel>(this ODataQueryOptions<TModel> options)
     {
         Type parentType = typeof(TModel);
@@ -52,7 +66,7 @@ internal static partial class ExpansionHelper
 
         List<PathSegment> newExpansionPath = depth switch
         {
-            > 0 => new(currentExpansionPath),
+            > 0 => currentExpansionPath.ToNewList(edmModel),
             _ => currentExpansionPath
         };
 
@@ -64,7 +78,7 @@ internal static partial class ExpansionHelper
         foreach (var selectItem in selectItems.Skip(1))
         {
             paths.Add(BuildPathSegments(selectItem,
-                newExpansionPath.Take(depth).ToList(), depth));
+                newExpansionPath.Take(depth).ToNewList(edmModel), depth));
         }
 
         return paths;

@@ -77,6 +77,7 @@ public static class QueryableExtensions
             Expression<Func<TModel, bool>> filter)
             where TModel : class
     {
+        var selects = options.GetSelects();
         var expansions = options.GetExpansions();
 
         var includes = expansions
