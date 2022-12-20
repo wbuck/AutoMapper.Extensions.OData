@@ -1,7 +1,6 @@
 ﻿#nullable enable
 
 using LogicBuilder.Expressions.Utils;
-using Microsoft.AspNetCore.OData.Deltas;
 using Microsoft.OData.Edm;
 using System;
 using System.Collections.Generic;
@@ -37,7 +36,6 @@ internal static class TypeExt
             {
                 new
                 (
-                    false,
                     member,
                     parentType,
                     member.GetMemberType(),
@@ -64,7 +62,7 @@ internal static class TypeExt
         List<PathSegment> currentExpansions,
         Type parentType,
         IEdmModel edmModel, 
-        int depth = 0)
+        in int depth = 0)
     {
         var members = edmModel.GetComplexMembers(parentType);
 
@@ -76,7 +74,6 @@ internal static class TypeExt
             List<PathSegment> pathSegments = i == 0 ? currentExpansions : new(currentExpansions.Take(depth));
             pathSegments.Add(new PathSegment
             (
-                false,
                 member,
                 parentType,
                 memberType,

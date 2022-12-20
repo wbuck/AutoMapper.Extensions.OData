@@ -35,7 +35,6 @@ internal static partial class ExpansionHelper
         (
             p => new PathSegment
             (
-                p.IsExpansionSegment,
                 p.Member,
                 p.ParentType,
                 p.MemberType,
@@ -93,8 +92,7 @@ internal static partial class ExpansionHelper
                 Type elementType = memberType.GetCurrentType();
 
                 path.Add(new
-                (
-                    true,
+                (                    
                     member,
                     rootType,
                     memberType,
@@ -142,10 +140,8 @@ internal static partial class ExpansionHelper
                     PathSegment pathSegment = segments.Last();
                     Type memberType = pathSegment.ElementType;
 
-                    var literalMembers = memberType.GetLiteralTypeMembers();
-
-                    var memberSelects = literalMembers
-                        .Select(m => AddExpansion(m, m.GetMemberType().GetCurrentType(), EdmTypeKind.Primitive, new(segments)));
+                    var memberSelects = memberType.GetLiteralTypeMembers()
+                        .Select(m => AddExpansion(m, EdmTypeKind.Primitive, new(segments)));
 
                     var complexPaths = edmModel.GetComplexTypeSelects(pathSegment.MemberType).Select
                     (
@@ -158,14 +154,13 @@ internal static partial class ExpansionHelper
 
                     paths.AddRange(memberSelects.Concat(complexPaths));
 
-                    List<PathSegment> AddExpansion(MemberInfo member, Type memberType, EdmTypeKind edmTypeKind, List<PathSegment> pathSegments)
+                    List<PathSegment> AddExpansion(MemberInfo member, EdmTypeKind edmTypeKind, List<PathSegment> pathSegments)
                     {
                         pathSegments.Add(new
                         (
-                            false,
                             member,
-                            memberType.DeclaringType!,
-                            memberType,
+                            member.DeclaringType!,
+                            member.GetMemberType().GetCurrentType(),
                             edmTypeKind,
                             edmModel
                         ));
@@ -188,7 +183,6 @@ internal static partial class ExpansionHelper
 
                 path.Add(new
                 (
-                    false,
                     member,
                     rootType,
                     memberType,

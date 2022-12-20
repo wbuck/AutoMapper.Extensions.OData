@@ -1,7 +1,4 @@
-﻿using AutoMapper.AspNet.OData;
-using AutoMapper.Extensions.ExpressionMapping;
-//using LogicBuilder.Expressions.Utils;
-using LogicBuilder.Expressions.Utils.Expansions;
+﻿using AutoMapper.Extensions.ExpressionMapping;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.Azure.Cosmos.Linq;
 using System;
@@ -77,7 +74,6 @@ public static class QueryableExtensions
             Expression<Func<TModel, bool>> filter)
             where TModel : class
     {
-        var selects = options.GetSelects();
         var expansions = options.GetExpansions();
 
         var includes = expansions
@@ -91,7 +87,24 @@ public static class QueryableExtensions
             options.GetQueryableExpression(querySettings?.ODataSettings),
             includes,
             querySettings?.ProjectionSettings
-        ).UpdateQueryableExpression(expansions.Select(p => p.Cast<ODataExpansionOptions>().ToList()).ToList(), options.Context);
+        ).UpdateQueryableExpression(expansions.ToExpansionOptions(), options.Context);
+    }
+
+    private static List<List<ODataExpansionOptions>> ToExpansionOptions(this List<List<PathSegment>> pathSegments)
+    {
+        List<List<ODataExpansionOptions>> options = new(pathSegments.Count);
+        foreach (List<PathSegment> segments in pathSegments)
+        {
+            options.Add(segments.Select(s => new ODataExpansionOptions
+            {
+                MemberName = s.MemberName,
+                MemberType = s.MemberType,
+                ParentType = s.ParentType,
+                FilterOptions = s.FilterOptions,
+                QueryOptions = s.QueryOptions
+            }).ToList());
+        }
+        return options;
     }
 
     private static IQueryable<TModel> GetQuery<TModel, TData>(this IQueryable<TData> query,
