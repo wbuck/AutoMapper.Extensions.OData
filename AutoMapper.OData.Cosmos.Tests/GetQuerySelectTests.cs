@@ -109,63 +109,7 @@ public sealed class GetQuerySelectTests
                 Assert.NotNull(model.Password);
             }
         }
-    }
-
-    [Fact]
-    public async Task ForestNoSelectsOrFilters_NavigationPropertiesShouldNotBeExpanded_ComplexTypesShouldBeExpanded_ShouldReturnAllDocuments2()
-    {
-        //const string query = "/forest?$select=ForestWideCredentials/Username, ForestWideCredentials/Password";
-        //const string query = "/forest?$select=ForestWideCredentials($select=Username), DomainControllers/Dc&$expand=DomainControllers/Dc($select=FullyQualifiedDomainName, Fake/FakeInternal/Age)";
-        //const string query = "/forest?$select=Fake($select=FakeInternal($select=Name, Age)), ForestName, DomainControllers($select=Dc, DateAdded, DcCredentials($select=Username, Password))&$expand=DomainControllers/Dc($select=Backups, FullyQualifiedDomainName;$expand=Backups($select=Location/Credentials/Username))";
-
-        const string query = "/forest?$select=Fake($select=FakeInternal($select=Name, Age)), ForestName, DomainControllers($select=Dc, DateAdded, DcCredentials)&$expand=DomainControllers/Dc($select=Backups, FullyQualifiedDomainName, Attributes, FsmoRoles;$expand=Backups($select=Location))";
-        //const string query = "/forest?$select=Fake/FakeInternal/Name, ForestName, DomainControllers($select=Dc, DateAdded, DcCredentials)&$expand=DomainControllers/Dc($select=Backups, FullyQualifiedDomainName;$expand=Backups($select=Location))";
-
-        //const string query = "/forest?$select=Fake/FakeInternal/Name, Fake/FakeInternal/Age, ForestName, DomainControllers/Dc, DomainControllers/DateAdded, DomainControllers/DcCredentials/Username, DomainControllers/DcCredentials/Password&expand=DomainControllers/Dc($select=Backups, FullyQualifiedDomainName;$expand=Backups($select=Location/Credentials/Username))";
-
-        // fake
-        //const string query = "/forest?$select=Fake/FakeInternal/Name, Fake/FakeInternal/Age, ForestName, DomainControllers/Dc, DomainControllers/DateAdded, DomainControllers/DcCredentials/Username, DomainControllers/DcCredentials/Password&expand=DomainControllers/Dc($select=Complex/Complex2/Backups, Complex/Complex2/Username, FullyQualifiedDomainName;$expand=Complex/Complex2/Backups($select=Location/Credentials/Username))";
-
-        //const string query = "/forest?$select=Fake/FakeInternal/Name, Fake/FakeInternal/Age, ForestName, Values($filter=$it lt 10)";
-        //const string query = "/forest?$select=DomainControllers($filter=DcCredentials/Username eq 'administrator')";
-        //const string query = "/forest?$select=ForestWideCredentials/Username, ForestWideCredentials/Password";
-        //const string query = "/forest?$select=Fake/FakeInternal/Name, Fake/FakeInternal/Age, DomainControllers/Dc";
-
-        //const string query = "/forest?$expand=DomainControllers/Dc($select=Fake($select=FakeInternal($select=Name)), Backups;$expand=Backups)";
-        //const string query = "/forest?$expand=DomainControllers/Dc";
-
-        //const string query = "/forest?$select=Fake($select=FakeInternal($select=Name, Age))";
-        //const string query = "/forest?$select=Fake/FakeInternal/Name, Fake/FakeInternal/Age";
-
-        Test(Get<ForestModel, Forest>(query));
-        Test(await GetAsync<ForestModel, Forest>(query));
-        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
-
-        static void Test(ICollection<ForestModel> collection)
-        {
-            Assert.Equal(3, collection.Count);
-
-            foreach (var (model, forestName) in
-                collection.Zip(new[] { "Abernathy Forest", "Rolfson Forest", "Zulauf Forest" }))
-            {
-                AssertModel(model, forestName);
-            }
-        }
-
-        static void AssertModel(ForestModel model, string forestName)
-        {
-            Assert.NotEqual(default, model.ForestId);
-            Assert.NotEqual(default, model.Id);
-            Assert.NotEmpty(model.DomainControllers);
-            Assert.All(model.DomainControllers.Select(entry => entry.DcCredentials), creds => Assert.NotNull(creds));
-            Assert.All(model.DomainControllers.Select(entry => entry.DcNetworkInformation), loc => Assert.NotNull(loc));
-            Assert.All(model.DomainControllers.Select(entry => entry.Dc), dc => Assert.Null(dc));
-            Assert.Equal(forestName, model.ForestName);
-            Assert.NotNull(model.ForestWideCredentials);
-            Assert.NotNull(model.ForestWideCredentials.Username);
-            Assert.NotNull(model.ForestWideCredentials.Password);
-        }
-    }
+    }    
 
     [Fact]
 	public async Task ForestSelectForestNameExpandDomainControllersOrderByForestNameAscending_DcShouldBeExpanded_ComplexTypesShouldBeExpanded()
@@ -247,7 +191,7 @@ public sealed class GetQuerySelectTests
     [Fact]
     public async Task ForestTopWithSelectAndExpandDomainControllersFilterEqAndOrderByForestName_DcShouldBeExpanded_ComplexTypesShouldBeExpanded_ShouldReturnSingleForest()
     {
-        const string query = "/forest?$top=5&$select=DomainControllers/Dc&$expand=DomainControllers/Dc&$filter=ForestName eq 'Rolfson Forest'&$orderby=ForestName desc";
+        const string query = "/forest?$top=1&$select=DomainControllers/Dc, ForestName&$expand=DomainControllers/Dc&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
@@ -255,18 +199,58 @@ public sealed class GetQuerySelectTests
         static void Test(ICollection<ForestModel> collection)
         {
             Assert.Equal(1, collection.Count);
-            Assert.Equal(default, collection.First().ForestId);
-            Assert.Equal(default, collection.First().Id);
-            Assert.Null(collection.First().ForestName);
-            Assert.Null(collection.First().ForestWideCredentials);
-            Assert.Equal(4, collection.First().DomainControllers.Count);            
-            Assert.All(collection.First().DomainControllers.Select(entry => entry.DcCredentials), creds => Assert.NotNull(creds));
-            Assert.All(collection.First().DomainControllers.Select(entry => entry.DcNetworkInformation), loc => Assert.NotNull(loc));
-            Assert.All(collection.First().DomainControllers.Select(entry => entry.DcNetworkInformation), loc => Assert.Equal("http://www.rolfson.com/", loc!.Address));
-            Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc), dc => Assert.NotNull(dc));
-            Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.FsmoRoles), roles => Assert.NotEmpty(roles));
-            Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.Backups), backups => Assert.Empty(backups));
-            Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.Attributes), attributes => Assert.NotEmpty(attributes));
+
+            ForestModel model = collection.First();
+
+            Assert.Equal(default, model.ForestId);
+            Assert.Equal(default, model.Id);
+            Assert.Equal("Zulauf Forest", model.ForestName);
+            Assert.Null(model.ForestWideCredentials);
+
+            AssertDomainControllerEntry(model.DomainControllers);
+            AssertDomainController(model.DomainControllers.Select(m => m.Dc));
+        }
+
+        static void AssertDomainControllerEntry(ICollection<DomainControllerEntryModel> models)
+        {
+            Assert.Equal(2, models.Count);
+            foreach (var model in models)
+            {
+                Assert.NotNull(model.Dc);
+                Assert.Equal(default, model.DateAdded);
+                Assert.Null(model.DcCredentials);
+                Assert.Null(model.DcNetworkInformation);
+            }
+        }
+
+        static void AssertDomainController(IEnumerable<DomainControllerModel> models)
+        {
+            foreach (var model in models)
+            {
+                Assert.NotEqual(default, model.Id);
+                Assert.NotEqual(default, model.ForestId);
+                Assert.NotNull(model.FullyQualifiedDomainName);
+                AssertMetadata(model.Metadata);
+                AssertAttributes(model.Attributes);
+                Assert.Equal(0, model.Backups.Count);
+                Assert.NotEmpty(model.FsmoRoles);
+            }
+        }
+
+        static void AssertAttributes(ICollection<ObjectAttributeModel> models)
+        {
+            Assert.NotEmpty(models);
+            foreach (var model in models)
+            {
+                Assert.NotNull(model.Name);
+                Assert.NotNull(model.Value);
+            }
+        }
+
+        static void AssertMetadata(MetadataModel model)
+        {
+            Assert.NotNull(model.MetadataType);
+            Assert.Equal(3, model.MetadataKeyValuePairs.Count);
         }
     }
 
@@ -317,6 +301,62 @@ public sealed class GetQuerySelectTests
             Assert.All(collection.First().DomainControllers.SelectMany(entry => entry.Dc.Backups), backup => Assert.NotNull(backup.Location.NetworkInformation));
             Assert.All(collection.First().DomainControllers.SelectMany(entry => entry.Dc.Backups), backup => Assert.Equal("admin@abernathy.com", backup.Location.Credentials!.Username));
             Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.Attributes), attributes => Assert.Empty(attributes));
+        }
+    }
+
+    [Fact]
+    public async Task TBD()
+    {
+        //const string query = "/forest?$select=ForestWideCredentials/Username, ForestWideCredentials/Password";
+        //const string query = "/forest?$select=ForestWideCredentials($select=Username), DomainControllers/Dc&$expand=DomainControllers/Dc($select=FullyQualifiedDomainName, Fake/FakeInternal/Age)";
+        //const string query = "/forest?$select=Fake($select=FakeInternal($select=Name, Age)), ForestName, DomainControllers($select=Dc, DateAdded, DcCredentials($select=Username, Password))&$expand=DomainControllers/Dc($select=Backups, FullyQualifiedDomainName;$expand=Backups($select=Location/Credentials/Username))";
+
+        const string query = "/forest?$select=Fake($select=FakeInternal($select=Name, Age)), ForestName, DomainControllers($select=Dc, DateAdded, DcCredentials)&$expand=DomainControllers/Dc($select=Backups, FullyQualifiedDomainName, Attributes, FsmoRoles;$expand=Backups($select=Location))";
+        //const string query = "/forest?$select=Fake/FakeInternal/Name, ForestName, DomainControllers($select=Dc, DateAdded, DcCredentials)&$expand=DomainControllers/Dc($select=Backups, FullyQualifiedDomainName;$expand=Backups($select=Location))";
+
+        //const string query = "/forest?$select=Fake/FakeInternal/Name, Fake/FakeInternal/Age, ForestName, DomainControllers/Dc, DomainControllers/DateAdded, DomainControllers/DcCredentials/Username, DomainControllers/DcCredentials/Password&expand=DomainControllers/Dc($select=Backups, FullyQualifiedDomainName;$expand=Backups($select=Location/Credentials/Username))";
+
+        // fake
+        //const string query = "/forest?$select=Fake/FakeInternal/Name, Fake/FakeInternal/Age, ForestName, DomainControllers/Dc, DomainControllers/DateAdded, DomainControllers/DcCredentials/Username, DomainControllers/DcCredentials/Password&expand=DomainControllers/Dc($select=Complex/Complex2/Backups, Complex/Complex2/Username, FullyQualifiedDomainName;$expand=Complex/Complex2/Backups($select=Location/Credentials/Username))";
+
+        //const string query = "/forest?$select=Fake/FakeInternal/Name, Fake/FakeInternal/Age, ForestName, Values($filter=$it lt 10)";
+        //const string query = "/forest?$select=DomainControllers($filter=DcCredentials/Username eq 'administrator')";
+        //const string query = "/forest?$select=ForestWideCredentials/Username, ForestWideCredentials/Password";
+        //const string query = "/forest?$select=Fake/FakeInternal/Name, Fake/FakeInternal/Age, DomainControllers/Dc";
+
+        //const string query = "/forest?$expand=DomainControllers/Dc($select=Fake($select=FakeInternal($select=Name)), Backups;$expand=Backups)";
+        //const string query = "/forest?$expand=DomainControllers/Dc";
+
+        //const string query = "/forest?$select=Fake($select=FakeInternal($select=Name, Age))";
+        //const string query = "/forest?$select=Fake/FakeInternal/Name, Fake/FakeInternal/Age";
+
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, collection.Count);
+
+            foreach (var (model, forestName) in
+                collection.Zip(new[] { "Abernathy Forest", "Rolfson Forest", "Zulauf Forest" }))
+            {
+                AssertModel(model, forestName);
+            }
+        }
+
+        static void AssertModel(ForestModel model, string forestName)
+        {
+            Assert.NotEqual(default, model.ForestId);
+            Assert.NotEqual(default, model.Id);
+            Assert.NotEmpty(model.DomainControllers);
+            Assert.All(model.DomainControllers.Select(entry => entry.DcCredentials), creds => Assert.NotNull(creds));
+            Assert.All(model.DomainControllers.Select(entry => entry.DcNetworkInformation), loc => Assert.NotNull(loc));
+            Assert.All(model.DomainControllers.Select(entry => entry.Dc), dc => Assert.Null(dc));
+            Assert.Equal(forestName, model.ForestName);
+            Assert.NotNull(model.ForestWideCredentials);
+            Assert.NotNull(model.ForestWideCredentials.Username);
+            Assert.NotNull(model.ForestWideCredentials.Password);
         }
     }
 

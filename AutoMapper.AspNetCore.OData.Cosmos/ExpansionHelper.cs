@@ -6,6 +6,7 @@ using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 
@@ -143,7 +144,7 @@ internal static partial class ExpansionHelper
                     var memberSelects = memberType.GetLiteralTypeMembers()
                         .Select(m => AddExpansion(m, EdmTypeKind.Primitive, new(segments)));
 
-                    var complexPaths = edmModel.GetComplexTypeSelects(pathSegment.MemberType).Select
+                    var complexPaths = edmModel.GetComplexTypeSelects(memberType).Select
                     (
                         paths =>
                         {
