@@ -1,48 +1,42 @@
 ﻿#nullable enable
 
-using LogicBuilder.Expressions.Utils.Expansions;
-using Microsoft.OData.Edm;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Linq;
 using LogicBuilder.Expressions.Utils;
-using System.Diagnostics;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow.Schemas;
-using System.Reflection;
-using Newtonsoft.Json.Linq;
-using Microsoft.AspNetCore.OData.Query.Expressions;
+using AutoMapper.Internal;
 
 namespace AutoMapper.AspNet.OData;
 
 internal static class ExpressionUtils
 {
     public static ICollection<Expression<Func<TSource, object>>> BuildIncludes<TSource>(
-        this IEnumerable<List<Expansion>> includes, List<string> selects)
+        this IEnumerable<List<PathSegment>> includes, List<List<PathSegment>> selects)
             where TSource : class
     {
         var expansions = GetAllExpansions(new List<LambdaExpression>());
         return expansions;
 
-        List<Expression<Func<TSource, object>>> GetAllExpansions(List<LambdaExpression> literalOrComplexMemberSelectors)
+        List<Expression<Func<TSource, object>>> GetAllExpansions(List<LambdaExpression> selectors)
         {
             string parameterName = "i";
             ParameterExpression param = Expression.Parameter(typeof(TSource), parameterName);
 
-            literalOrComplexMemberSelectors.AddSelectors(selects, param, param);
+            selectors.AddSelectors(selects, param, param);
 
             return includes
-                .Select(include => BuildSelectorExpression<TSource>(include, literalOrComplexMemberSelectors, parameterName))
-                .Concat(literalOrComplexMemberSelectors.Select(selector => (Expression<Func<TSource, object>>)selector))
+                .Select(include => BuildSelectorExpression<TSource>(include, selectors, parameterName))
+                .Concat(selectors.Select(selector => (Expression<Func<TSource, object>>)selector))
                 .ToList();
         }
     }
 
-    private static Expression GetSelectExpression(IEnumerable<Expansion> expansions, Expression parent, List<LambdaExpression> valueMemberSelectors, string parameterName)
+    private static Expression GetSelectExpression(IEnumerable<PathSegment> expansions, Expression parent, List<LambdaExpression> memberSelectors, string parameterName)
     {
         ParameterExpression parameter = Expression.Parameter(parent.GetUnderlyingElementType(), parameterName.ChildParameterName());
-        Expression selectorBody = BuildSelectorExpression(parameter, expansions.ToList(), valueMemberSelectors, parameter.Name);
+        Expression selectorBody = BuildSelectorExpression(parameter, expansions.ToList(), memberSelectors, parameter.Name);
         return Expression.Call
         (
             typeof(Enumerable),
@@ -58,7 +52,7 @@ internal static class ExpressionUtils
         );
     }
 
-    private static Expression BuildSelectorExpression(Expression sourceExpression, List<Expansion> parts, List<LambdaExpression> valueMemberSelectors, string parameterName = "i")
+    private static Expression BuildSelectorExpression(Expression sourceExpression, List<PathSegment> expansionPath, List<LambdaExpression> memberSelectors, string parameterName = "i")
     {
         Expression parent = sourceExpression;
 
@@ -66,13 +60,13 @@ internal static class ExpressionUtils
         //See AddChildSeelctors() below
         List<LambdaExpression> childValueMemberSelectors = new();
 
-        for (int i = 0; i < parts.Count; i++)
+        for (int i = 0; i < expansionPath.Count; i++)
         {
             if (parent.Type.IsList())
             {
                 Expression selectExpression = GetSelectExpression
                 (
-                    parts.Skip(i),
+                    expansionPath.Skip(i),
                     parent,
                     childValueMemberSelectors,
                     parameterName
@@ -84,7 +78,7 @@ internal static class ExpressionUtils
             }
             else
             {
-                parent = Expression.MakeMemberAccess(parent, parent.Type.GetMemberInfo(parts[i].MemberName));
+                parent = Expression.MakeMemberAccess(parent, parent.Type.GetMemberInfo(expansionPath[i].MemberName));
 
                 if (parent.Type.IsList())
                 {
@@ -92,14 +86,14 @@ internal static class ExpressionUtils
                     //selectors from an underlying list element must be added here.
                     childValueMemberSelectors.AddSelectors
                     (
-                        parts[i].Selects,
+                        expansionPath[i].SelectPaths,
                         childParam,
                         childParam
                     );
                 }
                 else
                 {
-                    valueMemberSelectors.AddSelectors(parts[i].Selects, Expression.Parameter(sourceExpression.Type, parameterName), parent);
+                    memberSelectors.AddSelectors(expansionPath[i].SelectPaths, Expression.Parameter(sourceExpression.Type, parameterName), parent);
                 }
             }
         }
@@ -115,7 +109,7 @@ internal static class ExpressionUtils
         {
             childValueMemberSelectors.ForEach(selector =>
             {
-                valueMemberSelectors.Add(Expression.Lambda
+                memberSelectors.Add(Expression.Lambda
                 (
                     typeof(Func<,>).MakeGenericType(new[] { sourceExpression.Type, typeof(object) }),
                     Expression.Call
@@ -133,46 +127,87 @@ internal static class ExpressionUtils
     }
 
     // Builds the the main selector delegate.
-    private static Expression<Func<TSource, object>> BuildSelectorExpression<TSource>(List<Expansion> fullName, List<LambdaExpression> valueMemberSelectors, string parameterName = "i")
+    private static Expression<Func<TSource, object>> BuildSelectorExpression<TSource>(List<PathSegment> expansionPath, List<LambdaExpression> memberSelectors, string parameterName = "i")
     {
         ParameterExpression param = Expression.Parameter(typeof(TSource), parameterName);
 
         return (Expression<Func<TSource, object>>)Expression.Lambda
         (
             typeof(Func<,>).MakeGenericType(new[] { param.Type, typeof(object) }),
-            BuildSelectorExpression(param, fullName, valueMemberSelectors, parameterName),
+            BuildSelectorExpression(param, expansionPath, memberSelectors, parameterName),
             param
         );
     }
 
     private static void AddSelectors(
-        this List<LambdaExpression> literalOrComplexMemberSelectors, List<string> selects, ParameterExpression param, Expression parentBody)
+        this List<LambdaExpression> selectors, 
+        IReadOnlyList<IReadOnlyList<PathSegment>>? selects, 
+        ParameterExpression param, 
+        Expression parentBody)
     {
-        if (parentBody.Type.IsList() || parentBody.Type.IsLiteralType())
+        if (parentBody.Type.IsList() || parentBody.Type.IsLiteralType() || selects is null)
             return;
 
-        literalOrComplexMemberSelectors.AddRange
+        selectors.AddRange
         (
-            parentBody.Type
-                .GetSelectMembersOrAllLiteralMembers(selects)
-                .Select(member => Expression.MakeMemberAccess(parentBody, member))
-                .Select
-                (
-                    selector => selector.Type.IsValueType
-                        ? (Expression)Expression.Convert(selector, typeof(object))
-                        : selector
-                )
-                .Select
-                (
-                    selector => Expression.Lambda
-                    (
-                        typeof(Func<,>).MakeGenericType(new[] { param.Type, typeof(object) }),
-                        selector,
-                        param
-                    )
-                )
+            selects.Select(path => path.MakeExpression(parentBody))
+            .Select(expression => Expression.Lambda
+             (
+                 typeof(Func<,>).MakeGenericType(new[] { param.Type, typeof(object) }),
+                 expression,
+                 param
+             ))
         );
     }
+
+    private static Expression MakeExpression(this IReadOnlyList<PathSegment> pathSegments, Expression expression)
+    {
+        if (!pathSegments.Any())
+            return expression;
+
+        Type parentType = expression.Type;
+
+        for (int i = 0; i < pathSegments.Count; i++)
+        {
+            if (!parentType.IsList() || parentType.IsListOfLiteralTypes())
+            {
+                var memberExpression = Expression.MakeMemberAccess(expression, pathSegments[i].Member);
+                expression = memberExpression.Type.IsValueType
+                    ? Expression.Convert(memberExpression, typeof(object))
+                    : memberExpression;
+
+                parentType = pathSegments[i].MemberType;
+            }
+            else
+            {
+                Type elementType = parentType.GetGenericArguments().First();
+                ParameterExpression parameter = Expression.Parameter(elementType, "i1");
+
+                MemberExpression memberExpression = Expression.MakeMemberAccess(parameter, pathSegments[i].Member);
+
+                LambdaExpression lambda = Expression.Lambda
+                (
+                    pathSegments.Skip(i + 1).ToList().MakeExpression(memberExpression),
+                    parameter
+                );
+
+                expression = Expression.Call
+                (
+                    typeof(Enumerable),
+                    nameof(Enumerable.Select),
+                    new Type[] { elementType, lambda.ReturnType },
+                    expression,
+                    lambda
+                );
+
+                break;
+            }
+
+        }
+        return expression;
+    }
+
+
 
     private static string ChildParameterName(this string currentParameterName)
     {

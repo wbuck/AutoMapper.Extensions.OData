@@ -78,11 +78,9 @@ public static class QueryableExtensions
             where TModel : class
     {
         var expansions = options.GetExpansions();
-        //var expansions = options.SelectExpand.GetExpansions(typeof(TModel));
 
         var includes = expansions
-            .Select(list => new List<Expansion>(list))
-            .BuildIncludes<TModel>(options.SelectExpand.GetSelects())
+            .BuildIncludes<TModel>(options.GetSelects())
             .ToList();
 
         return query.GetQuery
@@ -92,7 +90,7 @@ public static class QueryableExtensions
             options.GetQueryableExpression(querySettings?.ODataSettings),
             includes,
             querySettings?.ProjectionSettings
-        ).UpdateQueryableExpression(expansions, options.Context);
+        ).UpdateQueryableExpression(expansions.Select(p => p.Cast<ODataExpansionOptions>().ToList()).ToList(), options.Context);
     }
 
     private static IQueryable<TModel> GetQuery<TModel, TData>(this IQueryable<TData> query,

@@ -90,7 +90,7 @@ public sealed class GetQuerySelectTests
         //const string query = "/forest?$select=ForestWideCredentials($select=Username), DomainControllers/Dc&$expand=DomainControllers/Dc($select=FullyQualifiedDomainName, Fake/FakeInternal/Age)";
         //const string query = "/forest?$select=Fake($select=FakeInternal($select=Name, Age)), ForestName, DomainControllers($select=Dc, DateAdded, DcCredentials($select=Username, Password))&$expand=DomainControllers/Dc($select=Backups, FullyQualifiedDomainName;$expand=Backups($select=Location/Credentials/Username))";
 
-        //const string query = "/forest?$select=Fake($select=FakeInternal($select=Name, Age)), ForestName, DomainControllers($select=Dc, DateAdded, DcCredentials)&$expand=DomainControllers/Dc($select=Backups, FullyQualifiedDomainName;$expand=Backups($select=Location))";
+        const string query = "/forest?$select=Fake($select=FakeInternal($select=Name, Age)), ForestName, DomainControllers($select=Dc, DateAdded, DcCredentials)&$expand=DomainControllers/Dc($select=Backups, FullyQualifiedDomainName, Attributes, FsmoRoles;$expand=Backups($select=Location))";
         //const string query = "/forest?$select=Fake/FakeInternal/Name, ForestName, DomainControllers($select=Dc, DateAdded, DcCredentials)&$expand=DomainControllers/Dc($select=Backups, FullyQualifiedDomainName;$expand=Backups($select=Location))";
 
         //const string query = "/forest?$select=Fake/FakeInternal/Name, Fake/FakeInternal/Age, ForestName, DomainControllers/Dc, DomainControllers/DateAdded, DomainControllers/DcCredentials/Username, DomainControllers/DcCredentials/Password&expand=DomainControllers/Dc($select=Backups, FullyQualifiedDomainName;$expand=Backups($select=Location/Credentials/Username))";
@@ -104,7 +104,7 @@ public sealed class GetQuerySelectTests
         //const string query = "/forest?$select=Fake/FakeInternal/Name, Fake/FakeInternal/Age, DomainControllers/Dc";
 
         //const string query = "/forest?$expand=DomainControllers/Dc($select=Fake($select=FakeInternal($select=Name)), Backups;$expand=Backups)";
-        const string query = "/forest?$expand=DomainControllers/Dc";
+        //const string query = "/forest?$expand=DomainControllers/Dc";
 
         //const string query = "/forest?$select=Fake($select=FakeInternal($select=Name, Age))";
         //const string query = "/forest?$select=Fake/FakeInternal/Name, Fake/FakeInternal/Age";

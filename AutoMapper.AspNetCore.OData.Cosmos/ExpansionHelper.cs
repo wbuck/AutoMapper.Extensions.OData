@@ -1,23 +1,13 @@
 ﻿#nullable enable
 
 using LogicBuilder.Expressions.Utils;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData.Query;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow.RecordIO;
-using Microsoft.Extensions.FileSystemGlobbing.Internal;
 using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace AutoMapper.AspNet.OData;
 
@@ -84,13 +74,14 @@ internal static partial class ExpansionHelper
             Type rootType = parentType;
             foreach (var pathSegment in pathSegments.PathToNavigationProperty)
             {
-                Type memberType = rootType.GetMemberInfo(pathSegment.Identifier).GetMemberType();
+                MemberInfo member = rootType.GetMemberInfo(pathSegment.Identifier);
+                Type memberType = member.GetMemberType();
                 Type elementType = memberType.GetCurrentType();
 
                 path.Add(new
                 (
                     true,
-                    pathSegment.Identifier,
+                    member,
                     rootType,
                     memberType,
                     pathSegment.EdmType.TypeKind,
@@ -135,7 +126,7 @@ internal static partial class ExpansionHelper
                 else
                 {
                     PathSegment pathSegment = segments.Last();
-                    Type memberType = pathSegment.MemberType;
+                    Type memberType = pathSegment.ElementType;
 
                     var literalMembers = memberType.GetLiteralTypeMembers();
 
@@ -158,7 +149,7 @@ internal static partial class ExpansionHelper
                         pathSegments.Add(new
                         (
                             false,
-                            member.Name,
+                            member,
                             memberType.DeclaringType!,
                             memberType,
                             edmTypeKind,
@@ -177,16 +168,17 @@ internal static partial class ExpansionHelper
             Type rootType = parentType;
             foreach (var pathSegment in pathSegments.SelectedPath)
             {
-                Type memberType = rootType.GetMemberInfo(pathSegment.Identifier).GetMemberType();
+                MemberInfo member = rootType.GetMemberInfo(pathSegment.Identifier);
+                Type memberType = member.GetMemberType();
                 Type elementType = memberType.GetCurrentType();
 
                 path.Add(new
                 (
                     false,
-                    pathSegment.Identifier,
+                    member,
                     rootType,
                     memberType,
-                    pathSegment.EdmType.TypeKind,
+                    pathSegment.EdmType.AsElementType().TypeKind,
                     edmModel,
                     pathSegment.GetFilter(pathSegments),
                     pathSegment.GetQuery(pathSegments)
