@@ -77,7 +77,7 @@ internal static class ExpressionUtils
             }
             else
             {
-                parent = Expression.MakeMemberAccess(parent, parent.Type.GetMemberInfo(expansionPath[i].MemberName));
+                parent = Expression.MakeMemberAccess(parent, expansionPath[i].Member);
 
                 if (parent.Type.IsList())
                 {
@@ -92,7 +92,12 @@ internal static class ExpressionUtils
                 }
                 else
                 {
-                    memberSelectors.AddSelectors(expansionPath[i].SelectPaths, Expression.Parameter(sourceExpression.Type, parameterName), parent);
+                    memberSelectors.AddSelectors
+                    (
+                        expansionPath[i].SelectPaths, 
+                        Expression.Parameter(sourceExpression.Type, parameterName), 
+                        parent
+                    );
                 }
             }
         }
