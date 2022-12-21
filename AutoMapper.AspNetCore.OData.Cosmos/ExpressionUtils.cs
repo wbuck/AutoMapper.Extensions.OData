@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using System.Linq;
 using LogicBuilder.Expressions.Utils;
 using AutoMapper.Internal;
+using static AutoMapper.AspNet.OData.ExpressionMethodHelper;
 
 namespace AutoMapper.AspNet.OData;
 
@@ -21,7 +22,7 @@ internal static class ExpressionUtils
 
         List<Expression<Func<TSource, object>>> GetAllExpansions(List<LambdaExpression> selectors)
         {
-            string parameterName = "i";
+            const string parameterName = "i";
             ParameterExpression param = Expression.Parameter(typeof(TSource), parameterName);
 
             selectors.AddSelectors(selects, param, param);
@@ -39,9 +40,7 @@ internal static class ExpressionUtils
         Expression selectorBody = BuildSelectorExpression(parameter, expansions.ToList(), memberSelectors, parameter.Name);
         return Expression.Call
         (
-            typeof(Enumerable),
-            "Select",
-            new Type[] { parameter.Type, selectorBody.Type },
+            EnumerableSelectMethod.MakeGenericMethod(parameter.Type, selectorBody.Type),
             parent,
             Expression.Lambda
             (
@@ -114,9 +113,7 @@ internal static class ExpressionUtils
                     typeof(Func<,>).MakeGenericType(new[] { sourceExpression.Type, typeof(object) }),
                     Expression.Call
                     (
-                        typeof(Enumerable),
-                        "Select",
-                        new Type[] { parent.GetUnderlyingElementType(), typeof(object) },
+                        EnumerableSelectMethod.MakeGenericMethod(parent.GetUnderlyingElementType(), typeof(object)),
                         parent,
                         selector
                     ),
@@ -194,9 +191,7 @@ internal static class ExpressionUtils
 
                 expression = Expression.Call
                 (
-                    typeof(Enumerable),
-                    nameof(Enumerable.Select),
-                    new Type[] { elementType, lambda.ReturnType },
+                    EnumerableSelectMethod.MakeGenericMethod(elementType, lambda.ReturnType),
                     expression,
                     lambda
                 );

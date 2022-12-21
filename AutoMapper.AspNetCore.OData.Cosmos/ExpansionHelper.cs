@@ -52,7 +52,7 @@ internal static partial class ExpansionHelper
 
         List<PathSegment> segments = depth == 0 
             ? currentPath
-            : currentPath.ToNewList(edmModel);
+            : currentPath.ToNewList();
 
         BuildPathSegments(selectedPaths.First(), segments, depth);
 
@@ -62,7 +62,7 @@ internal static partial class ExpansionHelper
         foreach (var selectItem in selectedPaths.Skip(1))
         {
             paths.Add(BuildPathSegments(selectItem,
-                segments.Take(depth).ToNewList(edmModel), depth));
+                segments.Take(depth).ToNewList(), depth));
         }
 
         return paths;
@@ -89,7 +89,7 @@ internal static partial class ExpansionHelper
 
                 rootType = elementType;
             }
-            
+
             pathSegments.GetSelectPaths<ExpandedNavigationSelectItem>()
                 .ToList().BuildExpansionPaths(rootType, edmModel, paths, path, depth + 1);
 
@@ -109,7 +109,7 @@ internal static partial class ExpansionHelper
         {
             List<PathSegment> segments = i == 0 
                 ? currentPath 
-                : currentPath.Take(depth).ToList();
+                : currentPath.Take(depth).ToNewList();
 
             segments = BuildPathSegments(selectedPaths[i], segments, depth);
 
@@ -186,7 +186,7 @@ internal static partial class ExpansionHelper
         }
     }
 
-    private static List<PathSegment> ToNewList(this IEnumerable<PathSegment> pathSegments, IEdmModel edmModel) =>
+    private static List<PathSegment> ToNewList(this IEnumerable<PathSegment> pathSegments) =>
         new(pathSegments.Select
         (
             p => new PathSegment
