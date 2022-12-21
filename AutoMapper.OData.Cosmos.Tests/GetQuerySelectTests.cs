@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
 using Microsoft.OData.UriParser;
+using System.Reflection;
 
 namespace AutoMapper.OData.Cosmos.Tests;
 
@@ -42,7 +43,7 @@ public sealed class GetQuerySelectTests
     }
 
     [Fact]
-    public async Task ForestNoSelectsOrFilters_NavigationPropertiesShouldNotBeExpanded_ComplexTypesShouldBeExpanded_ShouldReturnAllDocuments()
+    public async Task ForestNoSelects_NavigationPropertiesShouldNotBeExpanded_ComplexTypesShouldBeExpanded()
     {
         const string query = "/forest?$orderby=ForestName";
 
@@ -112,7 +113,7 @@ public sealed class GetQuerySelectTests
     }    
 
     [Fact]
-	public async Task ForestSelectForestNameExpandDomainControllersOrderByForestNameAscending_DcShouldBeExpanded_ComplexTypesShouldBeExpanded()
+	public async Task ForestSelectForestNameExpandDc_DcShouldBeExpanded_RootComplexTypesShouldNotBeExpanded()
 	{        
         const string query = "/forest?$select=ForestName&$expand=DomainControllers/Dc&$orderby=ForestName desc";
 
@@ -189,7 +190,7 @@ public sealed class GetQuerySelectTests
     }
 
     [Fact]
-    public async Task ForestTopWithSelectAndExpandDomainControllersFilterEqAndOrderByForestName_DcShouldBeExpanded_ComplexTypesShouldBeExpanded_ShouldReturnSingleForest()
+    public async Task ForestTopWithSelectAndExpandDc_DcShouldBeExpanded_RootComplexTypesShouldNotBeExpanded()
     {
         const string query = "/forest?$top=1&$select=DomainControllers/Dc, ForestName&$expand=DomainControllers/Dc&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
@@ -232,7 +233,7 @@ public sealed class GetQuerySelectTests
                 Assert.NotNull(model.FullyQualifiedDomainName);
                 AssertMetadata(model.Metadata);
                 AssertAttributes(model.Attributes);
-                Assert.Equal(0, model.Backups.Count);
+                Assert.Empty(model.Backups);
                 Assert.NotEmpty(model.FsmoRoles);
             }
         }
@@ -255,9 +256,9 @@ public sealed class GetQuerySelectTests
     }
 
     [Fact]
-    public async void ForestTopWithSelectAndFilterEqForestNameExpandDomainControllersSelectFullyQualifiedDomainName_DcShouldBeExpanded_ShouldReturnSingleForest()
+    public async void ForestSelectForestNameExpandDcSelectFullyQualifiedDomainName_DcShouldBeExpanded_ShouldOnlyReturnDcWithSelectedProperty()
     {
-        string query = "/forest?$top=5&$select=ForestName&$expand=DomainControllers/Dc($select=FullyQualifiedDomainName)&$filter=ForestName eq 'Zulauf Forest'";
+        string query = "/forest?$top=1&$select=ForestName&$expand=DomainControllers/Dc($select=FullyQualifiedDomainName)&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
@@ -265,42 +266,218 @@ public sealed class GetQuerySelectTests
         static void Test(ICollection<ForestModel> collection)
         {
             Assert.Equal(1, collection.Count);
-            Assert.Equal(default, collection.First().ForestId);
-            Assert.Equal(default, collection.First().Id);
-            Assert.Equal("Zulauf Forest", collection.First().ForestName);
-            Assert.Null(collection.First().ForestWideCredentials);
-            Assert.Equal(2, collection.First().DomainControllers.Count);
-            Assert.All(collection.First().DomainControllers.Select(entry => entry.DcCredentials), creds => Assert.NotNull(creds));
-            Assert.All(collection.First().DomainControllers.Select(entry => entry.DcNetworkInformation), loc => Assert.NotNull(loc));
-            Assert.All(collection.First().DomainControllers.Select(entry => entry.DcNetworkInformation), loc => Assert.Equal("http://zulauf.net/", loc!.Address));
-            Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc), dc => Assert.NotNull(dc));
-            Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.FullyQualifiedDomainName), name => Assert.NotNull(name));
-            Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.FsmoRoles), roles => Assert.Empty(roles));
-            Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.Backups), backups => Assert.Empty(backups));
-            Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.Attributes), attributes => Assert.Empty(attributes));
+
+            ForestModel model = collection.First();
+
+            Assert.Equal(default, model.ForestId);
+            Assert.Equal(default, model.Id);
+            Assert.Equal("Zulauf Forest", model.ForestName);
+            Assert.Null(model.ForestWideCredentials);
+
+            AssertDomainControllerEntry(model.DomainControllers);
+            AssertDomainController(model.DomainControllers.Select(m => m.Dc));
+        }
+
+        static void AssertDomainControllerEntry(ICollection<DomainControllerEntryModel> models)
+        {
+            Assert.Equal(2, models.Count);
+            foreach (var model in models)
+            {
+                Assert.NotNull(model.Dc);
+                Assert.Equal(default, model.DateAdded);
+                Assert.Null(model.DcCredentials);
+                Assert.Null(model.DcNetworkInformation);
+            }
+        }
+
+        static void AssertDomainController(IEnumerable<DomainControllerModel> models)
+        {
+            foreach (var model in models)
+            {
+                Assert.Equal(default, model.Id);
+                Assert.Equal(default, model.ForestId);
+                Assert.NotNull(model.FullyQualifiedDomainName);
+                Assert.Null(model.Metadata);
+                Assert.Empty(model.Attributes);
+                Assert.Empty(model.Backups);
+                Assert.Empty(model.FsmoRoles);
+            }
         }
     }
 
     [Fact]
-    public async Task ForestTopWithSelectAndExpandDomainControllersExpandBackupsFilterContainsAndOrderByForestName_DcAndBackupShouldBeExpanded_ShouldReturnSingleForest()
+    public async Task ForestSelectForestNameDomainControllersAndDc_ExpandDcAndBackups_DcAndBackupShouldBeExpanded()
     {
-        const string query = "/forest?$select=ForestName, DomainControllers/Dc&$expand=DomainControllers/Dc($select=FsmoRoles;$expand=Backups)&$filter=contains(ForestName, 'Abernathy Forest')";
+        const string query = "/forest?$top=1&$select=ForestName, DomainControllers, DomainControllers/Dc&$expand=DomainControllers/Dc($select=FsmoRoles;$expand=Backups)&$orderby=ForestName asc";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
 
         static void Test(ICollection<ForestModel> collection)
-        {            
+        {
             Assert.Equal(1, collection.Count);
-            Assert.Equal(4, collection.First().DomainControllers.Count);
-            Assert.Equal("Abernathy Forest", collection.First().ForestName);
-            Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.FsmoRoles), roles => Assert.NotEmpty(roles));
-            Assert.Equal(7, collection.First().DomainControllers.SelectMany(entry => entry.Dc.Backups).Count());
-            Assert.All(collection.First().DomainControllers.SelectMany(entry => entry.Dc.Backups), backup => Assert.NotNull(backup.Location));
-            Assert.All(collection.First().DomainControllers.SelectMany(entry => entry.Dc.Backups), backup => Assert.NotNull(backup.Location.Credentials));
-            Assert.All(collection.First().DomainControllers.SelectMany(entry => entry.Dc.Backups), backup => Assert.NotNull(backup.Location.NetworkInformation));
-            Assert.All(collection.First().DomainControllers.SelectMany(entry => entry.Dc.Backups), backup => Assert.Equal("admin@abernathy.com", backup.Location.Credentials!.Username));
-            Assert.All(collection.First().DomainControllers.Select(entry => entry.Dc.Attributes), attributes => Assert.Empty(attributes));
+
+            ForestModel model = collection.First();
+            AssertForestModel(model);
+            AssertDomainControllerEntry(model.DomainControllers);
+            AssertDomainController(model.DomainControllers.Select(m => m.Dc));
+            AssertBackup(model.DomainControllers.SelectMany(m => m.Dc.Backups));
+        }
+
+        static void AssertForestModel(ForestModel model)
+        {
+            Assert.Equal(default, model.ForestId);
+            Assert.Equal(default, model.Id);
+            Assert.Empty(model.Values);
+            Assert.Equal("Abernathy Forest", model.ForestName);
+            Assert.Null(model.ForestWideCredentials);
+            Assert.Null(model.Metadata);                        
+        }
+
+        static void AssertBackup(IEnumerable<BackupModel> models)
+        {
+            Assert.NotEmpty(models);
+            foreach (var model in models)
+            {
+                Assert.NotEqual(default, model.Id);
+                Assert.NotEqual(default, model.ForestId);
+                Assert.NotEqual(default, model.DateCreated);
+                Assert.NotNull(model.Location);
+                AssertCredentials(model.Location.Credentials);
+                AssertNetworkInfo(model.Location.NetworkInformation);
+            }
+        }
+
+        static void AssertDomainControllerEntry(ICollection<DomainControllerEntryModel> models)
+        {
+            Assert.NotEmpty(models);
+            foreach (var model in models)
+            {
+                Assert.NotNull(model.Dc);
+                Assert.NotEqual(default, model.DateAdded);
+                AssertCredentials(model.DcCredentials);
+                AssertNetworkInfo(model.DcNetworkInformation);
+            }
+        }
+
+        static void AssertDomainController(IEnumerable<DomainControllerModel> models)
+        {
+            Assert.NotEmpty(models);
+            foreach (var model in models)
+            {
+                Assert.Equal(default, model.Id);
+                Assert.Equal(default, model.ForestId);
+                Assert.Null(model.FullyQualifiedDomainName);
+                Assert.Null(model.Metadata);
+                Assert.Empty(model.Attributes);
+                Assert.NotEmpty(model.FsmoRoles);
+            }
+        }
+
+        static void AssertNetworkInfo(params NetworkInformationModel?[] models)
+        {
+            foreach (var model in models)
+            {
+                Assert.NotNull(model);
+                Assert.NotNull(model.Address);
+            }
+        }
+
+        static void AssertCredentials(params CredentialsModel?[] models)
+        {
+            foreach (var model in models)
+            {
+                Assert.NotNull(model);
+                Assert.NotNull(model.Username);
+                Assert.NotNull(model.Password);
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData("/forest?$select=Metadata($select=MetadataKeyValuePairs($select=Value))")]
+    [InlineData("/forest?$select=Metadata/MetadataKeyValuePairs/Value")]
+    public async Task ForestSelectComplexProperties_BothSyntaxes_ShouldOnlyReturnComplexPropertiesWithSelectedProperties(string query)
+    {
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, collection.Count);
+            foreach (var model in collection)
+            {
+                AssertModel(model);
+            }
+        }
+
+        static void AssertModel(ForestModel model)
+        {
+            Assert.NotNull(model.Metadata);
+            Assert.Null(model.Metadata.MetadataType);
+            Assert.Equal(3, model.Metadata.MetadataKeyValuePairs.Count);
+            Assert.All(model.Metadata.MetadataKeyValuePairs, pair => Assert.Null(pair.Key));
+            Assert.All(model.Metadata.MetadataKeyValuePairs, pair => Assert.NotEqual(default, pair.Value));
+        }
+    }
+
+    [Theory]
+    [InlineData("/forest?$select=Metadata($select=MetadataKeyValuePairs)")]
+    [InlineData("/forest?$select=Metadata/MetadataKeyValuePairs")]
+    public async Task ForestSelectComplexType_BothSyntaxes_ShouldReturnFullyPopulatedComplexTypes(string query)
+    {
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, collection.Count);
+            foreach (var model in collection)
+            {
+                AssertModel(model);
+            }
+        }
+
+        static void AssertModel(ForestModel model)
+        {
+            Assert.NotNull(model.Metadata);
+            Assert.Null(model.Metadata.MetadataType);
+            Assert.Equal(3, model.Metadata.MetadataKeyValuePairs.Count);
+            Assert.All(model.Metadata.MetadataKeyValuePairs, pair => Assert.NotNull(pair.Key));
+            Assert.All(model.Metadata.MetadataKeyValuePairs, pair => Assert.NotEqual(default, pair.Value));
+        }
+    }
+
+    [Theory]
+    [InlineData("/forest?$expand=DomainControllers/Dc($expand=Backups($select=Location/Credentials/Username))")]
+    [InlineData("/forest?$expand=DomainControllers/Dc($expand=Backups($select=Location($select=Credentials($select=Username))))")]
+    public async Task ForestExpandDcAndBackupSelectComplexProperties_BothSyntaxes_ShouldOnlyReturnComplexPropertiesWithSelectedProperties(string query)
+    {
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, collection.Count);
+            foreach (var model in collection.SelectMany(m => m.DomainControllers.SelectMany(m => m.Dc.Backups)))
+            {
+                AssertModel(model);
+            }
+        }
+
+        static void AssertModel(BackupModel model)
+        {
+            Assert.Equal(default, model.Id);
+            Assert.Equal(default, model.ForestId);
+            Assert.Equal(default, model.DateCreated);
+            Assert.NotNull(model.Location);
+            Assert.NotNull(model.Location.Credentials);
+            Assert.NotNull(model.Location.Credentials.Username);
+            Assert.Null(model.Location.Credentials.Password);
+            Assert.Null(model.Location.NetworkInformation);
         }
     }
 
