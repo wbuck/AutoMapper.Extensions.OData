@@ -150,13 +150,14 @@ internal static class ExpressionUtils
 
         selectors.AddRange
         (
-            selects.Select(path => path.BuildSelectBodies(parentBody))
-            .Select(expression => Expression.Lambda
-             (
-                 typeof(Func<,>).MakeGenericType(new[] { param.Type, typeof(object) }),
-                 expression,
-                 param
-             ))
+            selects
+                .Select(path => path.BuildSelectBodies(parentBody))
+                .Select(expression => Expression.Lambda
+                (
+                    typeof(Func<,>).MakeGenericType(new[] { param.Type, typeof(object) }),
+                    expression,
+                    param
+                ))
         );
     }
 

@@ -15,7 +15,6 @@ internal record struct PathSegment
         Type parentType,
         Type memberType,
         EdmTypeKind edmTypeKind,
-        IEdmModel edmModel,
         FilterOptions? filterOptions = null,
         QueryOptions? queryOptions = null,
         List<List<PathSegment>>? selectPaths = null)
@@ -26,7 +25,6 @@ internal record struct PathSegment
         MemberType = memberType;
         ElementType = memberType.GetCurrentType();
         EdmTypeKind = edmTypeKind;
-        EdmModel = edmModel;
         FilterOptions = filterOptions;
         QueryOptions = queryOptions;
         SelectPaths = selectPaths;
@@ -39,7 +37,6 @@ internal record struct PathSegment
     public MemberInfo Member { get; }
     public Type ElementType { get; }
     public EdmTypeKind EdmTypeKind { get; }
-    public IEdmModel EdmModel { get; }
     public FilterOptions? FilterOptions { get; }
     public QueryOptions? QueryOptions { get; }
     public IReadOnlyList<IReadOnlyList<PathSegment>>? SelectPaths { get; }

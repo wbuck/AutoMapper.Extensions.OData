@@ -11,26 +11,10 @@ namespace AutoMapper.AspNet.OData;
 
 internal static class TypeExt
 {
-    public static MemberInfo[] GetSelectMembersOrAllLiteralMembers(this Type parentType, List<string>? selects = null)
-    {
-        if (selects is null || !selects.Any())
-            return parentType.GetLiteralTypeMembers();
+    public static List<List<PathSegment>> GetLiteralAndComplexSelects(this Type parentType, IEdmModel edmModel) =>
+        parentType.GetLiteralSelects().Concat(edmModel.GetComplexTypeSelects(parentType)).ToList();
 
-        return selects.Select(select => parentType.GetMemberInfo(select)).ToArray();
-    }
-
-    public static MemberInfo[] GetPropertiesAndFields(this Type parentType) =>
-        parentType.GetMemberInfos()
-            .Where(info => 
-                info.MemberType == MemberTypes.Field || info.MemberType == MemberTypes.Property)
-            .ToArray();
-
-    public static List<List<PathSegment>> GetComplexTypeSelects(this IEdmModel edmModel, Type parentType)
-    {
-        return GetComplexTypeSelects(new(), new(), parentType, edmModel);
-    }
-
-    public static List<List<PathSegment>> GetLiteralSelects(this Type parentType, IEdmModel edmModel, List<PathSegment>? pathSegments = null) =>
+    public static List<List<PathSegment>> GetLiteralSelects(this Type parentType, List<PathSegment>? pathSegments = null) =>
         parentType.GetLiteralTypeMembers()
             .Select(member => new List<PathSegment>(pathSegments ?? Enumerable.Empty<PathSegment>())
             {
@@ -39,8 +23,7 @@ internal static class TypeExt
                     member,
                     parentType,
                     member.GetMemberType(),
-                    EdmTypeKind.Primitive,
-                    edmModel
+                    EdmTypeKind.Primitive
                 )
             }).ToList();
 
@@ -57,61 +40,11 @@ internal static class TypeExt
         ).ToArray();
     }
 
-    private static List<List<PathSegment>> GetComplexTypeSelects(
-        List<List<PathSegment>> expansions, 
-        List<PathSegment> currentExpansions,
-        Type parentType,
-        IEdmModel edmModel, 
-        in int depth = 0)
-    {
-        var members = edmModel.GetComplexMembers(parentType);
-
-        for (int i = 0; i < members.Count; ++i)
-        {
-            var member = members[i];
-            Type memberType = member.GetMemberType();                
-
-            List<PathSegment> pathSegments = i == 0 ? currentExpansions : new(currentExpansions.Take(depth));
-            pathSegments.Add(new PathSegment
-            (
-                member,
-                parentType,
-                memberType,
-                EdmTypeKind.Complex,
-                edmModel
-            ));
-
-            Type elementType = pathSegments.Last().ElementType;
-            var memberSelects = elementType.GetLiteralSelects(edmModel, pathSegments);
-
-            if (memberSelects.Any())
-                expansions.AddRange(memberSelects);
-
-            GetComplexTypeSelects(expansions, pathSegments, elementType, edmModel, depth + 1);
-        }
-
-        return expansions;
-    }
-
-    private static IReadOnlyList<MemberInfo> GetComplexMembers(this IEdmModel edmModel, Type parentType)
-    {
-        MemberInfo[] members = parentType.GetPropertiesAndFields();
-        List<MemberInfo> complexMembers = new(members.Length);
-
-        var complexTypes = edmModel.SchemaElements.OfType<IEdmComplexType>();
-
-        foreach (var member in members)
-        {
-            var memberType = member.GetMemberType().GetCurrentType();
-
-            if (!member.IsListOfLiteralTypes() && !memberType.IsLiteralType() &&
-                complexTypes.Any(c => c.Name.Equals(memberType.Name, StringComparison.Ordinal)))
-            {
-                complexMembers.Add(member);
-            }
-        }
-        return complexMembers;
-    }
+    public static MemberInfo[] GetPropertiesAndFields(this Type parentType) =>
+        parentType.GetMemberInfos()
+            .Where(info =>
+                info.MemberType == MemberTypes.Field || info.MemberType == MemberTypes.Property)
+            .ToArray();
 
     public static bool IsListOfLiteralTypes(this MemberInfo memberInfo)
     {

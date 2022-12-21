@@ -6,7 +6,6 @@ using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 
@@ -19,7 +18,7 @@ internal static partial class ExpansionHelper
         Type parentType = typeof(TModel);
         IEdmModel edmModel = options.Context.Model;
 
-        var selects = options.GetSelects<PathSelectItem>();
+        var selects = options.GetSelectPaths<PathSelectItem>();
 
         if (!selects.Any())
         {
@@ -31,59 +30,44 @@ internal static partial class ExpansionHelper
         return selects.ToList().BuildSelectPaths(parentType, edmModel, new(), new());
     }
 
-    private static List<PathSegment> ToNewList(this IEnumerable<PathSegment> pathSegments, IEdmModel edmModel) =>
-        new(pathSegments.Select
-        (
-            p => new PathSegment
-            (
-                p.Member,
-                p.ParentType,
-                p.MemberType,
-                p.EdmTypeKind,
-                edmModel
-            ))
-        );
-
     public static List<List<PathSegment>> GetExpansions<TModel>(this ODataQueryOptions<TModel> options)
     {
         Type parentType = typeof(TModel);
         IEdmModel edmModel = options.Context.Model;
       
-        return options.GetSelects<ExpandedNavigationSelectItem>()
+        return options.GetSelectPaths<ExpandedNavigationSelectItem>()
             .ToList().BuildExpansionPaths(parentType, edmModel, new(), new());
     }
 
     private static List<List<PathSegment>> BuildExpansionPaths(
-        this IReadOnlyList<ExpandedNavigationSelectItem> selectItems,
+        this IReadOnlyList<ExpandedNavigationSelectItem> selectedPaths,
         Type parentType,
         IEdmModel edmModel,
         List<List<PathSegment>> paths,
-        List<PathSegment> currentExpansionPath,
-        int depth = 0)
+        List<PathSegment> currentPath,
+        in int depth = 0)
     {
-        if (!selectItems.Any())
+        if (!selectedPaths.Any())
             return paths;
 
-        List<PathSegment> newExpansionPath = depth switch
-        {
-            > 0 => currentExpansionPath.ToNewList(edmModel),
-            _ => currentExpansionPath
-        };
+        List<PathSegment> segments = depth == 0 
+            ? currentPath
+            : currentPath.ToNewList(edmModel);
 
-        BuildPathSegments(selectItems.First(), newExpansionPath, depth);
+        BuildPathSegments(selectedPaths.First(), segments, depth);
 
-        if (depth == 0 || !currentExpansionPath.Equals(newExpansionPath))
-            paths.Add(newExpansionPath);
+        if (depth == 0 || !currentPath.Equals(segments))
+            paths.Add(segments);
 
-        foreach (var selectItem in selectItems.Skip(1))
+        foreach (var selectItem in selectedPaths.Skip(1))
         {
             paths.Add(BuildPathSegments(selectItem,
-                newExpansionPath.Take(depth).ToNewList(edmModel), depth));
+                segments.Take(depth).ToNewList(edmModel), depth));
         }
 
         return paths;
 
-        List<PathSegment> BuildPathSegments(ExpandedNavigationSelectItem pathSegments, List<PathSegment> path, int depth)
+        List<PathSegment> BuildPathSegments(ExpandedNavigationSelectItem pathSegments, List<PathSegment> path, in int depth)
         {
             Type rootType = parentType;
             foreach (var pathSegment in pathSegments.PathToNavigationProperty)
@@ -98,7 +82,6 @@ internal static partial class ExpansionHelper
                     rootType,
                     memberType,
                     pathSegment.EdmType.TypeKind,
-                    edmModel,
                     pathSegment.GetFilter(pathSegments),
                     pathSegment.GetQuery(pathSegments),
                     pathSegment.GetSelects(pathSegments, elementType, edmModel)
@@ -107,7 +90,7 @@ internal static partial class ExpansionHelper
                 rootType = elementType;
             }
             
-            pathSegments.GetSelects<ExpandedNavigationSelectItem>()
+            pathSegments.GetSelectPaths<ExpandedNavigationSelectItem>()
                 .ToList().BuildExpansionPaths(rootType, edmModel, paths, path, depth + 1);
 
             return path;
@@ -120,60 +103,28 @@ internal static partial class ExpansionHelper
         IEdmModel edmModel,
         List<List<PathSegment>> paths,
         List<PathSegment> currentPath,
-        int depth = 0)
+        in int depth = 0)
     {
         for (int i = 0; i < selectedPaths.Count; ++i)
         {
-            List<PathSegment> segments = i == 0 ? currentPath : currentPath.Take(depth).ToList();
-            segments = BuildPathSegments
-            (
-                selectedPaths[i], 
-                segments, 
-                depth
-            );
+            List<PathSegment> segments = i == 0 
+                ? currentPath 
+                : currentPath.Take(depth).ToList();
+
+            segments = BuildPathSegments(selectedPaths[i], segments, depth);
 
             if (depth == 0 || !segments.Equals(currentPath))
             {
-                if (!segments.Last().IsComplex)
-                    paths.Add(segments);
+                if (!segments.Last().IsComplex)                
+                    paths.Add(segments);                    
                 else
-                {
-                    PathSegment pathSegment = segments.Last();
-                    Type memberType = pathSegment.ElementType;
-
-                    var memberSelects = memberType.GetLiteralTypeMembers()
-                        .Select(m => AddExpansion(m, EdmTypeKind.Primitive, new(segments)));
-
-                    var complexPaths = edmModel.GetComplexTypeSelects(memberType).Select
-                    (
-                        paths =>
-                        {
-                            paths.InsertRange(0, segments);
-                            return paths;
-                        }
-                    );
-
-                    paths.AddRange(memberSelects.Concat(complexPaths));
-
-                    List<PathSegment> AddExpansion(MemberInfo member, EdmTypeKind edmTypeKind, List<PathSegment> pathSegments)
-                    {
-                        pathSegments.Add(new
-                        (
-                            member,
-                            member.DeclaringType!,
-                            member.GetMemberType().GetCurrentType(),
-                            edmTypeKind,
-                            edmModel
-                        ));
-                        return pathSegments;
-                    }
-                }
+                    paths.AddLiteralAndComplexSelects(segments, edmModel);
             }
         }
 
         return paths;
 
-        List<PathSegment> BuildPathSegments(PathSelectItem pathSegments, List<PathSegment> path, int depth)
+        List<PathSegment> BuildPathSegments(PathSelectItem pathSegments, List<PathSegment> path, in int depth)
         {
             Type rootType = parentType;
             foreach (var pathSegment in pathSegments.SelectedPath)
@@ -188,7 +139,6 @@ internal static partial class ExpansionHelper
                     rootType,
                     memberType,
                     pathSegment.EdmType.AsElementType().TypeKind,
-                    edmModel,
                     pathSegment.GetFilter(pathSegments),
                     pathSegment.GetQuery(pathSegments)
                 ));
@@ -196,28 +146,57 @@ internal static partial class ExpansionHelper
                 rootType = elementType;
             }            
 
-            pathSegments.GetSelects<PathSelectItem>().ToList()
+            pathSegments.GetSelectPaths<PathSelectItem>().ToList()
                 .BuildSelectPaths(rootType, edmModel, paths, path, depth + 1);
 
             return path;
-        }        
-    }
-
-    private static List<List<PathSegment>> GetLiteralAndComplexSelects(this Type parentType, IEdmModel edmModel) =>
-        parentType.GetLiteralSelects(edmModel).Concat(edmModel.GetComplexTypeSelects(parentType)).ToList();
-
-    private static List<List<PathSegment>>? GetSelects(this ODataPathSegment pathSegment, ExpandedNavigationSelectItem pathSegments, Type parentType, IEdmModel edmModel)
-    {
-        if (pathSegments.PathToNavigationProperty.Last().Identifier.Equals(pathSegment.Identifier))
-        {
-            return pathSegments.GetSelects<PathSelectItem>().ToList() switch
-            {
-                var selects when selects.Any() => selects.BuildSelectPaths(parentType, edmModel, new(), new()),
-                _ => parentType.GetLiteralAndComplexSelects(edmModel)
-            };
         }
-        return null;
     }
+
+    private static List<List<PathSegment>> AddLiteralAndComplexSelects(this List<List<PathSegment>> paths, List<PathSegment> pathSegments, IEdmModel edmModel)
+    {
+        PathSegment pathSegment = pathSegments.Last();
+        Type memberType = pathSegment.ElementType;
+
+        var memberSelects = memberType.GetLiteralTypeMembers()
+            .Select(m => AddPathSegment(m, EdmTypeKind.Primitive, new(pathSegments)));
+
+        var complexPaths = edmModel.GetComplexTypeSelects(memberType).Select
+        (
+            paths =>
+            {
+                paths.InsertRange(0, pathSegments);
+                return paths;
+            }
+        );
+
+        paths.AddRange(memberSelects.Concat(complexPaths));
+        return paths;
+
+        static List<PathSegment> AddPathSegment(MemberInfo member, EdmTypeKind edmTypeKind, List<PathSegment> pathSegments)
+        {
+            pathSegments.Add(new
+            (
+                member,
+                member.DeclaringType!,
+                member.GetMemberType().GetCurrentType(),
+                edmTypeKind
+            ));
+            return pathSegments;
+        }
+    }
+
+    private static List<PathSegment> ToNewList(this IEnumerable<PathSegment> pathSegments, IEdmModel edmModel) =>
+        new(pathSegments.Select
+        (
+            p => new PathSegment
+            (
+                p.Member,
+                p.ParentType,
+                p.MemberType,
+                p.EdmTypeKind
+            ))
+        );  
 
     private static FilterOptions? GetFilter(this ODataPathSegment pathSegment, ExpandedNavigationSelectItem pathSegments)
     {
@@ -262,12 +241,25 @@ internal static partial class ExpansionHelper
         return null;
     }
 
-    private static IEnumerable<TPathType> GetSelects<TPathType>(this ExpandedNavigationSelectItem item) where TPathType : SelectItem =>
+    private static List<List<PathSegment>>? GetSelects(this ODataPathSegment pathSegment, ExpandedNavigationSelectItem pathSegments, Type parentType, IEdmModel edmModel)
+    {
+        if (pathSegments.PathToNavigationProperty.Last().Identifier.Equals(pathSegment.Identifier))
+        {
+            return pathSegments.GetSelectPaths<PathSelectItem>().ToList() switch
+            {
+                var selects when selects.Any() => selects.BuildSelectPaths(parentType, edmModel, new(), new()),
+                _ => parentType.GetLiteralAndComplexSelects(edmModel)
+            };
+        }
+        return null;
+    }
+
+    private static IEnumerable<TPathType> GetSelectPaths<TPathType>(this ExpandedNavigationSelectItem item) where TPathType : SelectItem =>
         item.SelectAndExpand?.SelectedItems.OfType<TPathType>() ?? Enumerable.Empty<TPathType>();
 
-    private static IEnumerable<TPathType> GetSelects<TPathType>(this PathSelectItem item) where TPathType : SelectItem =>
+    private static IEnumerable<TPathType> GetSelectPaths<TPathType>(this PathSelectItem item) where TPathType : SelectItem =>
         item.SelectAndExpand?.SelectedItems.OfType<TPathType>() ?? Enumerable.Empty<TPathType>();
 
-    private static IEnumerable<TPathType> GetSelects<TPathType>(this ODataQueryOptions options) where TPathType : SelectItem =>
+    private static IEnumerable<TPathType> GetSelectPaths<TPathType>(this ODataQueryOptions options) where TPathType : SelectItem =>
         options.SelectExpand?.SelectExpandClause?.SelectedItems.OfType<TPathType>() ?? Enumerable.Empty<TPathType>();
 }
