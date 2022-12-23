@@ -6,9 +6,9 @@ internal static class DatabaseSeeder
 {
     public static ICollection<Forest> GenerateData()
     {
-        var forest1 = Guid.NewGuid();
-        var forest2 = Guid.NewGuid();
-        var forest3 = Guid.NewGuid();
+        var forest1 = Guid.Parse("95165dc2-9617-4b61-991a-4b928d2bd735");
+        var forest2 = Guid.Parse("92e0f48d-45e4-4db4-8112-ce8a721e5ff2");
+        var forest3 = Guid.Parse("09defec7-e3cf-4556-b583-576eafe112cb");
 
         return new List<Forest>
         {

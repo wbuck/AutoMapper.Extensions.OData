@@ -31,6 +31,12 @@ internal class ExpressionMethodHelper
     private static readonly MethodInfo _queryableSkipMethod =
        GetGenericMethod(_ => Queryable.Skip(default(IQueryable<int>)!, 0));
 
+    private static readonly MethodInfo _enumerableOrderByMethod =
+        GetGenericMethod(_ => Enumerable.OrderBy(default(IQueryable<int>)!, i => i));
+
+    private static readonly MethodInfo _enumerableOrderByDescendingMethod =
+        GetGenericMethod(_ => Enumerable.OrderByDescending(default(IQueryable<int>)!, i => i));
+
     public static MethodInfo QueryableSkipMethod =>
         _queryableSkipMethod;
     public static MethodInfo QueryableTakeMethod =>
@@ -45,7 +51,10 @@ internal class ExpressionMethodHelper
         _enumerableEmptyAnyMethod;
     public static MethodInfo EnumerableNonEmptyAnyMethod =>
         _enumerableNonEmptyAnyMethod;
-
+    public static MethodInfo EnumerableOrderByMethod =>
+        _enumerableOrderByMethod;
+    public static MethodInfo EnumerableOrderByDescendingMethod =>
+        _enumerableOrderByDescendingMethod;
 
     private static MethodInfo GetGenericMethod<TReturn>(Expression<Func<object, TReturn>> expression) =>
         GetGenericMethod(expression as Expression);

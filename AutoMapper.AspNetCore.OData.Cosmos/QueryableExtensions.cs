@@ -10,8 +10,6 @@ using System.Threading.Tasks;
 
 namespace AutoMapper.AspNet.OData;
 
-
-
 public static class QueryableExtensions
 {
     public static ICollection<TModel> Get<TModel, TData>(this IQueryable<TData> query,
@@ -74,10 +72,11 @@ public static class QueryableExtensions
             Expression<Func<TModel, bool>> filter)
             where TModel : class
     {
+        var selects = options.GetSelects();
         var expansions = options.GetExpansions();
 
         var includes = expansions
-            .BuildIncludes<TModel>(options.GetSelects())
+            .BuildIncludes<TModel>(selects)
             .ToList();
 
         return query.GetQuery

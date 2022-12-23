@@ -153,7 +153,7 @@ internal static class ExpressionUtils
         selectors.AddRange
         (
             selects
-                .Select(path => path.BuildSelectBodies(parentBody))
+                .Select(path => path.BuildSelectorBodies(parentBody))
                 .Select(expression => Expression.Lambda
                 (
                     typeof(Func<,>).MakeGenericType(new[] { param.Type, typeof(object) }),
@@ -163,7 +163,7 @@ internal static class ExpressionUtils
         );
     }
 
-    private static Expression BuildSelectBodies(this IReadOnlyList<PathSegment> pathSegments, Expression expression)
+    private static Expression BuildSelectorBodies(this IReadOnlyList<PathSegment> pathSegments, Expression expression)
     {
         if (!pathSegments.Any())
             return expression;
@@ -190,7 +190,7 @@ internal static class ExpressionUtils
 
                 LambdaExpression lambda = Expression.Lambda
                 (
-                    pathSegments.Skip(i + 1).ToList().BuildSelectBodies(memberExpression),
+                    pathSegments.Skip(i + 1).ToList().BuildSelectorBodies(memberExpression),
                     parameter
                 );
 
