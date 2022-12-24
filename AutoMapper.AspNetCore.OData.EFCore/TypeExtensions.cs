@@ -126,6 +126,15 @@ namespace AutoMapper.AspNet.OData
 
         public static Dictionary<EdmTypeStructure, Type> GetEdmToClrTypeMappings() => Constants.EdmToClrTypeMappings;
 
+        public static bool IsListOfLiteralTypes(this MemberInfo memberInfo)
+        {
+            var memberType = memberInfo.GetMemberType();
+            return memberType.IsListOfLiteralTypes();
+        }
+
+        public static bool IsListOfLiteralTypes(this Type type) =>
+            type.IsList() && type.GetUnderlyingElementType().IsLiteralType();
+
         private class AssemblyResolver : IAssemblyResolver
         {
             private List<Assembly> _assemblides;

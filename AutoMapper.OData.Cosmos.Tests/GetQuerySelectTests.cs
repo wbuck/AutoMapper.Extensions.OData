@@ -520,7 +520,9 @@ public sealed class GetQuerySelectTests
     [Fact]
     public async Task ForestSelectValues_ShouldReturnLiteralCollectionOfValues()
     {
-        const string query = "/forest?$select=Values($top=1)";
+        const string query = "/forest?$select=Values($filter=$this gt 500 and $this lt 1000)";
+        //const string query = "/forest?$select=DomainControllers($filter=DcCredentials/Username eq 'administrator1')";
+        //const string query = "/forest?$expand=DomainControllers/Dc($expand=Backups($filter=ForestId eq 00000000-0000-0000-0000-000000000000))";
         //const string query = "/forest?$select=Values($orderby=$this)";
         //const string query = "/forest?$expand=DomainControllers/Dc($expand=Backups)";
         Test(Get<ForestModel, Forest>(query));

@@ -113,10 +113,10 @@ namespace AutoMapper.AspNet.OData
 
         private IExpressionPart GetNonResourceRangeVariableReferenceNodeFilterPart(NonResourceRangeVariableReferenceNode nonResourceRangeVariableReferenceNode)
             => new ParameterOperator
-            (
-                parameters,
-                nonResourceRangeVariableReferenceNode.RangeVariable.Name
-            );
+                (
+                    parameters,
+                    nonResourceRangeVariableReferenceNode.RangeVariable.Name
+                );
 
         private IExpressionPart GetResourceRangeVariableReferenceNodeFilterPart(ResourceRangeVariableReferenceNode resourceRangeVariableReferenceNode)
             => new ParameterOperator

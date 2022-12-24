@@ -1,6 +1,9 @@
-﻿using Microsoft.AspNetCore.OData.Query;
+﻿using LogicBuilder.Expressions.Utils;
+using Microsoft.AspNetCore.OData.Query;
+using Microsoft.OData.UriParser;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 
@@ -16,13 +19,36 @@ namespace AutoMapper.AspNet.OData.Visitors
         private readonly ODataQueryContext context;
 
         public static Expression UpdaterExpansion(Expression expression, List<ODataExpansionOptions> expansions, ODataQueryContext context)
-                => new ChildCollectionFilterUpdater(expansions, context).Visit(expression);
+                => new ChildCollectionFilterUpdater(expansions, context).Visit(expression);        
 
         protected override Expression GetBindingExpression(MemberAssignment binding, ODataExpansionOptions expansion)
         {
-            if (expansion.FilterOptions != null)
+            if (expansion.FilterOptions?.FilterClause is FilterClause filter)
             {
-                return FilterAppender.AppendFilter(binding.Expression, expansion, context);
+                Expression expression = FilterAppender.AppendFilter(binding.Expression, expansion, context);
+
+                Type expressionType = binding.Expression.Type;
+                if (expression == binding.Expression && expressionType.IsListOfLiteralTypes())
+                {
+                    Type elementType = binding.Expression.Type.GetCurrentType();
+
+                    LambdaExpression lambda = filter.GetFilterExpression(elementType, this.context, "$this");
+                    lambda = (LambdaExpression)lambda.ReplaceParameter
+                    (
+                        lambda.Parameters.First(), 
+                        Expression.Parameter(elementType, "i0")
+                    );
+
+                    expression = Expression.Call
+                    (
+                        typeof(Enumerable),
+                        nameof(Enumerable.Where),
+                        new Type[] { elementType },
+                        binding.Expression,
+                        lambda
+                    ).ToListCall(elementType);
+                }
+                return expression;
             }
             else if (expansions.Count > 1)  //Mutually exclusive with expansion.Filter != null.                            
             {                               //There can be only one filter in the list.  See the GetFilters() method in QueryableExtensions.UpdateQueryable.
@@ -36,5 +62,10 @@ namespace AutoMapper.AspNet.OData.Visitors
             else
                 throw new ArgumentException("Last expansion in the list must have a filter", nameof(expansions));
         }
+
+
+
+        private static LambdaExpression ReplaceParameter(LambdaExpression expression, ParameterExpression replacment) =>
+            (LambdaExpression)new ParameterReplacer(expression.Parameters.First(), replacment).Visit(expression);
     }
 }

@@ -86,7 +86,7 @@ public static class QueryableExtensions
             options.GetQueryableExpression(querySettings?.ODataSettings),
             includes,
             querySettings?.ProjectionSettings
-        ).UpdateQueryableExpression(expansions.ToExpansionOptions(), options.Context);
+        ).UpdateQueryableExpression(expansions.Concat(selects).ToList().ToExpansionOptions(), options.Context);
     }
 
     private static List<List<ODataExpansionOptions>> ToExpansionOptions(this List<List<PathSegment>> pathSegments)

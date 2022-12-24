@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Reflection.Metadata;
 
 namespace AutoMapper.AspNet.OData
 {
@@ -575,8 +576,8 @@ namespace AutoMapper.AspNet.OData
         public static LambdaExpression GetFilterExpression(this FilterClause filterClause, Type type) 
             => filterClause.GetFilterExpression(type, null);
 
-        public static LambdaExpression GetFilterExpression(this FilterClause filterClause, Type type, ODataQueryContext context)
-        {
+        public static LambdaExpression GetFilterExpression(this FilterClause filterClause, Type type, ODataQueryContext context, string? parameterName = null)
+        {            
             var parameters = new Dictionary<string, ParameterExpression>();
 
             return new FilterHelper
@@ -586,7 +587,7 @@ namespace AutoMapper.AspNet.OData
                 context
             )
             .GetFilterPart(filterClause.Expression)
-            .GetFilter(type, parameters, filterClause.RangeVariable.Name);
+            .GetFilter(type, parameters, parameterName ?? filterClause.RangeVariable.Name);
         }
 
         private static Expression Unquote(this Expression exp)
@@ -603,6 +604,15 @@ namespace AutoMapper.AspNet.OData
         public static IEnumerable<Expression<Func<TSource, object>>> BuildIncludes<TSource>(this IEnumerable<string> includes)
             where TSource : class
             => includes.Select(include => BuildSelectorExpression<TSource>(include)).ToList();
+
+        internal static MethodCallExpression ToListCall(this Expression expression, Type elementType) =>
+            Expression.Call
+            (
+                typeof(Enumerable),
+                nameof(Enumerable.ToList),
+                new Type[] { elementType },
+                expression
+            );
 
         private static Expression<Func<TSource, object>> BuildSelectorExpression<TSource>(string fullName, string parameterName = "i")
         {

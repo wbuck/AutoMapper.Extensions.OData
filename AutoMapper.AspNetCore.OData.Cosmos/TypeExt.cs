@@ -5,6 +5,7 @@ using Microsoft.OData.Edm;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace AutoMapper.AspNet.OData;
@@ -44,17 +45,7 @@ internal static class TypeExt
         parentType.GetMemberInfos()
             .Where(info =>
                 info.MemberType == MemberTypes.Field || info.MemberType == MemberTypes.Property)
-            .ToArray();
-
-    public static bool IsListOfLiteralTypes(this MemberInfo memberInfo)
-    {
-        var memberType = memberInfo.GetMemberType();
-        return memberType.IsListOfLiteralTypes();
-    }
-
-    public static bool IsListOfLiteralTypes(this Type type) =>
-        type.IsList() && type.GetUnderlyingElementType().IsLiteralType();
-
+            .ToArray();      
 
     private static MemberInfo[] GetMemberInfos(this Type parentType)
         => parentType.GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy | BindingFlags.IgnoreCase);

@@ -40,7 +40,7 @@ internal static class DatabaseSeeder
                         DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(12)),
                         DcCredentials = new()
                         {
-                            Username = "administrator",
+                            Username = "administrator1",
                             Password = "ch8d7F7YI6v6!BRx"
                         },
                         DcNetworkInformation = new()
@@ -126,7 +126,7 @@ internal static class DatabaseSeeder
                         DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(15)),
                         DcCredentials = new()
                         {
-                            Username = "administrator",
+                            Username = "administrator2",
                             Password = "cS6Xxs7z3Q4xS^KU"
                         },
                         DcNetworkInformation = new()
@@ -211,7 +211,7 @@ internal static class DatabaseSeeder
                        DateAdded = DateTime.Now,
                        DcCredentials = new()
                        {
-                           Username = "administrator",
+                           Username = "administrator3",
                            Password = ""
                        },
                        DcNetworkInformation = new()
@@ -278,7 +278,7 @@ internal static class DatabaseSeeder
                        DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(20)),
                        DcCredentials = new()
                        {
-                           Username = "administrator",
+                           Username = "administrator4",
                            Password = "r7j&eaN5OLWx*27S"
                        },
                        DcNetworkInformation = new()
@@ -388,7 +388,7 @@ internal static class DatabaseSeeder
                        DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(50)),
                        DcCredentials = new()
                        {
-                           Username = "administrator",
+                           Username = "administrator5",
                            Password = "ch8d7F7YI6v6!BRx"
                        },
                        DcNetworkInformation = new()
@@ -455,7 +455,7 @@ internal static class DatabaseSeeder
                        DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(15)),
                        DcCredentials = new()
                        {
-                           Username = "administrator",
+                           Username = "administrator1",
                            Password = "YHLNQc^ZKPu%6H4Z"
                        },
                        DcNetworkInformation = new()
@@ -558,7 +558,7 @@ internal static class DatabaseSeeder
                        DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(1)),
                        DcCredentials = new()
                        {
-                           Username = "administrator",
+                           Username = "administrator2",
                            Password = "U0^8WP^a2PWeh#sV"
                        },
                        DcNetworkInformation = new()
@@ -605,7 +605,7 @@ internal static class DatabaseSeeder
                        DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(20)),
                        DcCredentials = new()
                        {
-                           Username = "administrator",
+                           Username = "administrator3",
                            Password = "x5@v#7T4lC@3Xj4EU0^8WP^a2PWeh#sV"
                        },
                        DcNetworkInformation = new()
@@ -715,7 +715,7 @@ internal static class DatabaseSeeder
                        DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(50)),
                        DcCredentials = new()
                        {
-                           Username = "administrator",
+                           Username = "administrator1",
                            Password = "^dn@W2yXE10qE3bI"
                        },
                        DcNetworkInformation = new()
@@ -784,7 +784,7 @@ internal static class DatabaseSeeder
                        DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(15)),
                        DcCredentials = new()
                        {
-                           Username = "administrator",
+                           Username = "administrator1",
                            Password = "lYq9c*8aB"
                        },
                        DcNetworkInformation = new()
