@@ -1,6 +1,7 @@
 ﻿using AutoMapper.AspNet.OData.Visitors;
 using LogicBuilder.Expressions.Utils;
 using LogicBuilder.Expressions.Utils.Expansions;
+using LogicBuilder.Expressions.Utils.ExpressionBuilder;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.OData.UriParser;
 using System;
@@ -576,19 +577,28 @@ namespace AutoMapper.AspNet.OData
         public static LambdaExpression GetFilterExpression(this FilterClause filterClause, Type type) 
             => filterClause.GetFilterExpression(type, null);
 
-        public static LambdaExpression GetFilterExpression(this FilterClause filterClause, Type type, ODataQueryContext context, string? parameterName = null)
+        public static LambdaExpression GetFilterExpression(this FilterClause filterClause, Type type, ODataQueryContext context)
         {            
             var parameters = new Dictionary<string, ParameterExpression>();
 
-            return new FilterHelper
-            (
-                parameters,
-                type,
-                context
-            )
-            .GetFilterPart(filterClause.Expression)
-            .GetFilter(type, parameters, parameterName ?? filterClause.RangeVariable.Name);
+            FilterHelper helper = new(parameters, type, context);
+
+            return helper
+                .GetFilterPart(filterClause.Expression)
+                .GetFilter(type, parameters, helper.LiteralName)
+                .ReplaceParameter(type);
         }
+
+        private static LambdaExpression ReplaceParameter(this LambdaExpression lambda, Type parameterType)
+        {
+            ParameterExpression param = lambda.Parameters
+                .SingleOrDefault(p => p.Name == "$this");
+
+            return param is not null
+                ? (LambdaExpression)lambda.ReplaceParameter(param, Expression.Parameter(parameterType))
+                : lambda;
+        }
+            
 
         private static Expression Unquote(this Expression exp)
             => exp.NodeType == ExpressionType.Quote
@@ -607,10 +617,8 @@ namespace AutoMapper.AspNet.OData
 
         internal static MethodCallExpression ToListCall(this Expression expression, Type elementType) =>
             Expression.Call
-            (
-                typeof(Enumerable),
-                nameof(Enumerable.ToList),
-                new Type[] { elementType },
+            (  
+                ExpressionMethodHelper.EnumerableToListMethod.MakeGenericMethod(elementType),
                 expression
             );
 

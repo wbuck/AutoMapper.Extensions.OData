@@ -31,21 +31,11 @@ namespace AutoMapper.AspNet.OData.Visitors
                 if (expression == binding.Expression && expressionType.IsListOfLiteralTypes())
                 {
                     Type elementType = binding.Expression.Type.GetCurrentType();
-
-                    LambdaExpression lambda = filter.GetFilterExpression(elementType, this.context, "$this");
-                    lambda = (LambdaExpression)lambda.ReplaceParameter
-                    (
-                        lambda.Parameters.First(), 
-                        Expression.Parameter(elementType, "i0")
-                    );
-
                     expression = Expression.Call
                     (
-                        typeof(Enumerable),
-                        nameof(Enumerable.Where),
-                        new Type[] { elementType },
+                        ExpressionMethodHelper.EnumerableWhereMethod.MakeGenericMethod(elementType),
                         binding.Expression,
-                        lambda
+                        filter.GetFilterExpression(elementType, this.context)
                     ).ToListCall(elementType);
                 }
                 return expression;
@@ -62,10 +52,5 @@ namespace AutoMapper.AspNet.OData.Visitors
             else
                 throw new ArgumentException("Last expansion in the list must have a filter", nameof(expansions));
         }
-
-
-
-        private static LambdaExpression ReplaceParameter(LambdaExpression expression, ParameterExpression replacment) =>
-            (LambdaExpression)new ParameterReplacer(expression.Parameters.First(), replacment).Visit(expression);
     }
 }
