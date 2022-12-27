@@ -638,6 +638,30 @@ namespace ExpressionBuilder.Tests
         }
 
         [Fact]
+        public void NestedSelectFilter_IntegerCollection_GreaterThanAndLessThanOperator()
+        {
+            var filter = GetSelectNestedFilter<Product, int>("AlternateIDs($filter=$this gt 5 and $this lt 100)");
+
+            AssertFilterStringIsCorrect(filter, "i0 => ((i0 > 5) AndAlso (i0 < 100))");
+
+            int[] values = new int[] { 1, 2, 3, 4, 5, 6, 200 };
+            Assert.Equal(new int[] { 6 }, values.Where(filter.Compile()).ToArray());
+        }
+
+        [Fact]
+        public void NestedSelectFilter_IntegerCollection_GreaterThanOperator()
+        {            
+            var filter = GetSelectNestedFilter<Product, int>("AlternateIDs($filter=$this gt 5)");
+
+            AssertFilterStringIsCorrect(filter, "i0 => (i0 > 5)");
+
+            int[] values = new int[] { 1, 2, 3, 4, 5, 6, 200 };
+            Assert.Equal(new int[] { 6, 200 }, values.Where(filter.Compile()).ToArray());            
+        }
+
+
+
+        [Fact]
         public void AnyOnNavigationEnumerableCollections_EmptyFilter()
         {
             //act
@@ -3196,6 +3220,25 @@ namespace ExpressionBuilder.Tests
 
         private bool RunFilter<TModel>(Expression<Func<TModel, bool>> filter, TModel instance)
             => filter.Compile().Invoke(instance);
+
+
+
+        private static Expression<Func<TElement, bool>> GetSelectNestedFilter<TModel, TElement>(string selectString) where TModel : class
+            => GetSelectNestedFilter<TModel, TElement>
+               (
+                    new Dictionary<string, string> { ["$select"] = selectString }
+               );
+
+        private static Expression<Func<TElement, bool>> GetSelectNestedFilter<TModel, TElement>(IDictionary<string, string> queryOptions) where TModel : class
+        {
+            var selectAndExpand = ODataHelpers.GetSelectExpandClause<TModel>(queryOptions);
+            var filterOption = selectAndExpand.SelectedItems.OfType<PathSelectItem>().Select(p => p.FilterOption).First();
+            return (Expression<Func<TElement, bool>>)filterOption.GetFilterExpression
+            (
+                typeof(TElement), 
+                ODataHelpers.GetODataQueryContext<TModel>()
+            );
+        }
 
         private Expression<Func<TModel, bool>> GetFilter<TModel>(string filterString) where TModel : class
             => GetFilter<TModel>

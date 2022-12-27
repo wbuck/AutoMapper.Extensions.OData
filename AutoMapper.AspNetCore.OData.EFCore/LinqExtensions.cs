@@ -578,9 +578,8 @@ namespace AutoMapper.AspNet.OData
             => filterClause.GetFilterExpression(type, null);
 
         public static LambdaExpression GetFilterExpression(this FilterClause filterClause, Type type, ODataQueryContext context)
-        {            
+        {
             var parameters = new Dictionary<string, ParameterExpression>();
-
             FilterHelper helper = new(parameters, type, context);
 
             return helper
@@ -595,7 +594,7 @@ namespace AutoMapper.AspNet.OData
                 .SingleOrDefault(p => p.Name == "$this");
 
             return param is not null
-                ? (LambdaExpression)lambda.ReplaceParameter(param, Expression.Parameter(parameterType))
+                ? (LambdaExpression)lambda.ReplaceParameter(param, Expression.Parameter(parameterType, "i0"))
                 : lambda;
         }
             

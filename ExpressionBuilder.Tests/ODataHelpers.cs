@@ -7,6 +7,7 @@ using Microsoft.OData.ModelBuilder;
 using Microsoft.OData.UriParser;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace ExpressionBuilder.Tests
@@ -45,6 +46,23 @@ namespace ExpressionBuilder.Tests
                 serviceProvider
             );
 
+        public static SelectExpandClause GetSelectExpandClause<T>(IDictionary<string, string> queryOptions) where T : class
+        {
+            IEdmModel model = GetModel<T>();
+            IEdmEntityType productType = model.SchemaElements.OfType<IEdmEntityType>().Single(t => t.Name == typeof(T).Name);
+            IEdmEntitySet entitySet = model.EntityContainer.FindEntitySet(typeof(T).Name);
+
+            ODataQueryOptionParser parser = new
+            (
+                model,
+                productType,
+                entitySet,
+                queryOptions
+            );
+
+            return parser.ParseSelectAndExpand();            
+        }
+
         public static FilterClause GetFilterClause<T>(IDictionary<string, string> queryOptions, IServiceProvider serviceProvider, bool useFilterOption = false) where T : class
         {
             IEdmModel model = GetModel<T>();
@@ -69,7 +87,7 @@ namespace ExpressionBuilder.Tests
                     queryOptions["$filter"]
                 );
             }
-
+           
             return parser.ParseFilter();
         }
 
