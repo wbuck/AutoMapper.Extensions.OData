@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.OData;
+﻿using AutoMapper.OData.Cosmos.Tests.Binder;
+using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.OData.Extensions;
 using Microsoft.AspNetCore.OData.Query;
+using Microsoft.AspNetCore.OData.Query.Expressions;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
 using Microsoft.OData.UriParser;
@@ -30,9 +32,9 @@ public static class ODataHelpers
             RequestServices = serviceProvider
         }.Request;
 
-        //var oDataOptions = new ODataOptions().AddRouteComponents("key", model,
-        //    x => x.AddSingleton<ISearchBinder, OpsTenantSearchBinder>());
-        var oDataOptions = new ODataOptions().AddRouteComponents("key", model);
+        var oDataOptions = new ODataOptions().AddRouteComponents("key", model,
+            x => x.AddSingleton<ISearchBinder, ForestSearchBinder>());
+
         var (_, routeProvider) = oDataOptions.RouteComponents["key"];
 
         request.ODataFeature().Services = routeProvider;

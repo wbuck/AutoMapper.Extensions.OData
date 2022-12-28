@@ -14,6 +14,7 @@ internal static class DatabaseSeeder
         {
             new()
             {
+                CreatedDate = new DateTime(2022, 12, 25),
                 Values = new List<int> { 100, 1999, 12398 },
                 Metadata = new()
                 {
@@ -362,6 +363,7 @@ internal static class DatabaseSeeder
             },
             new()
             {
+                CreatedDate = new DateTime(2022, 12, 25),
                 Values = new List<int> { 42, 2, 908 },
                 Metadata = new()
                 {
@@ -689,6 +691,7 @@ internal static class DatabaseSeeder
             },
             new()
             {
+                CreatedDate = new DateTime(2022, 12, 27),
                 Values = new List<int> { 2, 176, 6389 },
                 Metadata = new()
                 {

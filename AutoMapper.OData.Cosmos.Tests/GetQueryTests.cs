@@ -37,6 +37,108 @@ public sealed class GetQueryTests
     }
 
     [Fact]
+    public async Task ForestModelSearch()
+    {
+        const string query = "/forest?$search=\"Rolfson Forest\"";
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(1, collection.Count);
+            Assert.Equal("Rolfson Forest", collection.First().ForestName);
+        }
+    }
+
+    [Fact]
+    public async Task ForestModelSearchAndFilter()
+    {
+        const string query = "/forest?$search=\"Rolfson Forest\"&$filter=ForestName eq 'Zulauf Forest'";
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(0, collection.Count);
+        }
+    }
+
+    [Fact]
+    public async void ForestModelCreatedOnFilterServerUTCTimeZone()
+    {
+        var querySettings = new QuerySettings
+        {
+            ODataSettings = new ODataSettings
+            {
+                HandleNullPropagation = HandleNullPropagationOption.False,
+                TimeZone = TimeZoneInfo.Utc
+            }
+        };
+
+        string query = "/forest?$filter=CreatedDate eq 2022-12-25T00:00:00Z";
+        Test(Get<ForestModel, Forest>(query, querySettings: querySettings));
+        Test(await GetAsync<ForestModel, Forest>(query, querySettings: querySettings));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query, querySettings: querySettings));
+
+        query = "/forest?$filter=CreatedDate eq 2022-12-24T19:00:00-05:00";
+        Test(Get<ForestModel, Forest>(query, querySettings: querySettings));
+        Test(await GetAsync<ForestModel, Forest>(query, querySettings: querySettings));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query, querySettings: querySettings));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(2, collection.Count);
+        }
+    }
+
+    [Fact]
+    public async void ForestModelCreatedOnFilterServerESTTimeZone()
+    {
+        var querySettings = new QuerySettings
+        {
+            ODataSettings = new ODataSettings
+            {
+                HandleNullPropagation = HandleNullPropagationOption.False,
+                TimeZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time")
+            }
+        };
+
+        string query = "/forest?$filter=CreatedDate eq 2022-12-25T05:00:00Z";
+        Test(Get<ForestModel, Forest>(query, querySettings: querySettings));
+        Test(await GetAsync<ForestModel, Forest>(query, querySettings: querySettings));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query, querySettings: querySettings));
+
+        query = "/forest?$filter=CreatedDate eq 2022-12-25T00:00:00-05:00";
+        Test(Get<ForestModel, Forest>(query, querySettings: querySettings));
+        Test(await GetAsync<ForestModel, Forest>(query, querySettings: querySettings));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query, querySettings: querySettings));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(2, collection.Count);
+        }
+    }
+
+    [Fact]
+    public async void ForestModelExpandBuildingsFilterEqAndOrderBy()
+    {
+        string query = "/ForestModel?$top=5&$expand=DomainControllers/Dc&$filter=ForestName eq 'Rolfson Forest'&$orderby=ForestName desc";
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(1, collection.Count);
+            Assert.Equal(4, collection.First().DomainControllers.Count);
+            Assert.All(collection.First().DomainControllers.Select(m => m.Dc), dc => Assert.NotNull(dc));
+            Assert.Equal("Rolfson Forest", collection.First().ForestName);
+        }
+    }
+
+    [Fact]
     public async Task ForestSelectValues_NestedFilter_ShouldReturnFilteredLiteralCollectionOfValues()
     {
         const string query = "/forest?$select=Values($filter=$this gt 1 and $this lt 101)&$orderby=ForestName";
@@ -74,7 +176,7 @@ public sealed class GetQueryTests
         return GetAsync<TModel, TData>(query, options, querySettings, "com.FooBar");
     }
 
-    private ICollection<TModel> Get<TModel, TData>(string query, ODataQueryOptions<TModel>? options = null)
+    private ICollection<TModel> Get<TModel, TData>(string query, ODataQueryOptions<TModel>? options = null, QuerySettings? querySettings = null)
         where TModel : class
         where TData : class
     {
@@ -93,7 +195,7 @@ public sealed class GetQueryTests
             (
                 mapper,
                 options ?? GetODataQueryOptions<TModel>(query),
-                new QuerySettings { ODataSettings = new ODataSettings { HandleNullPropagation = HandleNullPropagationOption.False } }
+                querySettings!
             );
         }
     }
