@@ -136,7 +136,7 @@ namespace AutoMapper.AspNet.OData
                 typeof(T),
                 options.Skip?.Value,
                 GetPageSize()
-            );
+            );            
 
             int? GetPageSize()
             {

@@ -9,6 +9,7 @@ public sealed record Forest : EntityBase
     public Credentials? ForestWideCredentials { get; init; } = default!;
     public Metadata Metadata { get; init; } = default!;
     public DateTime CreatedDate { get; init; }
+    public DomainController PrimaryDc { get; init; } = default!;
     public ICollection<DomainControllerEntry> DomainControllers { get; init; } = 
         new List<DomainControllerEntry>();
     public ICollection<int> Values { get; init; } =

@@ -8,6 +8,7 @@ internal sealed record ForestModel
     public CredentialsModel? ForestWideCredentials { get; init; } = default!;
     public MetadataModel Metadata { get; init; } = default!;
     public DateTime CreatedDate { get; init; }
+    public DomainControllerModel PrimaryDc { get; init; } = default!;
     public ICollection<DomainControllerEntryModel> DomainControllers { get; init; } =
         new List<DomainControllerEntryModel>();
     public ICollection<int> Values { get; init; } = 

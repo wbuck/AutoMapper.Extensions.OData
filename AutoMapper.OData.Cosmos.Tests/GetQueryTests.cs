@@ -5,6 +5,7 @@ using AutoMapper.OData.Cosmos.Tests.Mappings;
 using AutoMapper.OData.Cosmos.Tests.Models;
 using AutoMapper.OData.Cosmos.Tests.Persistence;
 using Microsoft.AspNetCore.OData;
+using Microsoft.AspNetCore.OData.Extensions;
 using Microsoft.AspNetCore.OData.Query;
 using System.Diagnostics;
 
@@ -67,7 +68,7 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async void ForestModelCreatedOnFilterServerUTCTimeZone()
+    public async Task ForestModelCreatedOnFilterServerUTCTimeZone()
     {
         var querySettings = new QuerySettings
         {
@@ -95,7 +96,7 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async void ForestModelCreatedOnFilterServerESTTimeZone()
+    public async Task ForestModelCreatedOnFilterServerESTTimeZone()
     {
         var querySettings = new QuerySettings
         {
@@ -123,7 +124,7 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async void ForestModelExpandDcFilterEqAndOrderBy()
+    public async Task ForestModelExpandDcFilterEqAndOrderBy()
     {
         string query = "/forest?$top=5&$expand=DomainControllers/Dc&$filter=ForestName eq 'Rolfson Forest'&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
@@ -140,7 +141,7 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async void ForestModelExpandDcFilterNeAndOrderBy()
+    public async Task ForestModelExpandDcFilterNeAndOrderBy()
     {
         const string query = "/forest?$top=5&$expand=DomainControllers/Dc&$filter=ForestName ne 'Zulauf Forest'&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
@@ -160,7 +161,7 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async void ForestModelFilterEqNoExpand()
+    public async Task ForestModelFilterEqNoExpand()
     {
         const string query = "/forest?$filter=ForestName eq 'Abernathy Forest'";
         Test(Get<ForestModel, Forest>(query));
@@ -177,7 +178,7 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async void ForestModelFilterGtDateNoExpand()
+    public async Task ForestModelFilterGtDateNoExpand()
     {
         string query = "/forest?$filter=CreatedDate gt 2022-12-26T12:00:00.00Z";
         Test(Get<ForestModel, Forest>(query));
@@ -192,7 +193,7 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async void ForestModelFilterLtDateNoExpand()
+    public async Task ForestModelFilterLtDateNoExpand()
     {
         string query = "/forest?$filter=CreatedDate lt 2022-12-26T12:00:00.00Z&$orderby=ForestName";
         Test(Get<ForestModel, Forest>(query));
@@ -208,7 +209,7 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async void ForestModelExpandDcNoFilterAndOrderBy()
+    public async Task ForestModelExpandDcNoFilterAndOrderBy()
     {
         string query = "/forest?$top=2&$expand=DomainControllers/Dc&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
@@ -228,7 +229,7 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async void ForestModelNoExpandNoFilterAndOrderBy()
+    public async Task ForestModelNoExpandNoFilterAndOrderBy()
     {
         string query = "/forest?$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
@@ -243,7 +244,7 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async void ForestModelNoExpandFilterEqAndOrderBy()
+    public async Task ForestModelNoExpandFilterEqAndOrderBy()
     {
         string query = "/forest?$top=5&$filter=ForestName eq 'Rolfson Forest'&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
@@ -260,7 +261,7 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async void ForestModelExpandDcSelectForestNameAndBackupExpandBackupFilterNeAndOrderBy()
+    public async Task ForestModelExpandDcSelectForestNameAndBackupExpandBackupFilterNeAndOrderBy()
     {
         string query = "/forest?$top=5&$select=ForestName&$expand=DomainControllers/Dc($select=FullyQualifiedDomainName,Backups;$expand=Backups($select=ForestId, Location))&$filter=ForestName ne 'Zulauf Forest'&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
@@ -294,7 +295,7 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async void ForestModelExpandDcExpandBackupFilterNeAndOrderBy()
+    public async Task ForestModelExpandDcExpandBackupFilterNeAndOrderBy()
     {
         const string query = "/forest?$top=5&$expand=DomainControllers/Dc($expand=Backups)&$filter=ForestName ne 'Abernathy Forest'&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
@@ -326,7 +327,7 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async void ForestModelExpandDcFilterDcPropertyEqAndOrderBy()
+    public async Task ForestModelExpandDcFilterDcPropertyEqAndOrderBy()
     {
         const string query = "/forest?$expand=DomainControllers/Dc&$filter=DomainControllers/any(entry: entry/Dc/FullyQualifiedDomainName eq 'dc1.abernathy.com')&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
@@ -340,6 +341,186 @@ public sealed class GetQueryTests
             Assert.All(collection.First().DomainControllers.Select(m => m.Dc), dc => Assert.NotNull(dc));
             Assert.Equal("Abernathy Forest", collection.First().ForestName);
             Assert.Equal("dc1.abernathy.com", collection.First().DomainControllers.First().Dc.FullyQualifiedDomainName);
+        }
+    }
+
+    [Fact]
+    public async Task ForestModelFilterComplexProperty()
+    {
+        const string query = "/forest?$filter=Metadata/MetadataType eq 'Abernathy Metadata'";
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(1, collection.Count);
+            Assert.Equal(4, collection.First().DomainControllers.Count);
+            Assert.All(collection.First().DomainControllers.Select(m => m.Dc), dc => Assert.Null(dc));
+            Assert.Equal("Abernathy Forest", collection.First().ForestName);
+            Assert.Equal("Abernathy Metadata", collection.First().Metadata.MetadataType);
+        }
+    }
+
+    [Fact]
+    public async Task ForestModelOrderByComplexProperty()
+    {
+        const string query = "/forest?$orderby=Metadata/MetadataType desc";
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, collection.Count);
+            Assert.Equal(new[] { "Zulauf Forest", "Rolfson Forest", "Abernathy Forest" }, collection.Select(m => m.ForestName));
+        }
+    }
+
+    [Fact]
+    public async Task ForestModelExpandDcExpandBackupOrderByForestNameSkipTakeWithCount()
+    {
+        string query = "/forest?$skip=2&$top=1&$expand=DomainControllers/Dc($expand=Backups)&$orderby=ForestName desc&$count=true";
+        ODataQueryOptions<ForestModel> options = ODataHelpers.GetODataQueryOptions<ForestModel>
+        (
+            query,
+            serviceProvider
+        );
+        Test(Get<ForestModel, Forest>(query, options));
+        Test(await GetAsync<ForestModel, Forest>(query, options));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query, options));
+
+        void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, options.Request.ODataFeature().TotalCount);
+            Assert.Equal(1, collection.Count);
+            Assert.Equal("Abernathy Forest", collection.First().ForestName);
+            Assert.Equal(4, collection.First().DomainControllers.Count);
+            Assert.Equal(7, collection.First().DomainControllers.Sum(dc => dc.Dc.Backups.Count));            
+        }
+    }
+
+    [Fact]
+    public async Task ForestModelWithTopAndSmallerPageSize()
+    {
+        string query = "/forest?$top=3";
+        var querySettings = new QuerySettings { ODataSettings = new ODataSettings { HandleNullPropagation = HandleNullPropagationOption.False, PageSize = 2 } };
+        Test(Get<ForestModel, Forest>(query, querySettings: querySettings));
+        Test(await GetAsync<ForestModel, Forest>(query, querySettings: querySettings));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query, querySettings: querySettings));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(2, collection.Count);
+        }
+    }
+
+    [Fact]
+    public async void ForestModelWithTopAndLargerPageSize()
+    {
+        string query = "/forest?$top=2";
+        var querySettings = new QuerySettings { ODataSettings = new ODataSettings { HandleNullPropagation = HandleNullPropagationOption.False, PageSize = 4 } };
+        Test(Get<ForestModel, Forest>(query, querySettings: querySettings));
+        Test(await GetAsync<ForestModel, Forest>(query, querySettings: querySettings));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query, querySettings: querySettings));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(2, collection.Count);
+        }
+    }
+
+    [Fact]
+    public async Task ForestModelWithTopAndSmallerPageSizeNextLink()
+    {
+        const int pageSize = 2;
+        const string query = "/forest?$top=3";
+        var querySettings = new QuerySettings { ODataSettings = new ODataSettings { HandleNullPropagation = HandleNullPropagationOption.False, PageSize = pageSize } };
+        ODataQueryOptions<ForestModel> options = ODataHelpers.GetODataQueryOptions<ForestModel>
+        (
+            query,
+            serviceProvider
+        );
+
+        Test(Get<ForestModel, Forest>(query, options, querySettings));
+        Test(await GetAsync<ForestModel, Forest>(query, options, querySettings));
+        Test
+        (
+            await GetUsingCustomNameSpace<ForestModel, Forest>
+            (
+                query,
+                ODataHelpers.GetODataQueryOptions<ForestModel>
+                (
+                    query,
+                    serviceProvider,
+                    "com.FooBar"
+                ),
+                querySettings
+            )
+        );
+
+        void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(2, collection.Count);
+
+            Uri nextPageLink = options.Request.ODataFeature().NextLink;
+            Assert.NotNull(nextPageLink);
+            Assert.Equal("localhost:16324/forest?$top=1&$skip=2", nextPageLink.AbsoluteUri);
+            Assert.Contains("$top=1", nextPageLink.Query);
+            Assert.Contains("$skip=2", nextPageLink.Query);
+        }
+    }
+
+    [Fact]
+    public async Task ForestModelWithTopAndLargerPageSizeNextLink()
+    {
+        const int pageSize = 4;
+        const string query = "/forest?$top=3";
+        var querySettings = new QuerySettings { ODataSettings = new ODataSettings { HandleNullPropagation = HandleNullPropagationOption.False, PageSize = pageSize } };
+        ODataQueryOptions<ForestModel> options = ODataHelpers.GetODataQueryOptions<ForestModel>
+        (
+            query,
+            serviceProvider
+        );
+
+        Test(Get<ForestModel, Forest>(query, options, querySettings));
+        Test(await GetAsync<ForestModel, Forest>(query, options, querySettings));
+        Test
+        (
+            await GetUsingCustomNameSpace<ForestModel, Forest>
+            (
+                query,
+                ODataHelpers.GetODataQueryOptions<ForestModel>
+                (
+                    query,
+                    serviceProvider,
+                    "com.FooBar"
+                ),
+                querySettings
+            )
+        );
+
+        void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, collection.Count);
+            Assert.Null(options.Request.ODataFeature().NextLink);
+        }
+    }
+
+    [Fact]
+    public async Task ForestModelOrderByPropertyOfChildReferenceOfReference()
+    {        
+        string query = "/forest?$expand=PrimaryDc($expand=SelectedBackup)&$orderby=PrimaryDc/SelectedBackup/DateCreated";
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, collection.Count);
+            Assert.Equal("Zulauf Forest", collection.ElementAt(0).ForestName);            
+            Assert.Equal("Rolfson Forest", collection.ElementAt(1).ForestName);
+            Assert.Equal("Abernathy Forest", collection.ElementAt(2).ForestName);
         }
     }
 

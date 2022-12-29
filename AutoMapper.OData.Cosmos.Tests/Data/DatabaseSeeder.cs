@@ -14,6 +14,45 @@ internal static class DatabaseSeeder
         {
             new()
             {
+                PrimaryDc = new()
+                {
+                    Metadata = new()
+                    {
+                        MetadataType = "DC1 Abernathy Metadata",
+                        MetadataKeyValuePairs = new List<MetadataKeyValue>
+                        {
+                            new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                            new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                            new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                        },
+                    },
+                    Id = Guid.NewGuid(),
+                    ForestId = forest1,
+                    Fqdn = "dc1.abernathy.com",
+                    FsmoRoles = new List<FsmoRole>
+                    {
+                        FsmoRole.PdcEmulator,
+                        FsmoRole.DomainNamingMaster
+                    },
+                    SelectedBackup = new Backup
+                    {
+                        Id = Guid.NewGuid(),
+                        ForestId = forest1,
+                        DateCreated = DateTime.Now,
+                        Location = new()
+                        {
+                            Credentials = new()
+                            {
+                                 Username = "admin@abernathy.com",
+                                 Password = "q70Z%T2i$T8Tomm*"
+                            },
+                            NetworkInformation = new()
+                            {
+                                 Address = "Azure blob storage"
+                            }
+                        }
+                    }
+                },
                 CreatedDate = new DateTime(2022, 12, 25),
                 Values = new List<int> { 100, 1999, 12398 },
                 Metadata = new()
@@ -363,6 +402,44 @@ internal static class DatabaseSeeder
             },
             new()
             {
+                PrimaryDc = new()
+                {
+                    Metadata = new()
+                    {
+                        MetadataType = "DC1 Rolfson Metadata",
+                        MetadataKeyValuePairs = new List<MetadataKeyValue>
+                        {
+                            new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                            new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                            new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                        },
+                    },
+                    Id = Guid.NewGuid(),
+                    ForestId = forest2,
+                    Fqdn = "dc1.rolfson.com",
+                    FsmoRoles = new List<FsmoRole>
+                    {
+                        FsmoRole.PdcEmulator
+                    },
+                    SelectedBackup = new()
+                    {
+                        Id = Guid.NewGuid(),
+                        ForestId = forest2,
+                        DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(25)),
+                        Location = new()
+                        {
+                            Credentials = new()
+                            {
+                                 Username = "admin@rolfson.com",
+                                 Password = "q70Z%T2i$T8Tomm*"
+                            },
+                            NetworkInformation = new()
+                            {
+                                 Address = "Azure blob storage"
+                            }
+                        }
+                    }
+                },
                 CreatedDate = new DateTime(2022, 12, 25),
                 Values = new List<int> { 42, 2, 908 },
                 Metadata = new()
@@ -400,15 +477,15 @@ internal static class DatabaseSeeder
                        Dc = new()
                        {
                            Metadata = new()
-                            {
-                                MetadataType = "DC1 Rolfson Metadata",
-                                MetadataKeyValuePairs = new List<MetadataKeyValue>
-                                {
-                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
-                                },
-                            },
+                           {
+                               MetadataType = "DC1 Rolfson Metadata",
+                               MetadataKeyValuePairs = new List<MetadataKeyValue>
+                               {
+                                   new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                   new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                   new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                               },
+                           },
                            Id = Guid.NewGuid(),
                            ForestId = forest2,
                            Fqdn = "dc1.rolfson.com",
@@ -691,6 +768,46 @@ internal static class DatabaseSeeder
             },
             new()
             {
+                PrimaryDc = new()
+                {
+                    Metadata = new()
+                    {
+                        MetadataType = "DC1 Zulauf Metadata",
+                        MetadataKeyValuePairs = new List<MetadataKeyValue>
+                        {
+                            new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                            new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                            new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                        },
+                    },
+                    Id = Guid.NewGuid(),
+                    ForestId = forest3,
+                    Fqdn = "dc1.zulauf.net",
+                    FsmoRoles = new List<FsmoRole>
+                    {
+                        FsmoRole.PdcEmulator,
+                        FsmoRole.RidMaster,
+                        FsmoRole.InfrastructureMaster
+                    },
+                    SelectedBackup = new()
+                    {
+                        Id = Guid.NewGuid(),
+                        ForestId = forest3,
+                        DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(50)),
+                        Location = new()
+                        {
+                            Credentials = new()
+                            {
+                                 Username = "admin@zulauf.net",
+                                 Password = "Z0nI4&%XJ"
+                            },
+                            NetworkInformation = new()
+                            {
+                                 Address = "Azure blob storage"
+                            }
+                        }
+                    }
+                },
                 CreatedDate = new DateTime(2022, 12, 27),
                 Values = new List<int> { 2, 176, 6389 },
                 Metadata = new()
@@ -728,15 +845,15 @@ internal static class DatabaseSeeder
                        Dc = new()
                        {
                            Metadata = new()
-                            {
-                                MetadataType = "DC1 Zulauf Metadata",
-                                MetadataKeyValuePairs = new List<MetadataKeyValue>
-                                {
-                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
-                                },
-                            },
+                           {
+                               MetadataType = "DC1 Zulauf Metadata",
+                               MetadataKeyValuePairs = new List<MetadataKeyValue>
+                               {
+                                   new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                   new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                   new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                               },
+                           },
                            Id = Guid.NewGuid(),
                            ForestId = forest3,
                            Fqdn = "dc1.zulauf.net",
