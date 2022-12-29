@@ -326,6 +326,24 @@ public sealed class GetQueryTests
     }
 
     [Fact]
+    public async void ForestModelExpandDcFilterDcPropertyEqAndOrderBy()
+    {
+        const string query = "/forest?$expand=DomainControllers/Dc&$filter=DomainControllers/any(entry: entry/Dc/FullyQualifiedDomainName eq 'dc1.abernathy.com')&$orderby=ForestName desc";
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(1, collection.Count);
+            Assert.Equal(4, collection.First().DomainControllers.Count);           
+            Assert.All(collection.First().DomainControllers.Select(m => m.Dc), dc => Assert.NotNull(dc));
+            Assert.Equal("Abernathy Forest", collection.First().ForestName);
+            Assert.Equal("dc1.abernathy.com", collection.First().DomainControllers.First().Dc.FullyQualifiedDomainName);
+        }
+    }
+
+    [Fact]
     public async Task ForestSelectValues_NestedFilter_ShouldReturnFilteredLiteralCollectionOfValues()
     {
         const string query = "/forest?$select=Values($filter=$this gt 1 and $this lt 101)&$orderby=ForestName";
