@@ -26,7 +26,7 @@ namespace AutoMapper.AspNet.OData
     {
         private readonly IDictionary<string, ParameterExpression> parameters;
         private static readonly IDictionary<EdmTypeStructure, Type> typesCache = TypeExtensions.GetEdmToClrTypeMappings();
-        private static readonly HashSet<string> literals = new() { "$this", "$root", "$it" };
+        private static readonly HashSet<string> literals = new() { "$this", "$it" };
         private string literalName = "$it";
         private readonly IEdmModel edmModel;        
         

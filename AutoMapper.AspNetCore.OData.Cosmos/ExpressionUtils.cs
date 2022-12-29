@@ -7,7 +7,7 @@ using System.Linq.Expressions;
 using System.Linq;
 using LogicBuilder.Expressions.Utils;
 using AutoMapper.Internal;
-using static AutoMapper.AspNet.OData.ExpressionMethodHelper;
+using static AutoMapper.AspNet.OData.LinqMethods;
 
 namespace AutoMapper.AspNet.OData;
 

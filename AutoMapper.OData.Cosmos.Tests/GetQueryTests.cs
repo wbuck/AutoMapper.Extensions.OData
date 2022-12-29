@@ -6,6 +6,7 @@ using AutoMapper.OData.Cosmos.Tests.Models;
 using AutoMapper.OData.Cosmos.Tests.Persistence;
 using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.OData.Query;
+using System.Diagnostics;
 
 namespace AutoMapper.OData.Cosmos.Tests;
 
@@ -293,19 +294,36 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async void OpsTenantExpandBuildingsExpandBuilderExpandCityFilterNeAndOrderBy()
+    public async void ForestModelExpandDcExpandBackupFilterNeAndOrderBy()
     {
-        string query = "/ForestModel?$top=5&$expand=Buildings($expand=Builder($expand=City))&$filter=Name ne 'One'&$orderby=Name desc";
+        const string query = "/forest?$top=5&$expand=DomainControllers/Dc($expand=Backups)&$filter=ForestName ne 'Abernathy Forest'&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
 
-        void Test(ICollection<ForestModel> collection)
+        static void Test(ICollection<ForestModel> collection)
         {
+            Assert.Equal(2, collection.Count);
+            Assert.Equal(new[] { "Zulauf Forest", "Rolfson Forest" }, collection.Select(m => m.ForestName));
 
+            var dcs = collection.SelectMany(m => m.DomainControllers.Select(m => m.Dc)).ToList();
+            Assert.All(dcs.SelectMany(m => m.Backups), backup => Assert.NotNull(backup));
+
+            var backups = dcs.SelectMany(dc => dc.Backups).ToList();
+            Assert.All(backups.Select(m => m.Location), location => Assert.NotNull(location));
+            Assert.All(backups.Select(m => m.Location.Credentials), creds =>
+            {
+                Assert.NotNull(creds);
+                Assert.NotNull(creds.Username);
+                Assert.NotNull(creds.Password);
+            });
+            Assert.All(backups.Select(m => m.Location.NetworkInformation), info =>
+            {
+                Assert.NotNull(info);
+                Assert.NotNull(info.Address);
+            });
         }
     }
-
 
     [Fact]
     public async Task ForestSelectValues_NestedFilter_ShouldReturnFilteredLiteralCollectionOfValues()
@@ -327,13 +345,8 @@ public sealed class GetQueryTests
             Assert.Equal(3, collection.Count);
             foreach (var (model, expected) in collection.Zip(expectedValues))
             {
-                AssertModel(model, expected);
+                Assert.Equal(expected, model.Values);
             }
-        }
-
-        static void AssertModel(ForestModel model, List<int> expected)
-        {
-            Assert.Equal(expected, model.Values);
         }
     }
 

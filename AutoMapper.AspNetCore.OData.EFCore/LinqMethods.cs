@@ -8,7 +8,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 
 namespace AutoMapper.AspNet.OData;
-internal class ExpressionMethodHelper
+internal class LinqMethods
 {
     private static readonly MethodInfo _queryableWhereMethod =
         GetGenericMethod(_ => Queryable.Where(default(IQueryable<int>)!, default(Expression<Func<int, bool>>)!));

@@ -33,7 +33,7 @@ namespace AutoMapper.AspNet.OData.Visitors
                     Type elementType = binding.Expression.Type.GetCurrentType();
                     expression = Expression.Call
                     (
-                        ExpressionMethodHelper.EnumerableWhereMethod.MakeGenericMethod(elementType),
+                        LinqMethods.EnumerableWhereMethod.MakeGenericMethod(elementType),
                         binding.Expression,
                         filter.GetFilterExpression(elementType, this.context)
                     ).ToListCall(elementType);

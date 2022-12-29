@@ -617,7 +617,7 @@ namespace AutoMapper.AspNet.OData
         internal static MethodCallExpression ToListCall(this Expression expression, Type elementType) =>
             Expression.Call
             (  
-                ExpressionMethodHelper.EnumerableToListMethod.MakeGenericMethod(elementType),
+                LinqMethods.EnumerableToListMethod.MakeGenericMethod(elementType),
                 expression
             );
 

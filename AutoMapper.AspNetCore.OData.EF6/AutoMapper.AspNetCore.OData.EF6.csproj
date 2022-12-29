@@ -32,9 +32,9 @@
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\Constants.cs" Link="Constants.cs" />
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\CustomMethodCache.cs" Link="CustomMethodCache.cs" />
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\EdmTypeStructure.cs" Link="EdmTypeStructure.cs" />
-    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\ExpressionMethodHelper.cs" Link="ExpressionMethodHelper.cs" />
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\FilterHelper.cs" Link="FilterHelper.cs" />
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\LinqExtensions.cs" Link="LinqExtensions.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\LinqMethods.cs" Link="LinqMethods.cs" />
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\ODataQueryContextExtentions.cs" Link="ODataQueryContextExtentions.cs" />
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\ODataQueryOptionsExtensions.cs" Link="ODataQueryOptionsExtensions.cs" />
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\ODataSettings.cs" Link="ODataSettings.cs" />
