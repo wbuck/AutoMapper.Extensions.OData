@@ -40,6 +40,15 @@ namespace AutoMapper.AspNet.OData.Visitors
                 }
                 return expression;
             }
+            else if (binding.Expression is MethodCallExpression callExpression)
+            {
+                return CallVisitor.Traverse
+                (
+                    callExpression,
+                    expansions,
+                    this.context
+                 );
+            }
             else if (expansions.Count > 1)  //Mutually exclusive with expansion.Filter != null.                            
             {                               //There can be only one filter in the list.  See the GetFilters() method in QueryableExtensions.UpdateQueryable.
                 return UpdaterExpansion

@@ -123,7 +123,7 @@ internal static class DatabaseSeeder
                                        },
                                        NetworkInformation = new()
                                        {
-                                            Address = "Azure blob storage"
+                                          Address = "Azure blob storage"
                                        }
                                    }
                                },
@@ -131,7 +131,7 @@ internal static class DatabaseSeeder
                                {
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
-                                   DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(10)),
+                                   DateCreated = new DateTime(2022, 12, 26),
                                    Location = new()
                                    {
                                        Credentials = new()
@@ -208,7 +208,7 @@ internal static class DatabaseSeeder
                                        },
                                        NetworkInformation = new()
                                        {
-                                            Address = "Azure blob storage"
+                                           Address = "Azure blob storage"
                                        }
                                    }
                                },

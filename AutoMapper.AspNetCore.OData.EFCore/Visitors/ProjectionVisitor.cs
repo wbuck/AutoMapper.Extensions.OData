@@ -1,12 +1,79 @@
 ﻿using LogicBuilder.Expressions.Utils;
+using Microsoft.AspNetCore.OData.Query;
+using Microsoft.OData.UriParser;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 
 namespace AutoMapper.AspNet.OData.Visitors
 {
+    internal sealed class CallVisitor : ExpressionVisitor
+    {
+        private List<ODataExpansionOptions> expansions;
+        private readonly ODataQueryContext context;        
+
+        public CallVisitor(List<ODataExpansionOptions> expansions, ODataQueryContext context)
+        {
+            this.expansions = expansions;
+            this.context = context;
+        }
+
+        public static Expression Traverse(Expression expression, List<ODataExpansionOptions> expansions, ODataQueryContext context) =>
+            new CallVisitor(expansions, context).Visit(expression);
+
+        protected override Expression VisitMemberInit(MemberInitExpression node)
+        {
+            var expansion = this.expansions.FirstOrDefault();
+            if (expansion is not null)
+            {
+                Type elementType = node.Type.GetCurrentType();
+                Type memberType = expansion.MemberType.GetCurrentType();
+
+                if (elementType == memberType)
+                {
+                    this.expansions = this.expansions.Skip(1).ToList();
+                    return Visit(node);
+                }
+            }            
+            return base.VisitMemberInit(node);
+        }
+
+        protected override Expression VisitMethodCall(MethodCallExpression node)
+        {
+            var expansion = this.expansions.FirstOrDefault();
+
+            if (expansion is not null)
+            {
+                Type elementType = node.Type.GetCurrentType();
+                Type memberType = expansion.MemberType.GetCurrentType();
+
+                if (node.Method.Name.Equals(nameof(Enumerable.Select)) && memberType == elementType)
+                {
+                    if (expansion.FilterOptions?.FilterClause is FilterClause clause)
+                    {
+                        var expr = Expression.Call
+                        (
+                            node.Method.DeclaringType,
+                            nameof(Enumerable.Where),
+                            new Type[] { elementType },
+                            node,
+                            clause.GetFilterExpression(elementType, this.context)
+                        );
+                        return expr;
+                    }
+
+                    this.expansions = this.expansions.Skip(1).ToList();
+                    return Visit(node);
+                }
+            }
+            
+            return base.VisitMethodCall(node);
+        }
+    }
+
     internal abstract class ProjectionVisitor : ExpressionVisitor
     {
         public ProjectionVisitor(List<ODataExpansionOptions> expansions)
@@ -15,7 +82,7 @@ namespace AutoMapper.AspNet.OData.Visitors
         }
 
         protected readonly List<ODataExpansionOptions> expansions;
-        private readonly List<Expression> foundExpansions = new List<Expression>();
+        private readonly List<Expression> foundExpansions = new();
 
         protected override Expression VisitMemberInit(MemberInitExpression node)
         {
