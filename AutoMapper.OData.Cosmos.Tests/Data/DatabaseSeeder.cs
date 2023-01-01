@@ -114,6 +114,7 @@ internal static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = DateTime.Now,
+                                   Values = new List<int> { 1, 10, 100 },
                                    Location = new()
                                    {
                                        Credentials = new()
@@ -132,6 +133,7 @@ internal static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = new DateTime(2022, 12, 26),
+                                   Values = new List<int> { 1, 10, 100 },
                                    Location = new()
                                    {
                                        Credentials = new()
@@ -199,6 +201,7 @@ internal static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(5)),
+                                   Values = new List<int> { 1, 10, 100 },
                                    Location = new()
                                    {
                                        Credentials = new()
@@ -217,6 +220,7 @@ internal static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(1)),
+                                   Values = new List<int> { 1, 10, 100 },
                                    Location = new()
                                    {
                                        Credentials = new()
@@ -284,6 +288,7 @@ internal static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = DateTime.Now,
+                                   Values = new List<int> { 1, 10, 100 },
                                    Location = new()
                                    {
                                        Credentials = new()
@@ -351,6 +356,7 @@ internal static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(5)),
+                                   Values = new List<int> { 1, 10, 100 },
                                    Location = new()
                                    {
                                        Credentials = new()
@@ -369,6 +375,7 @@ internal static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest1,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(1)),
+                                   Values = new List<int> { 1, 10, 100 },
                                    Location = new()
                                    {
                                        Credentials = new()
@@ -500,6 +507,7 @@ internal static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest2,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(25)),
+                                   Values = new List<int> { 1, 10, 100 },
                                    Location = new()
                                    {
                                        Credentials = new()
@@ -567,6 +575,7 @@ internal static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest2,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(10)),
+                                   Values = new List<int> { 1, 10, 100 },
                                    Location = new()
                                    {
                                        Credentials = new()
@@ -585,6 +594,7 @@ internal static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest2,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(5)),
+                                   Values = new List<int> { 1, 10, 100 },
                                    Location = new()
                                    {
                                        Credentials = new()
@@ -603,6 +613,7 @@ internal static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest2,
                                    DateCreated = DateTime.Now,
+                                   Values = new List<int> { 1, 10, 100 },
                                    Location = new()
                                    {
                                        Credentials = new()
@@ -717,6 +728,7 @@ internal static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest2,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(5)),
+                                   Values = new List<int> { 1, 10, 100 },
                                    Location = new()
                                    {
                                        Credentials = new()
@@ -735,6 +747,7 @@ internal static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest2,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(1)),
+                                   Values = new List<int> { 1, 10, 100 },
                                    Location = new()
                                    {
                                        Credentials = new()
@@ -870,6 +883,7 @@ internal static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest3,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(25)),
+                                   Values = new List<int> { 1, 10, 100 },
                                    Location = new()
                                    {
                                        Credentials = new()
@@ -938,6 +952,7 @@ internal static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest3,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(10)),
+                                   Values = new List<int> { 1, 10, 100 },
                                    Location = new()
                                    {
                                        Credentials = new()
@@ -956,6 +971,7 @@ internal static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest3,
                                    DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(5)),
+                                   Values = new List<int> { 1, 10, 100 },
                                    Location = new()
                                    {
                                        Credentials = new()
@@ -974,6 +990,7 @@ internal static class DatabaseSeeder
                                    Id = Guid.NewGuid(),
                                    ForestId = forest3,
                                    DateCreated = DateTime.Now,
+                                   Values = new List<int> { 1, 10, 100 },
                                    Location = new()
                                    {
                                        Credentials = new()

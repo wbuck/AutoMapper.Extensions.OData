@@ -1,6 +1,7 @@
 ﻿using AutoMapper.Extensions.ExpressionMapping;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.Azure.Cosmos.Linq;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow.RecordIO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -89,21 +90,40 @@ public static class QueryableExtensions
         ).UpdateQueryableExpression(expansions.Concat(selects).ToList().ToExpansionOptions(), options.Context);
     }
 
+    private static List<ODataExpansionOptions> ToExpansionOptions(this IEnumerable<PathSegment> pathSegments) =>
+        pathSegments.Select(s => new ODataExpansionOptions
+        {
+            MemberName = s.MemberName,
+            MemberType = s.MemberType,
+            ParentType = s.ParentType,
+            FilterOptions = s.FilterOptions,
+            QueryOptions = s.QueryOptions
+        }).ToList();
+
     private static List<List<ODataExpansionOptions>> ToExpansionOptions(this List<List<PathSegment>> pathSegments)
     {
-        List<List<ODataExpansionOptions>> options = new(pathSegments.Count);
+        List<List<ODataExpansionOptions>> filtered = new(pathSegments.Count);
         foreach (List<PathSegment> segments in pathSegments)
         {
-            options.Add(segments.Select(s => new ODataExpansionOptions
+            PathSegment lastSegment = segments.Last();
+            if (lastSegment.FilterOptions is not null)
             {
-                MemberName = s.MemberName,
-                MemberType = s.MemberType,
-                ParentType = s.ParentType,
-                FilterOptions = s.FilterOptions,
-                QueryOptions = s.QueryOptions
-            }).ToList());
+                filtered.Add(segments.ToExpansionOptions());
+            }
+
+            var selectSegments = lastSegment.SelectPaths;
+            if (selectSegments is not null)
+            {
+                filtered.AddRange
+                (
+                    selectSegments
+                        .Where(s => s.Last().FilterOptions is not null)
+                        .Select(s => segments.Concat(s).ToExpansionOptions())
+                );
+            }
         }
-        return options;
+
+        return filtered;
     }
 
     private static IQueryable<TModel> GetQuery<TModel, TData>(this IQueryable<TData> query,

@@ -19,7 +19,7 @@ namespace AutoMapper.AspNet.OData.Visitors
         private readonly ODataQueryContext context;
 
         public static Expression UpdaterExpansion(Expression expression, List<ODataExpansionOptions> expansions, ODataQueryContext context)
-                => new ChildCollectionFilterUpdater(expansions, context).Visit(expression);        
+                => new ChildCollectionFilterUpdater(expansions, context).Visit(expression);
 
         protected override Expression GetBindingExpression(MemberAssignment binding, ODataExpansionOptions expansion)
         {
@@ -42,12 +42,12 @@ namespace AutoMapper.AspNet.OData.Visitors
             }
             else if (binding.Expression is MethodCallExpression callExpression)
             {
-                return CallVisitor.Traverse
+                return NestedFilterAppender.AppendFilter
                 (
                     callExpression,
                     expansions,
                     this.context
-                 );
+                );
             }
             else if (expansions.Count > 1)  //Mutually exclusive with expansion.Filter != null.                            
             {                               //There can be only one filter in the list.  See the GetFilters() method in QueryableExtensions.UpdateQueryable.
