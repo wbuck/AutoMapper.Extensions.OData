@@ -547,19 +547,15 @@ public sealed class GetQueryTests
     public async Task ForestModelFilteringOnRoot_AndChildCollection_WithMatches2()
     {
         const string query = "/forest?$expand=DomainControllers/Dc($expand=Backups($select=Values($filter=$this gt 10), Location))";
-        //const string query = "/forest?$expand=DomainControllers/Dc($expand=Backups($select=Values))";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
 
         static void Test(ICollection<ForestModel> collection)
         {
-            Assert.Single(collection);
-            Assert.Equal(4, collection.First().DomainControllers.Count);
-            Assert.Equal(1, collection.First().DomainControllers.ElementAt(0).Dc.Backups.Count);
-            Assert.Equal(1, collection.First().DomainControllers.ElementAt(1).Dc.Backups.Count);
-            Assert.Equal(1, collection.First().DomainControllers.ElementAt(2).Dc.Backups.Count);
-            Assert.Equal(0, collection.First().DomainControllers.ElementAt(3).Dc.Backups.Count);
+            Assert.All(collection
+                .SelectMany(m => m.DomainControllers)
+                .SelectMany(entry => entry.Dc.Backups), backup => Assert.Single(backup.Values));
         }
     }
 

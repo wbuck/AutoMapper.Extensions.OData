@@ -1,9 +1,6 @@
-﻿using LogicBuilder.Expressions.Utils;
-using Microsoft.AspNetCore.OData.Query;
-using Microsoft.OData.UriParser;
+﻿using Microsoft.AspNetCore.OData.Query;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 
@@ -23,31 +20,9 @@ namespace AutoMapper.AspNet.OData.Visitors
 
         protected override Expression GetBindingExpression(MemberAssignment binding, ODataExpansionOptions expansion)
         {
-            if (expansion.FilterOptions?.FilterClause is FilterClause filter)
+            if (expansion.FilterOptions != null)
             {
-                Expression expression = FilterAppender.AppendFilter(binding.Expression, expansion, context);
-
-                Type expressionType = binding.Expression.Type;
-                if (expression == binding.Expression && expressionType.IsListOfLiteralTypes())
-                {
-                    Type elementType = binding.Expression.Type.GetCurrentType();
-                    expression = Expression.Call
-                    (
-                        LinqMethods.EnumerableWhereMethod.MakeGenericMethod(elementType),
-                        binding.Expression,
-                        filter.GetFilterExpression(elementType, this.context)
-                    ).ToListCall(elementType);
-                }
-                return expression;
-            }
-            else if (binding.Expression is MethodCallExpression callExpression)
-            {
-                return NestedFilterAppender.AppendFilter
-                (
-                    callExpression,
-                    expansions,
-                    this.context
-                );
+                return FilterAppender.AppendFilter(binding.Expression, expansion, context);
             }
             else if (expansions.Count > 1)  //Mutually exclusive with expansion.Filter != null.                            
             {                               //There can be only one filter in the list.  See the GetFilters() method in QueryableExtensions.UpdateQueryable.
