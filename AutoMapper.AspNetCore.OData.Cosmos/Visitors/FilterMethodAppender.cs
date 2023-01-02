@@ -1,5 +1,6 @@
 ﻿using LogicBuilder.Expressions.Utils;
 using Microsoft.AspNetCore.OData.Query;
+using Microsoft.OData.UriParser;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -10,13 +11,13 @@ namespace AutoMapper.AspNet.OData.Visitors
 {
     internal sealed class FilterMethodAppender : ExpressionVisitor
     {
-        private readonly List<ODataExpansionOptions> expansions;
+        private readonly List<ODataExpansionOptions> expansionPath;
         private readonly ODataQueryContext context;
         private int currentIndex;
 
         public FilterMethodAppender(List<ODataExpansionOptions> expansions, ODataQueryContext context)
         {
-            this.expansions = expansions;
+            this.expansionPath = expansions;
             this.context = context;
             this.currentIndex = 0;
         }
@@ -33,9 +34,9 @@ namespace AutoMapper.AspNet.OData.Visitors
 
                 if (nodeType == parentType && GetBinding(out var binding))
                 {                                   
-                    if (expansion.FilterOptions?.FilterClause is null)
+                    if (expansion.FilterOptions?.FilterClause is not FilterClause clause)
                     {
-                        Advance();
+                        Next();
                         return base.VisitMemberInit(node);
                     }
 
@@ -51,9 +52,12 @@ namespace AutoMapper.AspNet.OData.Visitors
                             return assignment;
 
                         if (assignment.Expression is MethodCallExpression callExpression)
-                            return assignment.Update(Visit(callExpression));
+                        {
+                            Next();
+                            return assignment.Update(FilterAppender.AppendFilter(callExpression, expansion, this.context));
+                        }
 
-                        Advance();
+                        Next();
                         Type elementType = assignment.Expression.Type.GetCurrentType();
 
                         return assignment.Update
@@ -62,7 +66,7 @@ namespace AutoMapper.AspNet.OData.Visitors
                             (
                                 LinqMethods.EnumerableWhereMethod.MakeGenericMethod(elementType),
                                 binding.Expression,
-                                expansion.FilterOptions.FilterClause.GetFilterExpression(elementType, this.context)
+                                clause.GetFilterExpression(elementType, this.context)
                             ).ToListCall(elementType)
                         );
 
@@ -80,37 +84,17 @@ namespace AutoMapper.AspNet.OData.Visitors
             }
         }
 
-        protected override Expression VisitMethodCall(MethodCallExpression node)
+        private void Next() 
         {
-            if (TryGetCurrent(out var expansion))
-            {
-                Type nodeType = node.Type.GetCurrentType();
-                Type memberType = expansion.MemberType.GetCurrentType();
-
-                if (node.Method.Name.Equals(nameof(Enumerable.Select)) 
-                    && memberType == nodeType)
-                {
-                    Advance();
-
-                    if (expansion.FilterOptions?.FilterClause is not null)                    
-                        return FilterAppender.AppendFilter(node, expansion, this.context);                    
-                }
-            }
-            
-            return base.VisitMethodCall(node);
-        }
-
-        private void Advance() 
-        {
-            if (this.currentIndex < this.expansions.Count)
+            if (this.currentIndex < this.expansionPath.Count)
                 ++this.currentIndex;
 
         }
 
         private bool TryGetCurrent([MaybeNullWhen(false)] out ODataExpansionOptions options)
         {
-            options = currentIndex < this.expansions.Count
-                ? this.expansions[this.currentIndex]
+            options = currentIndex < this.expansionPath.Count
+                ? this.expansionPath[this.currentIndex]
                 : null;
 
             return options is not null;
