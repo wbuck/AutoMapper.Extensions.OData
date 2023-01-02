@@ -39,34 +39,34 @@ namespace AutoMapper.AspNet.OData.Visitors
                         return base.VisitMemberInit(node);
                     }
 
-                    List<MemberAssignment> memberAssignments = node.Bindings.OfType<MemberAssignment>().Select(expr => 
-                    {
-                        if (expr == binding)
-                        {
-                            if (expr.Expression is MethodCallExpression callExpression)                            
-                                return expr.Update(Visit(callExpression));
-                            
-                            Advance();
-                            Type elementType = expr.Expression.Type.GetCurrentType();
-                            
-                            return expr.Update
-                            (
-                                Expression.Call
-                                (
-                                    LinqMethods.EnumerableWhereMethod.MakeGenericMethod(elementType),
-                                    binding.Expression,
-                                    expansion.FilterOptions.FilterClause.GetFilterExpression(elementType, this.context)
-                                ).ToListCall(elementType)
-                            );
-                        }
-                        return expr;
-                    }).ToList();
-
                     return Expression.MemberInit
                     (
                         Expression.New(node.Type),
-                        memberAssignments
+                        node.Bindings.OfType<MemberAssignment>().Select(UpdateBinding)
                     );
+
+                    MemberAssignment UpdateBinding(MemberAssignment assignment)
+                    {
+                        if (assignment != binding)
+                            return assignment;
+
+                        if (assignment.Expression is MethodCallExpression callExpression)
+                            return assignment.Update(Visit(callExpression));
+
+                        Advance();
+                        Type elementType = assignment.Expression.Type.GetCurrentType();
+
+                        return assignment.Update
+                        (
+                            Expression.Call
+                            (
+                                LinqMethods.EnumerableWhereMethod.MakeGenericMethod(elementType),
+                                binding.Expression,
+                                expansion.FilterOptions.FilterClause.GetFilterExpression(elementType, this.context)
+                            ).ToListCall(elementType)
+                        );
+
+                    }
                 }
             }                              
             return base.VisitMemberInit(node);
@@ -84,11 +84,11 @@ namespace AutoMapper.AspNet.OData.Visitors
         {
             if (TryGetCurrent(out var expansion))
             {
-                Type elementType = node.Type.GetCurrentType();
+                Type nodeType = node.Type.GetCurrentType();
                 Type memberType = expansion.MemberType.GetCurrentType();
 
                 if (node.Method.Name.Equals(nameof(Enumerable.Select)) 
-                    && memberType == elementType)
+                    && memberType == nodeType)
                 {
                     Advance();
 
@@ -100,8 +100,12 @@ namespace AutoMapper.AspNet.OData.Visitors
             return base.VisitMethodCall(node);
         }
 
-        private void Advance() =>
-            ++this.currentIndex;
+        private void Advance() 
+        {
+            if (this.currentIndex < this.expansions.Count)
+                ++this.currentIndex;
+
+        }
 
         private bool TryGetCurrent([MaybeNullWhen(false)] out ODataExpansionOptions options)
         {
