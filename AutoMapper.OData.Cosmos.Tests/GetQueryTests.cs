@@ -546,6 +546,40 @@ public sealed class GetQueryTests
     [Fact]
     public async Task ForestModelFilteringOnRoot_AndChildCollection_WithMatches2()
     {
+        const string query = "/forest?$select=DomainControllers($filter=DcCredentials/Username eq 'Some User')";
+        //const string query = "/forest?$top=5&$expand=DomainControllers($expand=Dc;$filter=Dc/FullyQualifiedDomainName eq 'SomeDomainName')";
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Single(collection);
+            Assert.Equal(4, collection.First().DomainControllers.Count);
+            Assert.Equal(1, collection.First().DomainControllers.ElementAt(0).Dc.Backups.Count);
+            Assert.Equal(1, collection.First().DomainControllers.ElementAt(1).Dc.Backups.Count);
+            Assert.Equal(1, collection.First().DomainControllers.ElementAt(2).Dc.Backups.Count);
+            Assert.Equal(0, collection.First().DomainControllers.ElementAt(3).Dc.Backups.Count);
+        }
+    }
+
+    [Fact]
+    public async Task ForestModelFilteringOnRoot_AndChildCollection_WithNoMatches()
+    {
+        const string query = "/forest?$top=5&$expand=DomainControllers/Dc($expand=Backups($filter=Location/NetworkInformation/Address eq 'Azure blob storage'))&$filter=ForestName eq 'Fake Forest'";
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Empty(collection);
+        }
+    }
+
+    [Fact]
+    public async Task ForestModel_NestedFilterAndSelect_ShouldReturnEntityWithSelectedPropertiesAndFilteredLiteralCollection()
+    {
         const string query = "/forest?$expand=DomainControllers/Dc($expand=Backups($select=Values($filter=$this gt 10), Location))";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
@@ -553,6 +587,10 @@ public sealed class GetQueryTests
 
         static void Test(ICollection<ForestModel> collection)
         {
+            Assert.All(collection
+                .SelectMany(m => m.DomainControllers)
+                .SelectMany(entry => entry.Dc.Backups), backup => Assert.NotNull(backup.Location));
+
             Assert.All(collection
                 .SelectMany(m => m.DomainControllers)
                 .SelectMany(entry => entry.Dc.Backups), backup => Assert.Single(backup.Values));

@@ -115,9 +115,12 @@ internal static partial class ExpansionHelper
 
             if (depth == 0 || !segments.Equals(currentPath))
             {
-                if (!segments.Last().IsComplex)                
-                    paths.Add(segments);                    
-                else
+                PathSegment lastSegment = segments.Last();
+
+                if (!lastSegment.IsComplex || (lastSegment.IsComplex && lastSegment.FilterOptions is not null))
+                    paths.Add(segments);
+
+                if (lastSegment.IsComplex)
                     paths.AddLiteralAndComplexSelects(segments, edmModel);
             }
         }

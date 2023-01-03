@@ -107,7 +107,7 @@ public static class QueryableExtensions
         foreach (List<PathSegment> segments in pathSegments)
         {
             PathSegment lastSegment = segments.Last();
-            if (lastSegment.FilterOptions is not null)
+            if (lastSegment.FilterOptions is not null || lastSegment.QueryOptions is not null)
             {
                 filtered.Add(segments.ToExpansionOptions());
             }
@@ -118,9 +118,48 @@ public static class QueryableExtensions
                 filtered.AddRange
                 (
                     selectSegments
-                        .Where(s => s.Last().FilterOptions is not null)
+                        .Where(s => s.Last().FilterOptions is not null || s.Last().QueryOptions is not null)
                         .Select(s => segments.Concat(s).ToExpansionOptions())
                 );
+            }
+        }
+
+        return filtered;
+    }
+
+    private static List<List<ODataExpansionOptions>> ToExpansionOptions2(this List<List<PathSegment>> pathSegments)
+    {
+        List<List<ODataExpansionOptions>> filtered = new(pathSegments.Count);
+        foreach (List<PathSegment> segments in pathSegments)
+        {
+            if (segments.Any(s => s.FilterOptions is not null || s.QueryOptions is not null))
+            {
+                int index = segments.FindIndex(s => s.FilterOptions is not null);
+                filtered.Add(segments.Take(index + 1).ToExpansionOptions());
+            }
+
+            foreach (var path in segments)
+            {
+                if (path.SelectPaths is null)
+                    continue;
+
+                foreach (var selectPath in path.SelectPaths
+                        .Where(p => p.Any(s => s.FilterOptions is not null || s.QueryOptions is not null))
+                        .Select(p => segments.Concat(p).ToList()))
+                {
+                    int index = selectPath.FindIndex(s => s.FilterOptions is not null);
+                    if (index > -1)
+                    {
+                        filtered.Add(selectPath.Take(index + 1).ToExpansionOptions());
+                    }
+                }
+
+                //filtered.AddRange
+                //(
+                //    path.SelectPaths
+                //        .Where(p => p.Any(s => s.FilterOptions is not null || s.QueryOptions is not null))
+                //        .Select(p => segments.Concat(p).ToExpansionOptions())
+                //);
             }
         }
 
@@ -261,7 +300,7 @@ public static class QueryableExtensions
         {
             methods.ForEach
             (
-                methodList => projectionExpression = ChildCollectionOrderByUpdater.UpdaterExpansion
+                methodList => projectionExpression = QueryMethodAppender.AppendQuery
                 (
                     projectionExpression,
                     methodList,

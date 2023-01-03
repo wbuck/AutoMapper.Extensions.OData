@@ -39,7 +39,7 @@ internal record struct PathSegment
     public EdmTypeKind EdmTypeKind { get; }
     public FilterOptions? FilterOptions { get; }
     public QueryOptions? QueryOptions { get; }
-    public IReadOnlyList<IReadOnlyList<PathSegment>>? SelectPaths { get; }
+    public List<List<PathSegment>>? SelectPaths { get; }
     public bool IsComplex => EdmTypeKind == EdmTypeKind.Complex;
     public bool IsEntity => EdmTypeKind == EdmTypeKind.Entity;
     public bool IsLiteral => EdmTypeKind == EdmTypeKind.Primitive || EdmTypeKind == EdmTypeKind.Enum;
