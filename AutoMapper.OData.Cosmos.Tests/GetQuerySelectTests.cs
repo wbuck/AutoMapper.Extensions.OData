@@ -75,7 +75,7 @@ public sealed class GetQuerySelectTests
             Assert.NotEmpty(models);
             foreach (var model in models)
             {
-                Assert.Null(model.Dc);
+                Assert.Null(model.Entry.Dc);
                 Assert.NotEqual(default, model.DateAdded);
                 AssertCredentials(model.DcCredentials);
                 AssertNetworkInfo(model.DcNetworkInformation);
@@ -111,7 +111,7 @@ public sealed class GetQuerySelectTests
     [Fact]
 	public async Task ForestSelectForestNameExpandDc_DcShouldBeExpanded_RootComplexTypesShouldNotBeExpanded()
 	{        
-        const string query = "/forest?$select=ForestName&$expand=DomainControllers/Dc&$orderby=ForestName desc";
+        const string query = "/forest?$select=ForestName&$expand=DomainControllers/Entry/Dc&$orderby=ForestName desc";
 
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
@@ -139,7 +139,7 @@ public sealed class GetQuerySelectTests
             Assert.Null(model.ForestWideCredentials);
 
             AssertDomainControllerEntry(model.DomainControllers);
-            AssertDomainController(model.DomainControllers.Select(m => m.Dc));
+            AssertDomainController(model.DomainControllers.Select(m => m.Entry.Dc));
         }        
 
         static void AssertDomainController(IEnumerable<DomainControllerModel> models)
@@ -177,7 +177,7 @@ public sealed class GetQuerySelectTests
             Assert.NotEmpty(models);
             foreach (var model in models)
             {
-                Assert.NotNull(model.Dc);
+                Assert.NotNull(model.Entry.Dc);
                 Assert.Equal(default, model.DateAdded);
                 Assert.Null(model.DcCredentials);
                 Assert.Null(model.DcNetworkInformation);
@@ -186,8 +186,8 @@ public sealed class GetQuerySelectTests
     }
 
     [Theory]
-    [InlineData("/forest?$top=1&$select=DomainControllers/Dc, ForestName&$expand=DomainControllers/Dc&$orderby=ForestName desc")]
-    [InlineData("/forest?$top=1&$select=DomainControllers($select=Dc), ForestName&$expand=DomainControllers/Dc&$orderby=ForestName desc")]
+    [InlineData("/forest?$top=1&$select=DomainControllers/Entry/Dc, ForestName&$expand=DomainControllers/Entry/Dc&$orderby=ForestName desc")]
+    [InlineData("/forest?$top=1&$select=DomainControllers/Entry($select=Dc), ForestName&$expand=DomainControllers/Entry/Dc&$orderby=ForestName desc")]
     public async Task ForestTopWithSelectAndExpandDc_BothSyntaxes_DcShouldBeExpanded_RootComplexTypesShouldNotBeExpanded(string query)
     {
         Test(Get<ForestModel, Forest>(query));
@@ -206,7 +206,7 @@ public sealed class GetQuerySelectTests
             Assert.Null(model.ForestWideCredentials);
 
             AssertDomainControllerEntry(model.DomainControllers);
-            AssertDomainController(model.DomainControllers.Select(m => m.Dc));
+            AssertDomainController(model.DomainControllers.Select(m => m.Entry.Dc));
         }
 
         static void AssertDomainControllerEntry(ICollection<DomainControllerEntryModel> models)
@@ -214,7 +214,7 @@ public sealed class GetQuerySelectTests
             Assert.Equal(2, models.Count);
             foreach (var model in models)
             {
-                Assert.NotNull(model.Dc);
+                Assert.NotNull(model.Entry.Dc);
                 Assert.Equal(default, model.DateAdded);
                 Assert.Null(model.DcCredentials);
                 Assert.Null(model.DcNetworkInformation);
@@ -255,7 +255,7 @@ public sealed class GetQuerySelectTests
     [Fact]
     public async void ForestSelectForestNameExpandDcSelectFullyQualifiedDomainName_DcShouldBeExpanded_ShouldOnlyReturnDcWithSelectedProperty()
     {
-        string query = "/forest?$top=1&$select=ForestName&$expand=DomainControllers/Dc($select=FullyQualifiedDomainName)&$orderby=ForestName desc";
+        string query = "/forest?$top=1&$select=ForestName&$expand=DomainControllers/Entry/Dc($select=FullyQualifiedDomainName)&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
@@ -272,7 +272,7 @@ public sealed class GetQuerySelectTests
             Assert.Null(model.ForestWideCredentials);
 
             AssertDomainControllerEntry(model.DomainControllers);
-            AssertDomainController(model.DomainControllers.Select(m => m.Dc));
+            AssertDomainController(model.DomainControllers.Select(m => m.Entry.Dc));
         }
 
         static void AssertDomainControllerEntry(ICollection<DomainControllerEntryModel> models)
@@ -280,7 +280,7 @@ public sealed class GetQuerySelectTests
             Assert.Equal(2, models.Count);
             foreach (var model in models)
             {
-                Assert.NotNull(model.Dc);
+                Assert.NotNull(model.Entry.Dc);
                 Assert.Equal(default, model.DateAdded);
                 Assert.Null(model.DcCredentials);
                 Assert.Null(model.DcNetworkInformation);
@@ -303,8 +303,8 @@ public sealed class GetQuerySelectTests
     }
 
     [Theory]
-    [InlineData("/forest?$top=1&$select=ForestName, DomainControllers, DomainControllers/Dc&$expand=DomainControllers/Dc($select=FsmoRoles;$expand=Backups)&$orderby=ForestName asc")]
-    [InlineData("/forest?$top=1&$select=ForestName, DomainControllers($select=DateAdded, Dc, DcCredentials, DcNetworkInformation)&$expand=DomainControllers/Dc($select=FsmoRoles;$expand=Backups)&$orderby=ForestName asc")]
+    [InlineData("/forest?$top=1&$select=ForestName, DomainControllers, DomainControllers/Entry/Dc&$expand=DomainControllers/Entry/Dc($select=FsmoRoles;$expand=Backups)&$orderby=ForestName asc")]
+    [InlineData("/forest?$top=1&$select=ForestName, DomainControllers($select=DateAdded, Entry/Dc, DcCredentials, DcNetworkInformation)&$expand=DomainControllers/Entry/Dc($select=FsmoRoles;$expand=Backups)&$orderby=ForestName asc")]
     public async Task ForestSelectForestNameDomainControllersAndDc_BothSyntaxes_ExpandDcAndBackups_DcAndBackupShouldBeExpanded(string query)
     {        
         Test(Get<ForestModel, Forest>(query));
@@ -318,8 +318,8 @@ public sealed class GetQuerySelectTests
             ForestModel model = collection.First();
             AssertForestModel(model);
             AssertDomainControllerEntry(model.DomainControllers);
-            AssertDomainController(model.DomainControllers.Select(m => m.Dc));
-            AssertBackup(model.DomainControllers.SelectMany(m => m.Dc.Backups));
+            AssertDomainController(model.DomainControllers.Select(m => m.Entry.Dc));
+            AssertBackup(model.DomainControllers.SelectMany(m => m.Entry.Dc.Backups));
         }
 
         static void AssertForestModel(ForestModel model)
@@ -351,7 +351,7 @@ public sealed class GetQuerySelectTests
             Assert.NotEmpty(models);
             foreach (var model in models)
             {
-                Assert.NotNull(model.Dc);
+                Assert.NotNull(model.Entry.Dc);
                 Assert.NotEqual(default, model.DateAdded);
                 AssertCredentials(model.DcCredentials);
                 AssertNetworkInfo(model.DcNetworkInformation);
@@ -452,8 +452,8 @@ public sealed class GetQuerySelectTests
     }
 
     [Theory]
-    [InlineData("/forest?$expand=DomainControllers/Dc($expand=Backups($select=Location/Credentials/Username))")]
-    [InlineData("/forest?$expand=DomainControllers/Dc($expand=Backups($select=Location($select=Credentials($select=Username))))")]
+    [InlineData("/forest?$expand=DomainControllers/Entry/Dc($expand=Backups($select=Location/Credentials/Username))")]
+    [InlineData("/forest?$expand=DomainControllers/Entry/Dc($expand=Backups($select=Location($select=Credentials($select=Username))))")]
     public async Task ForestExpandDcAndBackupSelectComplexProperties_BothSyntaxes_ShouldOnlyReturnComplexPropertiesWithSelectedProperties(string query)
     {
         Test(Get<ForestModel, Forest>(query));
@@ -463,7 +463,7 @@ public sealed class GetQuerySelectTests
         static void Test(ICollection<ForestModel> collection)
         {
             Assert.Equal(3, collection.Count);
-            foreach (var model in collection.SelectMany(m => m.DomainControllers.SelectMany(m => m.Dc.Backups)))
+            foreach (var model in collection.SelectMany(m => m.DomainControllers.SelectMany(m => m.Entry.Dc.Backups)))
             {
                 AssertModel(model);
             }
@@ -485,7 +485,7 @@ public sealed class GetQuerySelectTests
     [Fact]
     public async Task ForestExpandDcAndBackupSelectComplexProperty_ShouldReturnFullyPopulatedComplexProperty()
     {
-        const string query = "/forest?$expand=DomainControllers/Dc($expand=Backups($select=Location))";
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc($expand=Backups($select=Location))";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
@@ -493,7 +493,7 @@ public sealed class GetQuerySelectTests
         static void Test(ICollection<ForestModel> collection)
         {
             Assert.Equal(3, collection.Count);
-            foreach (var model in collection.SelectMany(m => m.DomainControllers.SelectMany(m => m.Dc.Backups)))
+            foreach (var model in collection.SelectMany(m => m.DomainControllers.SelectMany(m => m.Entry.Dc.Backups)))
             {
                 AssertModel(model);
             }

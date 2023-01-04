@@ -11,29 +11,31 @@ using System.Linq.Expressions;
 
 namespace AutoMapper.AspNet.OData.Visitors
 {
-    internal sealed class WhereAppender : ExpressionVisitor
+    internal sealed class FilterInserter : ExpressionVisitor
     {
-        private readonly Type type;
+        private readonly Type elementType;
         private readonly LambdaExpression lambdaExpression;        
 
-        public WhereAppender(Type type, LambdaExpression lambdaExpression)
+        private FilterInserter(Type elementType, LambdaExpression lambdaExpression)
         {
-            this.type = type;
+            this.elementType = elementType;
             this.lambdaExpression = lambdaExpression;            
         }
+
+        public static Expression Insert(Type elementType, LambdaExpression lambdaExpression, MemberAssignment binding) =>
+            new FilterInserter(elementType, lambdaExpression).Visit(binding.Expression);
 
         protected override Expression VisitMethodCall(MethodCallExpression node)
         {
             Type elementType = node.Type.GetCurrentType();
-            if (node.Method.Name.Equals(nameof(Enumerable.Select)) && elementType == this.type)
+            if (node.Method.Name.Equals(nameof(Enumerable.Select)) && elementType == this.elementType)
             {
-                var expr = Expression.Call
+                return Expression.Call
                 (
-                    LinqMethods.EnumerableWhereMethod.MakeGenericMethod(type),
+                    LinqMethods.EnumerableWhereMethod.MakeGenericMethod(this.elementType),
                     node,
                     this.lambdaExpression
-                );
-                return expr;
+                );                
             }
             return base.VisitMethodCall(node);
         }
@@ -44,11 +46,15 @@ namespace AutoMapper.AspNet.OData.Visitors
         private readonly Type currentType;
         private readonly MemberExpression replacement;
 
-        public MemberAccessReplacer(Type currentType, MemberExpression replacement)
+        private MemberAccessReplacer(Type currentType, MemberExpression replacement)
         {
             this.currentType = currentType;
             this.replacement = replacement;
         }
+
+        public static Expression Replace(Type currentType, MemberExpression replacement, Expression expression) =>
+            new MemberAccessReplacer(currentType, replacement).Visit(expression);
+
         protected override Expression VisitMember(MemberExpression node)
         {
             if (node.NodeType == ExpressionType.MemberAccess 
@@ -63,63 +69,36 @@ namespace AutoMapper.AspNet.OData.Visitors
 
     internal sealed class WhereMethodAppender : ExpressionVisitor
     {
-        private readonly List<PathSegment> filterPath;
+        private readonly List<PathSegment> pathSegments;
         private readonly PathSegment collectionSegment;
         private readonly ODataQueryContext context;
         private int currentIndex;
 
-        private WhereMethodAppender(List<PathSegment> filterPath, ODataQueryContext context)
+        private WhereMethodAppender(List<PathSegment> pathSegments, ODataQueryContext context)
         {
-            this.filterPath = filterPath;
-            this.collectionSegment = this.filterPath.First(e => e.MemberType.IsList());
+            this.pathSegments = pathSegments;
+            this.collectionSegment = this.pathSegments.First(e => e.MemberType.IsList());
             this.context = context;
             this.currentIndex = 0;
         }
 
-        public static Expression AppendFilters(Expression expression, List<PathSegment> filterPath, ODataQueryContext context) =>
-            new WhereMethodAppender(filterPath, context).Visit(expression);
+        public static Expression AppendFilters(Expression expression, List<PathSegment> pathSegments, ODataQueryContext context) =>
+            new WhereMethodAppender(pathSegments, context).Visit(expression);        
 
         protected override Expression VisitMemberInit(MemberInitExpression node)
         {
-            if (TryGetCurrent(out var pathSegemt))
+            if (TryGetCurrent(out var pathSegment))
             {
                 Type nodeType = node.Type.GetCurrentType();
-                Type parentType = pathSegemt.ParentType.GetCurrentType();
+                Type parentType = pathSegment.ParentType.GetCurrentType();
 
                 if (nodeType == parentType && GetBinding(out var binding))
                 {
-                    if (pathSegemt != this.collectionSegment)
-                    {
-                        Next();
-                        return base.VisitMemberInit(node);
-                    }
+                    Next();
 
-                    // Where(Select, $it.Dc.FullyQualifiedDomainName == "Some Value"))
-                    var lastExpansion = this.filterPath.Last();
-                    FilterClause clause = lastExpansion.FilterOptions.FilterClause;
-
-                    ParameterExpression param = Expression.Parameter(pathSegemt.MemberType.GetCurrentType());
-
-                    var access = Expression.MakeMemberAccess(param, pathSegemt.MemberType.GetCurrentType().GetPropertiesAndFields().First(m => m.Name.Equals(lastExpansion.MemberName)));
-                    var parameters = new Dictionary<string, ParameterExpression>();
-
-                    Type memberType = lastExpansion.MemberType.GetCurrentType();
-                    FilterHelper helper = new(parameters, this.context);
-
-                    
-                    var lambda = helper.GetFilterPart(clause.Expression).GetFilter(memberType, parameters, helper.LiteralName);
-                    
-                    //lambda = (LambdaExpression)new LambdaReplacer(lambda.Parameters.First(), param, access).Visit(lambda);
-
-                    var lambdaTest = Expression.Lambda
-                    (
-                        new MemberAccessReplacer(memberType, access).Visit(lambda.Body),
-                        false,
-                        param
-                    );
-
-                    var bindingExpression = new WhereAppender(param.Type, lambdaTest).Visit(binding.Expression);
-                   
+                    if (pathSegment != this.collectionSegment)                    
+                        return base.VisitMemberInit(node);                   
+                                       
                     return Expression.MemberInit
                     (
                         Expression.New(node.Type),
@@ -131,14 +110,12 @@ namespace AutoMapper.AspNet.OData.Visitors
                         if (assignment != binding)
                             return assignment;
 
-                        Next();
-                        var expr = assignment.Update(bindingExpression);
-                        return expr;
-                        //return assignment.Expression switch
-                        //{
-                        //    MethodCallExpression expr => assignment.Update(GetCallExpression(expr, expansion)),
-                        //    _ => assignment.Update(GetBindingExpression(assignment, clause))
-                        //};
+                        Type segmentType = pathSegment.MemberType.GetCurrentType();
+
+                        ParameterExpression param = Expression.Parameter(segmentType);
+                        MemberExpression memberExpression = GetMemberExpression(param);
+
+                        return assignment.Update(GetBindingExpression(binding, param, memberExpression));
                     }
                 }
             }
@@ -147,41 +124,58 @@ namespace AutoMapper.AspNet.OData.Visitors
             bool GetBinding([MaybeNullWhen(false)] out MemberAssignment binding)
             {
                 binding = node.Bindings.OfType<MemberAssignment>().FirstOrDefault(b =>
-                   b.Member.Name.Equals(pathSegemt.MemberName));
+                   b.Member.Name.Equals(pathSegment.MemberName));
 
                 return binding is not null;
             }
         }
 
-        //private Expression GetCallExpression(MethodCallExpression callExpression, ODataExpansionOptions expansion) =>
-        //    FilterAppender.AppendFilter(callExpression, expansion, this.context);
-        //
-        //private Expression GetBindingExpression(MemberAssignment memberAssignment, FilterClause clause)
-        //{
-        //    Type elementType = memberAssignment.Expression.Type.GetCurrentType();
-        //    return Expression.Call
-        //    (
-        //        LinqMethods.EnumerableWhereMethod.MakeGenericMethod(elementType),
-        //        memberAssignment.Expression,
-        //        clause.GetFilterExpression(elementType, context)
-        //    ).ToListCall(elementType);
-        //}
+        private MemberExpression GetMemberExpression(ParameterExpression param) =>
+            this.pathSegments.Skip(this.currentIndex + 1).Aggregate
+            (
+                Expression.MakeMemberAccess(param, this.pathSegments[this.currentIndex].Member),
+                (expression, next) => Expression.MakeMemberAccess(expression, next.Member)
+            );
+
+        private Expression GetBindingExpression(MemberAssignment binding, ParameterExpression param, MemberExpression memberExpression)
+        {
+            var parameters = new Dictionary<string, ParameterExpression>();
+
+            Type memberType = this.pathSegments.Last().MemberType.GetCurrentType();
+            FilterHelper helper = new(parameters, this.context);
+
+            LambdaExpression lambdaExpression = helper
+                .GetFilterPart(GetFilter().Expression)
+                .GetFilter(memberType, parameters, helper.LiteralName);
+
+            lambdaExpression = Expression.Lambda
+            (
+                MemberAccessReplacer.Replace(memberType, memberExpression, lambdaExpression.Body),
+                false,
+                param
+            );
+
+            return FilterInserter.Insert(param.Type, lambdaExpression, binding);
+        }
 
         private void Next()
         {
-            if (this.currentIndex < this.filterPath.Count)
+            if (this.currentIndex < this.pathSegments.Count)
                 ++this.currentIndex;
 
         }
 
-        private bool TryGetCurrent(out PathSegment options)
+        private bool TryGetCurrent(out PathSegment pathSegment)
         {
-            (var result, options) = currentIndex < this.filterPath.Count
-                ? (true, this.filterPath[this.currentIndex])
+            (var result, pathSegment) = this.currentIndex < this.pathSegments.Count
+                ? (true, this.pathSegments[this.currentIndex])
                 : (false, default);
 
             return result;
         }
+
+        private FilterClause GetFilter() =>
+            this.pathSegments.Last().FilterOptions.FilterClause;
     }
 
     internal sealed class QueryMethodAppender : ExpressionVisitor

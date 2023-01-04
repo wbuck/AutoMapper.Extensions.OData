@@ -44,7 +44,9 @@ internal static class EdmModelExt
 
             if (memberSelects.Any())
                 expansions.AddRange(memberSelects);
-
+            else
+                expansions.Add(new(pathSegments));
+            
             GetComplexTypeSelects(expansions, pathSegments, elementType, edmModel, depth + 1);
         }
 

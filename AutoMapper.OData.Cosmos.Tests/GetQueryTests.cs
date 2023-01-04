@@ -135,7 +135,7 @@ public sealed class GetQueryTests
         {
             Assert.Equal(1, collection.Count);
             Assert.Equal(4, collection.First().DomainControllers.Count);
-            Assert.All(collection.First().DomainControllers.Select(m => m.Dc), dc => Assert.NotNull(dc));
+            Assert.All(collection.First().DomainControllers.Select(m => m.Entry.Dc), dc => Assert.NotNull(dc));
             Assert.Equal("Rolfson Forest", collection.First().ForestName);
         }
     }
@@ -153,8 +153,8 @@ public sealed class GetQueryTests
             Assert.Equal(2, collection.Count);
             Assert.Equal(4, collection.First().DomainControllers.Count);
             Assert.Equal(4, collection.Last().DomainControllers.Count);
-            Assert.All(collection.First().DomainControllers.Select(m => m.Dc), dc => Assert.NotNull(dc));
-            Assert.All(collection.Last().DomainControllers.Select(m => m.Dc), dc => Assert.NotNull(dc));
+            Assert.All(collection.First().DomainControllers.Select(m => m.Entry.Dc), dc => Assert.NotNull(dc));
+            Assert.All(collection.Last().DomainControllers.Select(m => m.Entry.Dc), dc => Assert.NotNull(dc));
             Assert.Equal("Rolfson Forest", collection.First().ForestName);
             Assert.Equal("Abernathy Forest", collection.Last().ForestName);
         }
@@ -172,7 +172,7 @@ public sealed class GetQueryTests
         {
             Assert.Equal(1, collection.Count);
             Assert.Equal(4, collection.First().DomainControllers.Count);
-            Assert.All(collection.First().DomainControllers.Select(m => m.Dc), dc => Assert.Null(dc));
+            Assert.All(collection.First().DomainControllers.Select(m => m.Entry.Dc), dc => Assert.Null(dc));
             Assert.Equal("Abernathy Forest", collection.First().ForestName);
         }
     }
@@ -221,8 +221,8 @@ public sealed class GetQueryTests
             Assert.Equal(2, collection.Count);
             Assert.Equal(2, collection.First().DomainControllers.Count);
             Assert.Equal(4, collection.Last().DomainControllers.Count);
-            Assert.All(collection.First().DomainControllers.Select(m => m.Dc), dc => Assert.NotNull(dc));
-            Assert.All(collection.Last().DomainControllers.Select(m => m.Dc), dc => Assert.NotNull(dc));
+            Assert.All(collection.First().DomainControllers.Select(m => m.Entry.Dc), dc => Assert.NotNull(dc));
+            Assert.All(collection.Last().DomainControllers.Select(m => m.Entry.Dc), dc => Assert.NotNull(dc));
             Assert.Equal("Zulauf Forest", collection.First().ForestName);
             Assert.Equal("Rolfson Forest", collection.Last().ForestName);
         }
@@ -255,7 +255,7 @@ public sealed class GetQueryTests
         {
             Assert.Equal(1, collection.Count);
             Assert.Equal(4, collection.Single().DomainControllers.Count);
-            Assert.All(collection.Single().DomainControllers.Select(m => m.Dc), dc => Assert.Null(dc));
+            Assert.All(collection.Single().DomainControllers.Select(m => m.Entry.Dc), dc => Assert.Null(dc));
             Assert.Equal("Rolfson Forest", collection.First().ForestName);
         }
     }
@@ -273,7 +273,7 @@ public sealed class GetQueryTests
             Assert.Equal(2, collection.Count);
             Assert.Equal(new[] { "Rolfson Forest", "Abernathy Forest" }, collection.Select(m => m.ForestName));
 
-            var dcs = collection.SelectMany(m => m.DomainControllers.Select(m => m.Dc)).ToList();
+            var dcs = collection.SelectMany(m => m.DomainControllers.Select(m => m.Entry.Dc)).ToList();
             Assert.All(dcs.Select(m => m.FullyQualifiedDomainName), fqdn => Assert.NotNull(fqdn));
             Assert.All(dcs.SelectMany(m => m.Backups), backup => Assert.NotNull(backup));
 
@@ -307,7 +307,7 @@ public sealed class GetQueryTests
             Assert.Equal(2, collection.Count);
             Assert.Equal(new[] { "Zulauf Forest", "Rolfson Forest" }, collection.Select(m => m.ForestName));
 
-            var dcs = collection.SelectMany(m => m.DomainControllers.Select(m => m.Dc)).ToList();
+            var dcs = collection.SelectMany(m => m.DomainControllers.Select(m => m.Entry.Dc)).ToList();
             Assert.All(dcs.SelectMany(m => m.Backups), backup => Assert.NotNull(backup));
 
             var backups = dcs.SelectMany(dc => dc.Backups).ToList();
@@ -338,9 +338,9 @@ public sealed class GetQueryTests
         {
             Assert.Equal(1, collection.Count);
             Assert.Equal(4, collection.First().DomainControllers.Count);           
-            Assert.All(collection.First().DomainControllers.Select(m => m.Dc), dc => Assert.NotNull(dc));
+            Assert.All(collection.First().DomainControllers.Select(m => m.Entry.Dc), dc => Assert.NotNull(dc));
             Assert.Equal("Abernathy Forest", collection.First().ForestName);
-            Assert.Equal("dc1.abernathy.com", collection.First().DomainControllers.First().Dc.FullyQualifiedDomainName);
+            Assert.Equal("dc1.abernathy.com", collection.First().DomainControllers.First().Entry.Dc.FullyQualifiedDomainName);
         }
     }
 
@@ -356,7 +356,7 @@ public sealed class GetQueryTests
         {
             Assert.Equal(1, collection.Count);
             Assert.Equal(4, collection.First().DomainControllers.Count);
-            Assert.All(collection.First().DomainControllers.Select(m => m.Dc), dc => Assert.Null(dc));
+            Assert.All(collection.First().DomainControllers.Select(m => m.Entry.Dc), dc => Assert.Null(dc));
             Assert.Equal("Abernathy Forest", collection.First().ForestName);
             Assert.Equal("Abernathy Metadata", collection.First().Metadata.MetadataType);
         }
@@ -396,7 +396,7 @@ public sealed class GetQueryTests
             Assert.Equal(1, collection.Count);
             Assert.Equal("Abernathy Forest", collection.First().ForestName);
             Assert.Equal(4, collection.First().DomainControllers.Count);
-            Assert.Equal(7, collection.First().DomainControllers.Sum(dc => dc.Dc.Backups.Count));            
+            Assert.Equal(7, collection.First().DomainControllers.Sum(dc => dc.Entry.Dc.Backups.Count));            
         }
     }
 
@@ -536,10 +536,10 @@ public sealed class GetQueryTests
         {
             Assert.Single(collection);
             Assert.Equal(4, collection.First().DomainControllers.Count);
-            Assert.Equal(1, collection.First().DomainControllers.ElementAt(0).Dc.Backups.Count);
-            Assert.Equal(1, collection.First().DomainControllers.ElementAt(1).Dc.Backups.Count);
-            Assert.Equal(1, collection.First().DomainControllers.ElementAt(2).Dc.Backups.Count);
-            Assert.Equal(0, collection.First().DomainControllers.ElementAt(3).Dc.Backups.Count);
+            Assert.Equal(1, collection.First().DomainControllers.ElementAt(0).Entry.Dc.Backups.Count);
+            Assert.Equal(1, collection.First().DomainControllers.ElementAt(1).Entry.Dc.Backups.Count);
+            Assert.Equal(1, collection.First().DomainControllers.ElementAt(2).Entry.Dc.Backups.Count);
+            Assert.Equal(0, collection.First().DomainControllers.ElementAt(3).Entry.Dc.Backups.Count);
         }
     }
 
@@ -580,7 +580,7 @@ public sealed class GetQueryTests
     [Fact]
     public async Task ForestModelFilteringChildComplexCollection_WithMatches2()
     {
-        const string query = "/forest?$expand=DomainControllers/Dc($filter=FullyQualifiedDomainName eq 'dc1.abernathy.com')";
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=FullyQualifiedDomainName eq 'dc1.abernathy.com')";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
@@ -620,11 +620,11 @@ public sealed class GetQueryTests
         {
             Assert.All(collection
                 .SelectMany(m => m.DomainControllers)
-                .SelectMany(entry => entry.Dc.Backups), backup => Assert.NotNull(backup.Location));
+                .SelectMany(entry => entry.Entry.Dc.Backups), backup => Assert.NotNull(backup.Location));
 
             Assert.All(collection
                 .SelectMany(m => m.DomainControllers)
-                .SelectMany(entry => entry.Dc.Backups), backup => Assert.Single(backup.Values));
+                .SelectMany(entry => entry.Entry.Dc.Backups), backup => Assert.Single(backup.Values));
         }
     }
 

@@ -87,9 +87,11 @@ internal static class DatabaseSeeder
                         {
                             Address = "http://www.abernathy.com/"
                         },
-                        Dc = new()
+                        Entry = new()
                         {
-                            Metadata = new()
+                            Dc = new()
+                            {
+                                Metadata = new()
                             {
                                 MetadataType = "DC1 Abernathy Metadata",
                                 MetadataKeyValuePairs = new List<MetadataKeyValue>
@@ -161,7 +163,8 @@ internal static class DatabaseSeeder
                                    Value = "Windows 2019"
                                }
                            }
-                       }
+                            }
+                        }
                     },
                     new()
                     {
@@ -175,9 +178,11 @@ internal static class DatabaseSeeder
                         {
                             Address = "http://www.abernathy.com/"
                         },
-                        Dc = new()
+                        Entry = new()
                         {
-                            Metadata = new()
+                            Dc = new()
+                            {
+                                Metadata = new()
                             {
                                 MetadataType = "DC2 Abernathy Metadata",
                                 MetadataKeyValuePairs = new List<MetadataKeyValue>
@@ -248,7 +253,8 @@ internal static class DatabaseSeeder
                                    Value = "Windows 2016"
                                }
                            }
-                       }
+                            }
+                        }
                     },
                     new()
                     {
@@ -262,9 +268,11 @@ internal static class DatabaseSeeder
                        {
                            Address = "http://www.abernathy.com/"
                        },
-                       Dc = new()
+                       Entry = new()
                        {
-                           Metadata = new()
+                           Dc = new()
+                           {
+                               Metadata = new()
                             {
                                 MetadataType = "DC3 Abernathy Metadata",
                                 MetadataKeyValuePairs = new List<MetadataKeyValue>
@@ -316,6 +324,7 @@ internal static class DatabaseSeeder
                                    Value = "Windows 2012R2"
                                }
                            }
+                           }
                        }
                     },
                     new()
@@ -330,9 +339,11 @@ internal static class DatabaseSeeder
                        {
                            Address = "http://www.abernathy.com/"
                        },
-                       Dc = new()
+                       Entry = new()
                        {
-                           Metadata = new()
+                           Dc = new()
+                           {
+                               Metadata = new()
                             {
                                 MetadataType = "DC4 Abernathy Metadata",
                                 MetadataKeyValuePairs = new List<MetadataKeyValue>
@@ -402,6 +413,7 @@ internal static class DatabaseSeeder
                                    Name = "sAMAccountName",
                                    Value = "DC4"
                                }
+                           }
                            }
                        }
                     },
@@ -481,9 +493,11 @@ internal static class DatabaseSeeder
                        {
                            Address = "http://www.rolfson.com/"
                        },
-                       Dc = new()
+                       Entry = new()
                        {
-                           Metadata = new()
+                           Dc = new()
+                           {
+                               Metadata = new()
                            {
                                MetadataType = "DC1 Rolfson Metadata",
                                MetadataKeyValuePairs = new List<MetadataKeyValue>
@@ -535,6 +549,7 @@ internal static class DatabaseSeeder
                                    Value = "Windows 2022"
                                }
                            }
+                           }
                        }
                     },
                     new()
@@ -549,26 +564,28 @@ internal static class DatabaseSeeder
                        {
                            Address = "http://www.rolfson.com/"
                        },
-                       Dc = new()
+                       Entry = new()
                        {
-                           Metadata = new()
-                            {
-                                MetadataType = "DC2 Rolfson Metadata",
-                                MetadataKeyValuePairs = new List<MetadataKeyValue>
+                           Dc = new()
+                           {
+                                Metadata = new()
                                 {
-                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                    MetadataType = "DC2 Rolfson Metadata",
+                                    MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                    {
+                                        new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                        new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                        new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                    },
                                 },
-                            },
-                           Id = Guid.NewGuid(),
-                           ForestId = forest2,
-                           Fqdn = "dc2.rolfson.com",
-                           FsmoRoles = new List<FsmoRole>
+                                Id = Guid.NewGuid(),
+                                ForestId = forest2,
+                                Fqdn = "dc2.rolfson.com",
+                                FsmoRoles = new List<FsmoRole>
                            {
                                FsmoRole.SchemaMaster
                            },
-                           Backups = new List<Backup>
+                                Backups = new List<Backup>
                            {
                                new Backup
                                {
@@ -628,7 +645,7 @@ internal static class DatabaseSeeder
                                    }
                                }
                            },
-                           Attributes = new List<ObjectAttribute>
+                                Attributes = new List<ObjectAttribute>
                            {
                                new()
                                {
@@ -640,6 +657,7 @@ internal static class DatabaseSeeder
                                    Name = "operatingSystem",
                                    Value = "Windows 2022"
                                }
+                           }
                            }
                        }
                     },
@@ -655,9 +673,11 @@ internal static class DatabaseSeeder
                        {
                            Address = "http://www.rolfson.com/"
                        },
-                       Dc = new()
+                       Entry = new()
                        {
-                           Metadata = new()
+                           Dc = new()
+                           {
+                               Metadata = new()
                             {
                                 MetadataType = "DC3 Rolfson Metadata",
                                 MetadataKeyValuePairs = new List<MetadataKeyValue>
@@ -688,6 +708,7 @@ internal static class DatabaseSeeder
                                    Value = "Windows 2022"
                                }
                            }
+                           }
                        }
                     },
                     new()
@@ -702,9 +723,11 @@ internal static class DatabaseSeeder
                        {
                            Address = "http://www.rolfson.com/"
                        },
-                       Dc = new()
+                       Entry = new()
                        {
-                           Metadata = new()
+                           Dc = new()
+                           {
+                               Metadata = new()
                             {
                                 MetadataType = "DC4 Rolfson Metadata",
                                 MetadataKeyValuePairs = new List<MetadataKeyValue>
@@ -774,6 +797,7 @@ internal static class DatabaseSeeder
                                    Name = "operatingSystem",
                                    Value = "Windows 2008"
                                }
+                           }
                            }
                        }
                     },
@@ -855,9 +879,11 @@ internal static class DatabaseSeeder
                        {
                            Address = "http://zulauf.net/"
                        },
-                       Dc = new()
+                       Entry = new()
                        {
-                           Metadata = new()
+                           Dc = new()
+                           {
+                               Metadata = new()
                            {
                                MetadataType = "DC1 Zulauf Metadata",
                                MetadataKeyValuePairs = new List<MetadataKeyValue>
@@ -911,6 +937,7 @@ internal static class DatabaseSeeder
                                    Value = "Windows 2022"
                                }
                            }
+                           }
                        }
                     },
                     new()
@@ -925,9 +952,11 @@ internal static class DatabaseSeeder
                        {
                            Address = "http://zulauf.net/"
                        },
-                       Dc = new()
+                       Entry = new()
                        {
-                           Metadata = new()
+                           Dc = new()
+                           {
+                               Metadata = new()
                             {
                                 MetadataType = "DC2 Zulauf Metadata",
                                 MetadataKeyValuePairs = new List<MetadataKeyValue>
@@ -1017,6 +1046,7 @@ internal static class DatabaseSeeder
                                    Name = "operatingSystem",
                                    Value = "Windows 2022"
                                }
+                           }
                            }
                        }
                     }
