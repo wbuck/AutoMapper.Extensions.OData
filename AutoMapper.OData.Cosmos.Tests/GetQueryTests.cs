@@ -525,7 +525,7 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async Task ForestModelFilteringOnRoot_AndChildCollection_WithMatches()
+    public async Task ForestModelFilteringOnRoot_AndChildEntityCollection_WithMatches()
     {
         const string query = "/forest?$top=5&$expand=DomainControllers/Dc($expand=Backups($filter=Location/NetworkInformation/Address eq 'Azure blob storage'))&$filter=ForestName eq 'Abernathy Forest'";        
         Test(Get<ForestModel, Forest>(query));
@@ -544,27 +544,58 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async Task ForestModelFilteringOnRoot_AndChildCollection_WithMatches2()
+    public async Task ForestModelFilteringChildComplexCollection_WithNoMatches()
     {
         const string query = "/forest?$select=DomainControllers($filter=DcCredentials/Username eq 'Some User')";
-        //const string query = "/forest?$top=5&$expand=DomainControllers($expand=Dc;$filter=Dc/FullyQualifiedDomainName eq 'SomeDomainName')";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
 
         static void Test(ICollection<ForestModel> collection)
         {
-            Assert.Single(collection);
-            Assert.Equal(4, collection.First().DomainControllers.Count);
-            Assert.Equal(1, collection.First().DomainControllers.ElementAt(0).Dc.Backups.Count);
-            Assert.Equal(1, collection.First().DomainControllers.ElementAt(1).Dc.Backups.Count);
-            Assert.Equal(1, collection.First().DomainControllers.ElementAt(2).Dc.Backups.Count);
-            Assert.Equal(0, collection.First().DomainControllers.ElementAt(3).Dc.Backups.Count);
+            Assert.Equal(3, collection.Count);
+            Assert.Equal(0, collection.ElementAt(0).DomainControllers.Count);
+            Assert.Equal(0, collection.ElementAt(1).DomainControllers.Count);
+            Assert.Equal(0, collection.ElementAt(2).DomainControllers.Count);            
         }
     }
 
     [Fact]
-    public async Task ForestModelFilteringOnRoot_AndChildCollection_WithNoMatches()
+    public async Task ForestModelFilteringChildComplexCollection_WithMatches()
+    {
+        const string query = "/forest?$select=DomainControllers($filter=DcCredentials/Username eq 'administrator1')";
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, collection.Count);
+            Assert.Equal(1, collection.ElementAt(0).DomainControllers.Count);
+            Assert.Equal(1, collection.ElementAt(1).DomainControllers.Count);
+            Assert.Equal(2, collection.ElementAt(2).DomainControllers.Count);
+        }
+    }
+
+    [Fact]
+    public async Task ForestModelFilteringChildComplexCollection_WithMatches2()
+    {
+        const string query = "/forest?$expand=DomainControllers/Dc($filter=FullyQualifiedDomainName eq 'dc1.abernathy.com')";
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, collection.Count);
+            Assert.Equal(1, collection.ElementAt(0).DomainControllers.Count);
+            Assert.Equal(1, collection.ElementAt(1).DomainControllers.Count);
+            Assert.Equal(2, collection.ElementAt(2).DomainControllers.Count);
+        }
+    }
+
+    [Fact]
+    public async Task ForestModelFilteringOnRoot_AndChildEntityCollection_WithNoMatches()
     {
         const string query = "/forest?$top=5&$expand=DomainControllers/Dc($expand=Backups($filter=Location/NetworkInformation/Address eq 'Azure blob storage'))&$filter=ForestName eq 'Fake Forest'";
         Test(Get<ForestModel, Forest>(query));

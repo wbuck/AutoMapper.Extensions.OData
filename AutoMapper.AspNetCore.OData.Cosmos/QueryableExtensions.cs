@@ -1,5 +1,6 @@
 ﻿using AutoMapper.AspNet.OData.Visitors;
 using AutoMapper.Extensions.ExpressionMapping;
+using LogicBuilder.Expressions.Utils;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.Azure.Cosmos.Linq;
 using Microsoft.Azure.Cosmos.Serialization.HybridRow.RecordIO;
@@ -88,7 +89,7 @@ public static class QueryableExtensions
             options.GetQueryableExpression(querySettings?.ODataSettings),
             includes,
             querySettings?.ProjectionSettings
-        ).ApplyFilters(expansions.Concat(selects).ToList().ToExpansionOptions(), options.Context);
+        ).ApplyFilters(expansions.Concat(selects).ToList().FilterExpansions(), options.Context);
     }
 
     private static List<ODataExpansionOptions> ToExpansionOptions(this IEnumerable<PathSegment> pathSegments) =>
@@ -100,6 +101,31 @@ public static class QueryableExtensions
             FilterOptions = s.FilterOptions,
             QueryOptions = s.QueryOptions
         }).ToList();
+
+    private static List<List<PathSegment>> FilterExpansions(this List<List<PathSegment>> pathSegments)
+    {
+        List<List<PathSegment>> filtered = new(pathSegments.Count);
+        foreach (List<PathSegment> segments in pathSegments)
+        {
+            PathSegment lastSegment = segments.Last();
+            if (lastSegment.FilterOptions is not null || lastSegment.QueryOptions is not null)
+            {
+                filtered.Add(segments);
+            }
+
+            var selectSegments = lastSegment.SelectPaths;
+            if (selectSegments is not null)
+            {
+                filtered.AddRange
+                (
+                    selectSegments
+                        .Where(s => s.Last().FilterOptions is not null || s.Last().QueryOptions is not null)
+                        .Select(s => segments.Concat(s).ToList())
+                );
+            }
+        }
+        return filtered;
+    }
 
     private static List<List<ODataExpansionOptions>> ToExpansionOptions(this List<List<PathSegment>> pathSegments)
     {
@@ -121,45 +147,6 @@ public static class QueryableExtensions
                         .Where(s => s.Last().FilterOptions is not null || s.Last().QueryOptions is not null)
                         .Select(s => segments.Concat(s).ToExpansionOptions())
                 );
-            }
-        }
-
-        return filtered;
-    }
-
-    private static List<List<ODataExpansionOptions>> ToExpansionOptions2(this List<List<PathSegment>> pathSegments)
-    {
-        List<List<ODataExpansionOptions>> filtered = new(pathSegments.Count);
-        foreach (List<PathSegment> segments in pathSegments)
-        {
-            if (segments.Any(s => s.FilterOptions is not null || s.QueryOptions is not null))
-            {
-                int index = segments.FindIndex(s => s.FilterOptions is not null);
-                filtered.Add(segments.Take(index + 1).ToExpansionOptions());
-            }
-
-            foreach (var path in segments)
-            {
-                if (path.SelectPaths is null)
-                    continue;
-
-                foreach (var selectPath in path.SelectPaths
-                        .Where(p => p.Any(s => s.FilterOptions is not null || s.QueryOptions is not null))
-                        .Select(p => segments.Concat(p).ToList()))
-                {
-                    int index = selectPath.FindIndex(s => s.FilterOptions is not null);
-                    if (index > -1)
-                    {
-                        filtered.Add(selectPath.Take(index + 1).ToExpansionOptions());
-                    }
-                }
-
-                //filtered.AddRange
-                //(
-                //    path.SelectPaths
-                //        .Where(p => p.Any(s => s.FilterOptions is not null || s.QueryOptions is not null))
-                //        .Select(p => segments.Concat(p).ToExpansionOptions())
-                //);
             }
         }
 
@@ -263,24 +250,41 @@ public static class QueryableExtensions
     }
 
     private static IQueryable<TModel> ApplyFilters<TModel>(
-            this IQueryable<TModel> query, List<List<ODataExpansionOptions>> expansions, ODataQueryContext context)
+            this IQueryable<TModel> query, List<List<PathSegment>> filters, ODataQueryContext context)
     {
-        List<List<ODataExpansionOptions>> filters = GetFilters();
-        List<List<ODataExpansionOptions>> methods = GetQueryMethods();
+        //List<List<ODataExpansionOptions>> filters = GetFilters();
+        List<List<ODataExpansionOptions>> methods = new();// GetQueryMethods();
 
         if (!filters.Any() && !methods.Any())
             return query;
 
         Expression expression = query.Expression;
 
-        if (methods.Any())
-            expression = UpdateProjectionMethodExpression(expression);
+        //if (methods.Any())
+        //    expression = UpdateProjectionMethodExpression(expression);
 
-        if (filters.Any())//do filter last so it runs before a Skip or Take call.
-            expression = UpdateProjectionFilterExpression(expression);
+        if (filters.Any(f => !f.Last().MemberType.IsList()))
+        {
+            var test = filters.Where(f => !f.Last().MemberType.IsList()).ToList();
+            foreach (var t in test)
+            {
+                test.ForEach(v => expression = WhereMethodAppender.AppendFilters(expression, t, context));
+            }
+        }
+
+        if (filters.Any(f => f.Last().MemberType.IsList()))
+        {
+            var test = filters.Where(f => f.Last().MemberType.IsList()).ToList();
+            foreach (var t in test)
+            {
+                test.ForEach(v => expression = FilterMethodAppender.AppendFilters(expression, t, context));
+            }
+            //expression = UpdateProjectionFilterExpression(expression);
+        }
 
         return query.Provider.CreateQuery<TModel>(expression);
 
+#if false
         Expression UpdateProjectionFilterExpression(Expression projectionExpression)
         {
             filters.ForEach
@@ -312,7 +316,7 @@ public static class QueryableExtensions
         }
 
         List<List<ODataExpansionOptions>> GetFilters()
-            => expansions.Aggregate(new List<List<ODataExpansionOptions>>(), (listOfLists, nextList) =>
+            => filters.Aggregate(new List<List<ODataExpansionOptions>>(), (listOfLists, nextList) =>
             {
                 var filterNextList = nextList.Aggregate(new List<ODataExpansionOptions>(), (list, next) =>
                 {
@@ -354,7 +358,7 @@ public static class QueryableExtensions
             });
 
         List<List<ODataExpansionOptions>> GetQueryMethods()
-            => expansions.Aggregate(new List<List<ODataExpansionOptions>>(), (listOfLists, nextList) =>
+            => filters.Aggregate(new List<List<ODataExpansionOptions>>(), (listOfLists, nextList) =>
             {
                 var filterNextList = nextList.Aggregate(new List<ODataExpansionOptions>(), (list, next) =>
                 {
@@ -394,5 +398,7 @@ public static class QueryableExtensions
 
                 return listOfLists;
             });
+
+#endif
     }
 }

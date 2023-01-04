@@ -580,7 +580,7 @@ namespace AutoMapper.AspNet.OData
         public static LambdaExpression GetFilterExpression(this FilterClause filterClause, Type type, ODataQueryContext context)
         {
             var parameters = new Dictionary<string, ParameterExpression>();
-            FilterHelper helper = new(parameters, type, context);
+            FilterHelper helper = new(parameters, context);
 
             return helper
                 .GetFilterPart(filterClause.Expression)

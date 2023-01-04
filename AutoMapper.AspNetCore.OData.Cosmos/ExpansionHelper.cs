@@ -117,7 +117,7 @@ internal static partial class ExpansionHelper
             {
                 PathSegment lastSegment = segments.Last();
 
-                if (!lastSegment.IsComplex || (lastSegment.IsComplex && lastSegment.FilterOptions is not null))
+                if (!lastSegment.IsComplex || lastSegment.FilterOptions is not null || lastSegment.QueryOptions is not null)
                     paths.Add(segments);
 
                 if (lastSegment.IsComplex)
@@ -162,13 +162,13 @@ internal static partial class ExpansionHelper
         Type memberType = pathSegment.ElementType;
 
         var memberSelects = memberType.GetLiteralTypeMembers()
-            .Select(m => AddPathSegment(m, EdmTypeKind.Primitive, new(pathSegments)));
+            .Select(m => AddPathSegment(m, EdmTypeKind.Primitive, pathSegments.ToNewList()));
 
         var complexPaths = edmModel.GetComplexTypeSelects(memberType).Select
         (
             paths =>
             {
-                paths.InsertRange(0, pathSegments);
+                paths.InsertRange(0, pathSegments.ToNewList());
                 return paths;
             }
         );

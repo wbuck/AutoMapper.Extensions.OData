@@ -31,7 +31,7 @@ namespace AutoMapper.AspNet.OData
         private readonly IEdmModel edmModel;        
         
 
-        public FilterHelper(IDictionary<string, ParameterExpression> parameters, Type underlyingElementType, ODataQueryContext context)
+        public FilterHelper(IDictionary<string, ParameterExpression> parameters, ODataQueryContext context)
         {
             this.parameters = parameters;
             this.edmModel = context.Model;
