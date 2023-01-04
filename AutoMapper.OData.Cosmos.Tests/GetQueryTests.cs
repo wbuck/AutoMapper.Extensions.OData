@@ -597,7 +597,7 @@ public sealed class GetQueryTests
     [Fact]
     public async Task ForestModelFilterContainsByNestedChildComplexCollection_WithMatches()
     {
-        const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=contains(FullyQualifiedDomainName, 'dc1.abernathy.com'))&orderby=ForestName asc";
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=contains(FullyQualifiedDomainName, 'dc1'))&orderby=ForestName asc";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
@@ -606,8 +606,11 @@ public sealed class GetQueryTests
         {
             Assert.Equal(3, collection.Count);
             Assert.Equal(1, collection.ElementAt(0).DomainControllers.Count);
-            Assert.Equal(0, collection.ElementAt(1).DomainControllers.Count);
-            Assert.Equal(0, collection.ElementAt(2).DomainControllers.Count);
+            Assert.Equal("dc1.abernathy.com", collection.ElementAt(0).DomainControllers.First().Entry.Dc.FullyQualifiedDomainName);
+            Assert.Equal(1, collection.ElementAt(1).DomainControllers.Count);
+            Assert.Equal("dc1.rolfson.com", collection.ElementAt(1).DomainControllers.First().Entry.Dc.FullyQualifiedDomainName);
+            Assert.Equal(1, collection.ElementAt(2).DomainControllers.Count);
+            Assert.Equal("dc1.zulauf.net", collection.ElementAt(2).DomainControllers.First().Entry.Dc.FullyQualifiedDomainName);
         }
     }
 
