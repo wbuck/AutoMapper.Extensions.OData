@@ -578,9 +578,9 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async Task ForestModelFilteringChildComplexCollection_WithMatches2()
+    public async Task ForestModelFilterEqByNestedChildComplexCollection_WithMatches()
     {
-        const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=FullyQualifiedDomainName eq 'dc1.abernathy.com')";
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=FullyQualifiedDomainName eq 'dc1.abernathy.com')&orderby=ForestName asc";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
@@ -589,8 +589,25 @@ public sealed class GetQueryTests
         {
             Assert.Equal(3, collection.Count);
             Assert.Equal(1, collection.ElementAt(0).DomainControllers.Count);
-            Assert.Equal(1, collection.ElementAt(1).DomainControllers.Count);
-            Assert.Equal(2, collection.ElementAt(2).DomainControllers.Count);
+            Assert.Equal(0, collection.ElementAt(1).DomainControllers.Count);
+            Assert.Equal(0, collection.ElementAt(2).DomainControllers.Count);
+        }
+    }
+
+    [Fact]
+    public async Task ForestModelFilterContainsByNestedChildComplexCollection_WithMatches()
+    {
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=contains(FullyQualifiedDomainName, 'dc1.abernathy.com'))&orderby=ForestName asc";
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, collection.Count);
+            Assert.Equal(1, collection.ElementAt(0).DomainControllers.Count);
+            Assert.Equal(0, collection.ElementAt(1).DomainControllers.Count);
+            Assert.Equal(0, collection.ElementAt(2).DomainControllers.Count);
         }
     }
 
