@@ -126,7 +126,7 @@ public sealed class GetQueryTests
     [Fact]
     public async Task ForestModelExpandDcFilterEqAndOrderBy()
     {
-        string query = "/forest?$top=5&$expand=DomainControllers/Dc&$filter=ForestName eq 'Rolfson Forest'&$orderby=ForestName desc";
+        string query = "/forest?$top=5&$expand=DomainControllers/Entry/Dc&$filter=ForestName eq 'Rolfson Forest'&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
@@ -143,7 +143,7 @@ public sealed class GetQueryTests
     [Fact]
     public async Task ForestModelExpandDcFilterNeAndOrderBy()
     {
-        const string query = "/forest?$top=5&$expand=DomainControllers/Dc&$filter=ForestName ne 'Zulauf Forest'&$orderby=ForestName desc";
+        const string query = "/forest?$top=5&$expand=DomainControllers/Entry/Dc&$filter=ForestName ne 'Zulauf Forest'&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
@@ -211,7 +211,7 @@ public sealed class GetQueryTests
     [Fact]
     public async Task ForestModelExpandDcNoFilterAndOrderBy()
     {
-        string query = "/forest?$top=2&$expand=DomainControllers/Dc&$orderby=ForestName desc";
+        string query = "/forest?$top=2&$expand=DomainControllers/Entry/Dc&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
@@ -263,7 +263,7 @@ public sealed class GetQueryTests
     [Fact]
     public async Task ForestModelExpandDcSelectForestNameAndBackupExpandBackupFilterNeAndOrderBy()
     {
-        string query = "/forest?$top=5&$select=ForestName&$expand=DomainControllers/Dc($select=FullyQualifiedDomainName,Backups;$expand=Backups($select=ForestId, Location))&$filter=ForestName ne 'Zulauf Forest'&$orderby=ForestName desc";
+        string query = "/forest?$top=5&$select=ForestName&$expand=DomainControllers/Entry/Dc($select=FullyQualifiedDomainName,Backups;$expand=Backups($select=ForestId, Location))&$filter=ForestName ne 'Zulauf Forest'&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
@@ -297,7 +297,7 @@ public sealed class GetQueryTests
     [Fact]
     public async Task ForestModelExpandDcExpandBackupFilterNeAndOrderBy()
     {
-        const string query = "/forest?$top=5&$expand=DomainControllers/Dc($expand=Backups)&$filter=ForestName ne 'Abernathy Forest'&$orderby=ForestName desc";
+        const string query = "/forest?$top=5&$expand=DomainControllers/Entry/Dc($expand=Backups)&$filter=ForestName ne 'Abernathy Forest'&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
@@ -329,7 +329,7 @@ public sealed class GetQueryTests
     [Fact]
     public async Task ForestModelExpandDcFilterDcPropertyEqAndOrderBy()
     {
-        const string query = "/forest?$expand=DomainControllers/Dc&$filter=DomainControllers/any(entry: entry/Dc/FullyQualifiedDomainName eq 'dc1.abernathy.com')&$orderby=ForestName desc";
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc&$filter=DomainControllers/any(entry: entry/Entry/Dc/FullyQualifiedDomainName eq 'dc1.abernathy.com')&$orderby=ForestName desc";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
@@ -380,7 +380,7 @@ public sealed class GetQueryTests
     [Fact]
     public async Task ForestModelExpandDcExpandBackupOrderByForestNameSkipTakeWithCount()
     {
-        string query = "/forest?$skip=2&$top=1&$expand=DomainControllers/Dc($expand=Backups)&$orderby=ForestName desc&$count=true";
+        string query = "/forest?$skip=2&$top=1&$expand=DomainControllers/Entry/Dc($expand=Backups)&$orderby=ForestName desc&$count=true";
         ODataQueryOptions<ForestModel> options = ODataHelpers.GetODataQueryOptions<ForestModel>
         (
             query,
@@ -527,7 +527,7 @@ public sealed class GetQueryTests
     [Fact]
     public async Task ForestModelFilteringOnRoot_AndChildEntityCollection_WithMatches()
     {
-        const string query = "/forest?$top=5&$expand=DomainControllers/Dc($expand=Backups($filter=Location/NetworkInformation/Address eq 'Azure blob storage'))&$filter=ForestName eq 'Abernathy Forest'";        
+        const string query = "/forest?$top=5&$expand=DomainControllers/Entry/Dc($expand=Backups($filter=Location/NetworkInformation/Address eq 'Azure blob storage'))&$filter=ForestName eq 'Abernathy Forest'";        
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
@@ -563,7 +563,7 @@ public sealed class GetQueryTests
     [Fact]
     public async Task ForestModelFilteringChildComplexCollection_WithMatches()
     {
-        const string query = "/forest?$select=DomainControllers($filter=DcCredentials/Username eq 'administrator1')";
+        const string query = "/forest?$select=DomainControllers($filter=DcCredentials/Username eq 'administrator1')&orderby=ForestName asc";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
@@ -597,7 +597,7 @@ public sealed class GetQueryTests
     [Fact]
     public async Task ForestModelFilteringOnRoot_AndChildEntityCollection_WithNoMatches()
     {
-        const string query = "/forest?$top=5&$expand=DomainControllers/Dc($expand=Backups($filter=Location/NetworkInformation/Address eq 'Azure blob storage'))&$filter=ForestName eq 'Fake Forest'";
+        const string query = "/forest?$top=5&$expand=DomainControllers/Entry/Dc($expand=Backups($filter=Location/NetworkInformation/Address eq 'Azure blob storage'))&$filter=ForestName eq 'Fake Forest'";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
@@ -611,7 +611,7 @@ public sealed class GetQueryTests
     [Fact]
     public async Task ForestModel_NestedFilterAndSelect_ShouldReturnEntityWithSelectedPropertiesAndFilteredLiteralCollection()
     {
-        const string query = "/forest?$expand=DomainControllers/Dc($expand=Backups($select=Values($filter=$this gt 10), Location))";
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc($expand=Backups($select=Values($filter=$this gt 10), Location))";
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
         Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
