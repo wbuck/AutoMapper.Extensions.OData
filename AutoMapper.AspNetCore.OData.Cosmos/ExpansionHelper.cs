@@ -59,11 +59,8 @@ internal static partial class ExpansionHelper
         if (depth == 0 || !currentPath.Equals(segments))
             paths.Add(segments);
 
-        foreach (var selectItem in selectedPaths.Skip(1))
-        {
-            paths.Add(BuildPathSegments(selectItem,
-                segments.Take(depth).ToNewList(), depth));
-        }
+        foreach (var selectItem in selectedPaths.Skip(1))        
+            paths.Add(BuildPathSegments(selectItem, currentPath.ToNewList(), depth));        
 
         return paths;
 

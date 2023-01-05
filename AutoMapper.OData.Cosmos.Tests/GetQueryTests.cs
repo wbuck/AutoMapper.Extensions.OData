@@ -537,10 +537,10 @@ public sealed class GetQueryTests
         {
             Assert.Single(collection);
             Assert.Equal(4, collection.First().DomainControllers.Count);
-            Assert.Equal(1, collection.First().DomainControllers.ElementAt(0).Entry.Dc.Backups.Count);
-            Assert.Equal(1, collection.First().DomainControllers.ElementAt(1).Entry.Dc.Backups.Count);
-            Assert.Equal(1, collection.First().DomainControllers.ElementAt(2).Entry.Dc.Backups.Count);
-            Assert.Equal(0, collection.First().DomainControllers.ElementAt(3).Entry.Dc.Backups.Count);
+            Assert.Single(collection.First().DomainControllers.ElementAt(0).Entry.Dc.Backups);
+            Assert.Single(collection.First().DomainControllers.ElementAt(1).Entry.Dc.Backups);
+            Assert.Single(collection.First().DomainControllers.ElementAt(2).Entry.Dc.Backups);
+            Assert.Empty(collection.First().DomainControllers.ElementAt(3).Entry.Dc.Backups);
         }
     }
 
@@ -627,6 +627,7 @@ public sealed class GetQueryTests
         {            
             Assert.Equal(3, collection.Count);
             Assert.Single(collection.ElementAt(0).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User));
+            Assert.Equal("Edgar", collection.ElementAt(0).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User).ElementAt(0).FirstName);
             Assert.Empty(collection.ElementAt(1).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User));
             Assert.Empty(collection.ElementAt(2).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User));
         }
@@ -644,13 +645,15 @@ public sealed class GetQueryTests
         {
             Assert.Equal(3, collection.Count);
             Assert.Single(collection.ElementAt(0).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User));
+            Assert.Equal("McGhee", collection.ElementAt(0).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User).ElementAt(0).LastName);
             Assert.Empty(collection.ElementAt(1).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User));
             Assert.Single(collection.ElementAt(2).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User));
+            Assert.Equal("McGhee", collection.ElementAt(2).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User).ElementAt(0).LastName);
         }
     }
 
     [Fact]
-    public async Task ForestModelFilterContainsOnNestedEntityInComplexCollection_And_FilterContainsOnNestedNestedEntityInComplexCollection_WithMatches()
+    public async Task ForestModelFilterContainsOnNestedEntityInComplexCollection_AndFilterContainsOnNestedNestedEntityInComplexCollection_WithMatches()
     {
         const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=FullyQualifiedDomainName eq 'dc2.abernathy.com';$expand=AdminGroup/UserObjects/User($filter=contains(LastName, 'McGhee')))&orderby=ForestName asc";
         Test(Get<ForestModel, Forest>(query));
@@ -661,7 +664,31 @@ public sealed class GetQueryTests
         {
             Assert.Equal(3, collection.Count);
             Assert.Single(collection.ElementAt(0).DomainControllers);
+            Assert.Equal("dc2.abernathy.com", collection.ElementAt(0).DomainControllers.ElementAt(0).Entry.Dc.FullyQualifiedDomainName);
             Assert.Single(collection.ElementAt(0).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User));
+            Assert.Equal("McGhee", collection.ElementAt(0).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User).ElementAt(0).LastName);
+            Assert.Empty(collection.ElementAt(1).DomainControllers);
+            Assert.Empty(collection.ElementAt(2).DomainControllers);
+        }
+    }
+
+    [Fact]
+    public async Task ForestModelFilterContainsOnNestedEntityInComplexCollection_AndFilterContainsOnNestedNestedEntityInComplexCollection_AndFilterNestedNestedNestedEntityInEntityCollection_WithMatches()
+    {
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=FullyQualifiedDomainName eq 'dc2.abernathy.com';$expand=AdminGroup/UserObjects/User($filter=contains(LastName, 'McGhee')),Backups($filter=Location/NetworkInformation/Address eq 'Azure blob storage'))&orderby=ForestName asc";
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, collection.Count);
+            Assert.Single(collection.ElementAt(0).DomainControllers);
+            Assert.Equal("dc2.abernathy.com", collection.ElementAt(0).DomainControllers.ElementAt(0).Entry.Dc.FullyQualifiedDomainName);
+            Assert.Single(collection.ElementAt(0).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User));
+            Assert.Equal("McGhee", collection.ElementAt(0).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User).ElementAt(0).LastName);
+            Assert.Single(collection.ElementAt(0).DomainControllers.SelectMany(e => e.Entry.Dc.Backups));
+            Assert.Equal("Azure blob storage", collection.ElementAt(0).DomainControllers.SelectMany(e => e.Entry.Dc.Backups).ElementAt(0).Location!.NetworkInformation!.Address);
             Assert.Empty(collection.ElementAt(1).DomainControllers);
             Assert.Empty(collection.ElementAt(2).DomainControllers);
         }
