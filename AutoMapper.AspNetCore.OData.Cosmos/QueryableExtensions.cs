@@ -6,6 +6,7 @@ using Microsoft.Azure.Cosmos.Linq;
 using Microsoft.Azure.Cosmos.Serialization.HybridRow.RecordIO;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -214,12 +215,14 @@ public static class QueryableExtensions
     }
 
     private static IQueryable<TModel> ApplyFilters<TModel>(
-            this IQueryable<TModel> query, List<List<PathSegment>> filters, ODataQueryContext context)
+            this IQueryable<TModel> query, List<List<PathSegment>> selects, ODataQueryContext context)
     {
-        //List<List<ODataExpansionOptions>> filters = GetFilters();
-        List<List<ODataExpansionOptions>> methods = new();// GetQueryMethods();
+        List<List<PathSegment>> memberFilters = GetMemberFilters();
+        List<List<PathSegment>> collectionFilters = GetMemberCollectionFilters();
 
-        if (!filters.Any() && !methods.Any())
+        //List<List<ODataExpansionOptions>> methods = new();// GetQueryMethods();
+
+        if (!memberFilters.Any() && !collectionFilters.Any() /*&& !methods.Any()*/)
             return query;
 
         Expression expression = query.Expression;
@@ -227,142 +230,22 @@ public static class QueryableExtensions
         //if (methods.Any())
         //    expression = UpdateProjectionMethodExpression(expression);
 
-        if (filters.Any(f => !f.Last().MemberType.IsList()))
-        {
-            var test = filters.Where(f => !f.Last().MemberType.IsList()).ToList();
-            foreach (var t in test)
-            {
-                test.ForEach(v => expression = WhereMethodAppender.AppendFilters(expression, t, context));
-            }
-        }
+        memberFilters.ForEach
+        (
+            segments => expression = MemberFilterAppender.AppendFilters(expression, segments, context)
+        );
 
-        if (filters.Any(f => f.Last().MemberType.IsList()))
-        {
-            var test = filters.Where(f => f.Last().MemberType.IsList()).ToList();
-            foreach (var t in test)
-            {
-                test.ForEach(v => expression = FilterMethodAppender.AppendFilters(expression, t, context));
-            }
-            //expression = UpdateProjectionFilterExpression(expression);
-        }
+        collectionFilters.ForEach
+        (
+            segments => expression = MemberCollectionFilterAppender.AppendFilters(expression, segments, context)
+        );
 
         return query.Provider.CreateQuery<TModel>(expression);
 
-#if false
-        Expression UpdateProjectionFilterExpression(Expression projectionExpression)
-        {
-            filters.ForEach
-            (
-                filterList => projectionExpression = FilterMethodAppender.AppendFilters
-                (
-                    projectionExpression,
-                    filterList,
-                    context
-                )
-            );
+        List<List<PathSegment>> GetMemberFilters() =>
+            selects.Where(s => !s.Last().MemberType.IsList()).ToList();
 
-            return projectionExpression;
-        }
-
-        Expression UpdateProjectionMethodExpression(Expression projectionExpression)
-        {
-            methods.ForEach
-            (
-                methodList => projectionExpression = QueryMethodAppender.AppendQuery
-                (
-                    projectionExpression,
-                    methodList,
-                    context
-                )
-            );
-
-            return projectionExpression;
-        }
-
-        List<List<ODataExpansionOptions>> GetFilters()
-            => filters.Aggregate(new List<List<ODataExpansionOptions>>(), (listOfLists, nextList) =>
-            {
-                var filterNextList = nextList.Aggregate(new List<ODataExpansionOptions>(), (list, next) =>
-                {
-                    if (next.FilterOptions != null)
-                    {
-                        list = list.ConvertAll
-                        (
-                            exp => new ODataExpansionOptions
-                            {
-                                MemberName = exp.MemberName,
-                                MemberType = exp.MemberType,
-                                ParentType = exp.ParentType,
-                            }
-                        );//new list removing filter
-
-                        list.Add
-                        (
-                            new ODataExpansionOptions
-                            {
-                                MemberName = next.MemberName,
-                                MemberType = next.MemberType,
-                                ParentType = next.ParentType,
-                                FilterOptions = new FilterOptions(next.FilterOptions.FilterClause)
-                            }
-                        );//add expansion with filter
-
-                        listOfLists.Add(list.ToList()); //Add the whole list to the list of filter lists
-                                                        //Only the last item in each list has a filter
-                                                        //Filters for parent expansions exist in their own lists
-                        return list;
-                    }
-
-                    list.Add(next);
-
-                    return list;
-                });
-
-                return listOfLists;
-            });
-
-        List<List<ODataExpansionOptions>> GetQueryMethods()
-            => filters.Aggregate(new List<List<ODataExpansionOptions>>(), (listOfLists, nextList) =>
-            {
-                var filterNextList = nextList.Aggregate(new List<ODataExpansionOptions>(), (list, next) =>
-                {
-                    if (next.QueryOptions != null)
-                    {
-                        list = list.ConvertAll
-                        (
-                            exp => new ODataExpansionOptions
-                            {
-                                MemberName = exp.MemberName,
-                                MemberType = exp.MemberType,
-                                ParentType = exp.ParentType,
-                            }
-                        );//new list removing query options
-
-                        list.Add
-                        (
-                            new ODataExpansionOptions
-                            {
-                                MemberName = next.MemberName,
-                                MemberType = next.MemberType,
-                                ParentType = next.ParentType,
-                                QueryOptions = new QueryOptions(next.QueryOptions.OrderByClause, next.QueryOptions.Skip, next.QueryOptions.Top)
-                            }
-                        );//add expansion with query options
-
-                        listOfLists.Add(list.ToList()); //Add the whole list to the list of query method lists
-                                                        //Only the last item in each list has a query method
-                                                        //Query methods for parent expansions exist in their own lists
-                        return list;
-                    }
-
-                    list.Add(next);
-
-                    return list;
-                });
-
-                return listOfLists;
-            });
-
-#endif
+        List<List<PathSegment>> GetMemberCollectionFilters() =>
+            selects.Where(s => s.Last().MemberType.IsList()).ToList();
     }
 }

@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Xml.Linq;
 
 namespace AutoMapper.AspNet.OData.Visitors
 {
@@ -67,23 +68,18 @@ namespace AutoMapper.AspNet.OData.Visitors
         }
     }
 
-    internal sealed class WhereMethodAppender : ExpressionVisitor
+    internal abstract class VisitorBase : ExpressionVisitor
     {
-        private readonly List<PathSegment> pathSegments;
-        private readonly PathSegment collectionSegment;
-        private readonly ODataQueryContext context;
         private int currentIndex;
+        protected readonly List<PathSegment> pathSegments;
+        protected readonly ODataQueryContext context;
 
-        private WhereMethodAppender(List<PathSegment> pathSegments, ODataQueryContext context)
+        protected VisitorBase(List<PathSegment> pathSegments, ODataQueryContext context)
         {
-            this.pathSegments = pathSegments;
-            this.collectionSegment = this.pathSegments.First(e => e.MemberType.IsList());
-            this.context = context;
             this.currentIndex = 0;
+            this.pathSegments = pathSegments;
+            this.context = context;
         }
-
-        public static Expression AppendFilters(Expression expression, List<PathSegment> pathSegments, ODataQueryContext context) =>
-            new WhereMethodAppender(pathSegments, context).Visit(expression);        
 
         protected override Expression VisitMemberInit(MemberInitExpression node)
         {
@@ -92,48 +88,95 @@ namespace AutoMapper.AspNet.OData.Visitors
                 Type nodeType = node.Type.GetCurrentType();
                 Type parentType = pathSegment.ParentType.GetCurrentType();
 
-                if (nodeType == parentType && GetBinding(out var binding))
+                if (nodeType == parentType && GetMatchingBinding(node, pathSegment, out var binding))
                 {
                     Next();
-
-                    if (pathSegment != this.collectionSegment)                    
-                        return base.VisitMemberInit(node);                   
-                                       
-                    return Expression.MemberInit
-                    (
-                        Expression.New(node.Type),
-                        node.Bindings.OfType<MemberAssignment>().Select(UpdateBinding)
-                    );
-
-                    MemberAssignment UpdateBinding(MemberAssignment assignment)
-                    {
-                        if (assignment != binding)
-                            return assignment;
-
-                        Type segmentType = pathSegment.MemberType.GetCurrentType();
-
-                        ParameterExpression param = Expression.Parameter(segmentType);
-                        MemberExpression memberExpression = GetMemberExpression(param);
-
-                        return assignment.Update(GetBindingExpression(binding, param, memberExpression));
-                    }
+                    Expression expression = MatchedExpression(pathSegment, node, binding);
+                    return expression;
                 }
             }
-            return base.VisitMemberInit(node);
+            return base.VisitMemberInit(node);            
+        }
 
-            bool GetBinding([MaybeNullWhen(false)] out MemberAssignment binding)
+        protected abstract Expression MatchedExpression(PathSegment pathSegment, MemberInitExpression node, MemberAssignment binding);
+
+        private static bool ListTypesAreEquivalent(Type bindingType, Type expansionType)
+        {
+            if (!bindingType.IsList() || !expansionType.IsList())
+                return false;
+
+            return bindingType.GetUnderlyingElementType() == expansionType.GetUnderlyingElementType();
+        }
+
+        protected virtual bool GetMatchingBinding(MemberInitExpression node, PathSegment pathSegment, [MaybeNullWhen(false)] out MemberAssignment binding)
+        {
+            binding = node.Bindings.OfType<MemberAssignment>().FirstOrDefault(b =>
+               b.Member.Name.Equals(pathSegment.MemberName));
+
+            return binding is not null;
+        }
+
+        protected int CurrentIndex() => 
+            this.currentIndex;
+
+        private void Next()
+        {
+            if (this.currentIndex < this.pathSegments.Count)
+                ++this.currentIndex;
+        }
+
+        private bool TryGetCurrent(out PathSegment options)
+        {
+            (var result, options) = currentIndex < this.pathSegments.Count
+                ? (true, this.pathSegments[this.currentIndex])
+                : (false, default);
+
+            return result;
+        }
+    }
+
+    internal sealed class MemberFilterAppender : VisitorBase
+    {
+        private readonly PathSegment collectionSegment;
+
+        private MemberFilterAppender(List<PathSegment> pathSegments, ODataQueryContext context) 
+            : base(pathSegments, context)
+        {
+            this.collectionSegment = this.pathSegments.First(e => e.MemberType.IsList());
+        }
+
+        public static Expression AppendFilters(Expression expression, List<PathSegment> pathSegments, ODataQueryContext context) =>
+            new MemberFilterAppender(pathSegments, context).Visit(expression);
+
+        protected override Expression MatchedExpression(PathSegment pathSegment, MemberInitExpression node, MemberAssignment binding)
+        {
+            if (pathSegment != this.collectionSegment)
+                return base.VisitMemberInit(node);
+
+            return Expression.MemberInit
+            (
+                Expression.New(node.Type),
+                node.Bindings.OfType<MemberAssignment>().Select(UpdateBinding)
+            );
+
+            MemberAssignment UpdateBinding(MemberAssignment assignment)
             {
-                binding = node.Bindings.OfType<MemberAssignment>().FirstOrDefault(b =>
-                   b.Member.Name.Equals(pathSegment.MemberName));
+                if (assignment != binding)
+                    return assignment;
 
-                return binding is not null;
+                Type segmentType = pathSegment.MemberType.GetCurrentType();
+
+                ParameterExpression param = Expression.Parameter(segmentType);
+                MemberExpression memberExpression = GetMemberExpression(param);
+
+                return assignment.Update(GetBindingExpression(binding, param, memberExpression));
             }
         }
 
         private MemberExpression GetMemberExpression(ParameterExpression param) =>
-            this.pathSegments.Skip(this.currentIndex + 1).Aggregate
+            this.pathSegments.Skip(CurrentIndex() + 1).Aggregate
             (
-                Expression.MakeMemberAccess(param, this.pathSegments[this.currentIndex].Member),
+                Expression.MakeMemberAccess(param, this.pathSegments[CurrentIndex()].Member),
                 (expression, next) => Expression.MakeMemberAccess(expression, next.Member)
             );
 
@@ -158,24 +201,8 @@ namespace AutoMapper.AspNet.OData.Visitors
             return FilterInserter.Insert(param.Type, lambdaExpression, binding);
         }
 
-        private void Next()
-        {
-            if (this.currentIndex < this.pathSegments.Count)
-                ++this.currentIndex;
-
-        }
-
-        private bool TryGetCurrent(out PathSegment pathSegment)
-        {
-            (var result, pathSegment) = this.currentIndex < this.pathSegments.Count
-                ? (true, this.pathSegments[this.currentIndex])
-                : (false, default);
-
-            return result;
-        }
-
         private FilterClause GetFilter() =>
-            this.pathSegments.Last().FilterOptions.FilterClause;
+            this.pathSegments.Last().FilterOptions.FilterClause;        
     }
 
     internal sealed class QueryMethodAppender : ExpressionVisitor
@@ -272,82 +299,45 @@ namespace AutoMapper.AspNet.OData.Visitors
         }
     }
 
-    internal sealed class FilterMethodAppender : ExpressionVisitor
+    internal sealed class MemberCollectionFilterAppender : VisitorBase
     {
-        private readonly List<PathSegment> filterPath;
-        private readonly ODataQueryContext context;
-        private int currentIndex;
-
-        private FilterMethodAppender(List<PathSegment> filterPath, ODataQueryContext context)
-        {
-            this.filterPath = filterPath;
-            this.context = context;
-            this.currentIndex = 0;
-        }
+        private MemberCollectionFilterAppender(List<PathSegment> pathSegments, ODataQueryContext context) 
+            : base(pathSegments, context)
+        {}
 
         public static Expression AppendFilters(Expression expression, List<PathSegment> filterPath, ODataQueryContext context) =>
-            new FilterMethodAppender(filterPath, context).Visit(expression);        
+            new MemberCollectionFilterAppender(filterPath, context).Visit(expression);        
 
-        protected override Expression VisitMemberInit(MemberInitExpression node)
-        {            
-            if (TryGetCurrent(out var pathSegment))
+        protected override Expression MatchedExpression(PathSegment pathSegment, MemberInitExpression node, MemberAssignment binding)
+        {
+            if (pathSegment.FilterOptions?.FilterClause is not FilterClause clause)
+                return base.VisitMemberInit(node);
+
+            if (!binding.Member.GetMemberType().IsList())
             {
-                Type nodeType = node.Type.GetCurrentType();
-                Type parentType = pathSegment.ParentType.GetCurrentType();            
+                throw new NotSupportedException();
+            }
 
-                if (nodeType == parentType && GetBinding(out var binding))
-                {                                   
-                    if (pathSegment.FilterOptions?.FilterClause is not FilterClause clause)
-                    {
-                        Next();
-                        return base.VisitMemberInit(node);
-                    }
+            return Expression.MemberInit
+            (
+                Expression.New(node.Type),
+                node.Bindings.OfType<MemberAssignment>().Select(UpdateBinding)
+            );
 
-                    if (!binding.Member.GetMemberType().IsList())
-                    {
-                        throw new NotSupportedException();
-                    }
-
-                    return Expression.MemberInit
-                    (
-                        Expression.New(node.Type),
-                        node.Bindings.OfType<MemberAssignment>().Select(UpdateBinding)
-                    );
-
-                    MemberAssignment UpdateBinding(MemberAssignment assignment)
-                    {
-                        if (assignment != binding)
-                            return assignment;
-
-                        Next();
-                        return assignment.Expression switch
-                        {
-                            MethodCallExpression expr => assignment.Update(GetCallExpression(expr, pathSegment)),
-                            _ => assignment.Update(GetBindingExpression(assignment, clause))
-                        };
-                    }
-                }
-            }                              
-            return base.VisitMemberInit(node);
-
-            bool GetBinding([MaybeNullWhen(false)] out MemberAssignment binding)
+            MemberAssignment UpdateBinding(MemberAssignment assignment)
             {
-                 binding = node.Bindings.OfType<MemberAssignment>().FirstOrDefault(b => 
-                    b.Member.Name.Equals(pathSegment.MemberName));
+                if (assignment != binding)
+                    return assignment;
 
-                return binding is not null;
+                return assignment.Expression switch
+                {
+                    MethodCallExpression expr => assignment.Update(GetCallExpression(expr, pathSegment)),
+                    _ => assignment.Update(GetBindingExpression(assignment, clause))
+                };
             }
         }
 
-        private static bool ListTypesAreEquivalent(Type bindingType, Type expansionType)
-        {
-            if (!bindingType.IsList() || !expansionType.IsList())
-                return false;
-
-            return bindingType.GetUnderlyingElementType() == expansionType.GetUnderlyingElementType();
-        }
-
-        private Expression GetCallExpression(MethodCallExpression callExpression, PathSegment pathSegment) =>
+        private Expression GetCallExpression(MethodCallExpression callExpression, in PathSegment pathSegment) =>
             FilterAppender.AppendFilter(callExpression, ToExpansion(pathSegment), this.context);
 
         private Expression GetBindingExpression(MemberAssignment memberAssignment, FilterClause clause)
@@ -357,24 +347,8 @@ namespace AutoMapper.AspNet.OData.Visitors
             (
                 LinqMethods.EnumerableWhereMethod.MakeGenericMethod(elementType),
                 memberAssignment.Expression,
-                clause.GetFilterExpression(elementType, context)
+                clause.GetFilterExpression(elementType, this.context)
             ).ToListCall(elementType);
-        }
-
-        private void Next() 
-        {
-            if (this.currentIndex < this.filterPath.Count)
-                ++this.currentIndex;
-
-        }
-
-        private bool TryGetCurrent(out PathSegment options)
-        {
-            (var result, options) = currentIndex < this.filterPath.Count
-                ? (true, this.filterPath[this.currentIndex])
-                : (false, default);
-
-            return result;
         }
 
         private ODataExpansionOptions ToExpansion(in PathSegment pathSegment) =>
@@ -385,6 +359,6 @@ namespace AutoMapper.AspNet.OData.Visitors
                 ParentType = pathSegment.ParentType,
                 FilterOptions = pathSegment.FilterOptions,
                 QueryOptions = pathSegment.QueryOptions
-            };
+            };        
     }
 }
