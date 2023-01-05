@@ -31,8 +31,7 @@ namespace AutoMapper.AspNet.OData.Visitors
                 if (nodeType == parentType && GetMatchingBinding(node, pathSegment, out var binding))
                 {
                     Next();
-                    Expression expression = MatchedExpression(pathSegment, node, binding);
-                    return expression;
+                    return MatchedExpression(pathSegment, node, binding);                    
                 }
             }
             return base.VisitMemberInit(node);            

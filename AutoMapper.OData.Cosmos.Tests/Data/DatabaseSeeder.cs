@@ -1,4 +1,5 @@
 ﻿using AutoMapper.OData.Cosmos.Tests.Entities;
+using System.Linq.Expressions;
 
 namespace AutoMapper.OData.Cosmos.Tests.Data;
 
@@ -91,25 +92,33 @@ internal static class DatabaseSeeder
                         {
                             Dc = new()
                             {
-                                Metadata = new()
-                            {
-                                MetadataType = "DC1 Abernathy Metadata",
-                                MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                AdminGroup = new()
                                 {
-                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                    UserObjects = new List<UserObject>
+                                    {
+                                        new() { User = new() { ForestId = forest1, Id = Guid.NewGuid(), FirstName = "John", LastName = "Harrison" } },
+                                        new() { User = new() { ForestId = forest1, Id = Guid.NewGuid(), FirstName = "Brad", LastName = "Smith" } }
+                                    }
                                 },
-                            },
-                           Id = Guid.NewGuid(),
-                           ForestId = forest1,
-                           Fqdn = "dc1.abernathy.com",
-                           FsmoRoles = new List<FsmoRole>
+                                Metadata = new()
+                                {
+                                    MetadataType = "DC1 Abernathy Metadata",
+                                    MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                    {
+                                        new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                        new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                        new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                    },
+                                },
+                                Id = Guid.NewGuid(),
+                                ForestId = forest1,
+                                Fqdn = "dc1.abernathy.com",
+                                FsmoRoles = new List<FsmoRole>
                            {
                                FsmoRole.PdcEmulator,
                                FsmoRole.DomainNamingMaster
                            },
-                           Backups = new List<Backup>
+                                Backups = new List<Backup>
                            {
                                new Backup
                                {
@@ -150,7 +159,7 @@ internal static class DatabaseSeeder
                                    }
                                }
                            },
-                           Attributes = new List<ObjectAttribute>
+                                Attributes = new List<ObjectAttribute>
                            {
                                new()
                                {
@@ -182,24 +191,31 @@ internal static class DatabaseSeeder
                         {
                             Dc = new()
                             {
-                                Metadata = new()
-                            {
-                                MetadataType = "DC2 Abernathy Metadata",
-                                MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                AdminGroup = new()
                                 {
-                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                    UserObjects = new List<UserObject>
+                                    {
+                                        new() { User = new() { ForestId = forest1, Id = Guid.NewGuid(), FirstName = "Edgar", LastName = "McGhee" } }
+                                    }
                                 },
-                            },
-                           Id = Guid.NewGuid(),
-                           ForestId = forest1,
-                           Fqdn = "dc2.abernathy.com",
-                           FsmoRoles = new List<FsmoRole>
+                                Metadata = new()
+                                {
+                                    MetadataType = "DC2 Abernathy Metadata",
+                                    MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                    {
+                                        new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                        new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                        new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                    },
+                                },
+                                Id = Guid.NewGuid(),
+                                ForestId = forest1,
+                                Fqdn = "dc2.abernathy.com",
+                                FsmoRoles = new List<FsmoRole>
                            {
                                FsmoRole.RidMaster
                            },
-                           Backups = new List<Backup>
+                                Backups = new List<Backup>
                            {
                                new Backup
                                {
@@ -240,7 +256,7 @@ internal static class DatabaseSeeder
                                    }
                                }
                            },
-                           Attributes = new List<ObjectAttribute>
+                                Attributes = new List<ObjectAttribute>
                            {
                                new()
                                {
@@ -272,24 +288,32 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
+                               AdminGroup = new()
+                               {
+                                   UserObjects = new List<UserObject>
+                                   {
+                                       new() { User = new() { ForestId = forest1, Id = Guid.NewGuid(), FirstName = "Michael", LastName = "Collier" } },
+                                       new() { User = new() { ForestId = forest1, Id = Guid.NewGuid(), FirstName = "Benjamin", LastName = "Andersen" } }
+                                   }
+                               },
                                Metadata = new()
-                            {
-                                MetadataType = "DC3 Abernathy Metadata",
-                                MetadataKeyValuePairs = new List<MetadataKeyValue>
-                                {
-                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
-                                },
-                            },
-                           Id = Guid.NewGuid(),
-                           ForestId = forest1,
-                           Fqdn = "dc3.abernathy.com",
-                           FsmoRoles = new List<FsmoRole>
+                               {
+                                    MetadataType = "DC3 Abernathy Metadata",
+                                    MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                    {
+                                        new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                        new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                        new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                    },
+                               },
+                               Id = Guid.NewGuid(),
+                               ForestId = forest1,
+                               Fqdn = "dc3.abernathy.com",
+                               FsmoRoles = new List<FsmoRole>
                            {
                                FsmoRole.InfrastructureMaster
                            },
-                           Backups = new List<Backup>
+                               Backups = new List<Backup>
                            {
                                new Backup
                                {
@@ -311,7 +335,7 @@ internal static class DatabaseSeeder
                                    }
                                }
                            },
-                           Attributes = new List<ObjectAttribute>
+                               Attributes = new List<ObjectAttribute>
                            {
                                new()
                                {
@@ -343,24 +367,31 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
+                               AdminGroup = new()
+                               {
+                                   UserObjects = new List<UserObject>
+                                   {
+                                       new() { User = new() { ForestId = forest1, Id = Guid.NewGuid(), FirstName = "Santiago", LastName = "Simpson" } }
+                                   }
+                               },
                                Metadata = new()
-                            {
-                                MetadataType = "DC4 Abernathy Metadata",
-                                MetadataKeyValuePairs = new List<MetadataKeyValue>
-                                {
-                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
-                                },
-                            },
-                           Id = Guid.NewGuid(),
-                           ForestId = forest1,
-                           Fqdn = "dc4.abernathy.com",
-                           FsmoRoles = new List<FsmoRole>
+                               {
+                                    MetadataType = "DC4 Abernathy Metadata",
+                                    MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                    {
+                                        new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                        new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                        new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                    },
+                               },
+                               Id = Guid.NewGuid(),
+                               ForestId = forest1,
+                               Fqdn = "dc4.abernathy.com",
+                               FsmoRoles = new List<FsmoRole>
                            {
                                FsmoRole.SchemaMaster
                            },
-                           Backups = new List<Backup>
+                               Backups = new List<Backup>
                            {
                                new Backup
                                {
@@ -401,7 +432,7 @@ internal static class DatabaseSeeder
                                    }
                                }
                            },
-                           Attributes = new List<ObjectAttribute>
+                               Attributes = new List<ObjectAttribute>
                            {
                                new()
                                {
@@ -497,24 +528,32 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
-                               Metadata = new()
-                           {
-                               MetadataType = "DC1 Rolfson Metadata",
-                               MetadataKeyValuePairs = new List<MetadataKeyValue>
+                               AdminGroup = new()
                                {
-                                   new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
-                                   new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
-                                   new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                   UserObjects = new List<UserObject>
+                                   {
+                                       new() { User = new() { ForestId = forest2, Id = Guid.NewGuid(), FirstName = "Gregorio", LastName = "Mesta" } },
+                                       new() { User = new() { ForestId = forest2, Id = Guid.NewGuid(), FirstName = "Eugene", LastName = "Ramos" } },
+                                   }
                                },
-                           },
-                           Id = Guid.NewGuid(),
-                           ForestId = forest2,
-                           Fqdn = "dc1.rolfson.com",
-                           FsmoRoles = new List<FsmoRole>
+                               Metadata = new()
+                               {
+                                    MetadataType = "DC1 Rolfson Metadata",
+                                    MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                    {
+                                        new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                        new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                        new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                    },
+                               },
+                               Id = Guid.NewGuid(),
+                               ForestId = forest2,
+                               Fqdn = "dc1.rolfson.com",
+                               FsmoRoles = new List<FsmoRole>
                            {
                                FsmoRole.PdcEmulator
                            },
-                           Backups = new List<Backup>
+                               Backups = new List<Backup>
                            {
                                new Backup
                                {
@@ -536,7 +575,7 @@ internal static class DatabaseSeeder
                                    }
                                }
                            },
-                           Attributes = new List<ObjectAttribute>
+                               Attributes = new List<ObjectAttribute>
                            {
                                new()
                                {
@@ -568,6 +607,13 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
+                               AdminGroup = new()
+                               {
+                                   UserObjects = new List<UserObject>
+                                   {
+                                       new() { User = new() { ForestId = forest2, Id = Guid.NewGuid(), FirstName = "Barbara", LastName = "Wiggins" } }
+                                   }
+                               },
                                 Metadata = new()
                                 {
                                     MetadataType = "DC2 Rolfson Metadata",
@@ -677,25 +723,32 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
+                               AdminGroup = new()
+                               {
+                                   UserObjects = new List<UserObject>
+                                   {
+                                       new() { User = new() { ForestId = forest2, Id = Guid.NewGuid(), FirstName = "Jessica", LastName = "Reinke" } }
+                                   }
+                               },
                                Metadata = new()
-                            {
-                                MetadataType = "DC3 Rolfson Metadata",
-                                MetadataKeyValuePairs = new List<MetadataKeyValue>
-                                {
-                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
-                                },
-                            },
-                           Id = Guid.NewGuid(),
-                           ForestId = forest2,
-                           Fqdn = "dc3.rolfson.com",
-                           FsmoRoles = new List<FsmoRole>
+                               {
+                                    MetadataType = "DC3 Rolfson Metadata",
+                                    MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                    {
+                                        new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                        new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                        new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                    },
+                               },
+                               Id = Guid.NewGuid(),
+                               ForestId = forest2,
+                               Fqdn = "dc3.rolfson.com",
+                               FsmoRoles = new List<FsmoRole>
                            {
                                FsmoRole.InfrastructureMaster,
                                FsmoRole.RidMaster
                            },
-                           Attributes = new List<ObjectAttribute>
+                               Attributes = new List<ObjectAttribute>
                            {
                                new()
                                {
@@ -727,24 +780,32 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
+                               AdminGroup = new()
+                               {
+                                   UserObjects = new List<UserObject>
+                                   {
+                                       new() { User = new() { ForestId = forest2, Id = Guid.NewGuid(), FirstName = "Diana", LastName = "Daum" } },
+                                       new() { User = new() { ForestId = forest2, Id = Guid.NewGuid(), FirstName = "Gwendolyn", LastName = "Billings" } },
+                                   }
+                               },
                                Metadata = new()
-                            {
-                                MetadataType = "DC4 Rolfson Metadata",
-                                MetadataKeyValuePairs = new List<MetadataKeyValue>
-                                {
-                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
-                                },
-                            },
-                           Id = Guid.NewGuid(),
-                           ForestId = forest2,
-                           Fqdn = "dc4.rolfson.com",
-                           FsmoRoles = new List<FsmoRole>
+                               {
+                                    MetadataType = "DC4 Rolfson Metadata",
+                                    MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                    {
+                                        new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                        new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                        new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                    },
+                               },
+                               Id = Guid.NewGuid(),
+                               ForestId = forest2,
+                               Fqdn = "dc4.rolfson.com",
+                               FsmoRoles = new List<FsmoRole>
                            {
                                FsmoRole.DomainNamingMaster
                            },
-                           Backups = new List<Backup>
+                               Backups = new List<Backup>
                            {
                                new Backup
                                {
@@ -785,7 +846,7 @@ internal static class DatabaseSeeder
                                    }
                                }
                            },
-                           Attributes = new List<ObjectAttribute>
+                               Attributes = new List<ObjectAttribute>
                            {
                                new()
                                {
@@ -883,26 +944,33 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
-                               Metadata = new()
-                           {
-                               MetadataType = "DC1 Zulauf Metadata",
-                               MetadataKeyValuePairs = new List<MetadataKeyValue>
+                               AdminGroup = new()
                                {
-                                   new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
-                                   new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
-                                   new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                   UserObjects = new List<UserObject>
+                                   {
+                                       new() { User = new() { ForestId = forest3, Id = Guid.NewGuid(), FirstName = "Donna", LastName = "Dell" } }
+                                   }
                                },
-                           },
-                           Id = Guid.NewGuid(),
-                           ForestId = forest3,
-                           Fqdn = "dc1.zulauf.net",
-                           FsmoRoles = new List<FsmoRole>
+                               Metadata = new()
+                               {
+                                   MetadataType = "DC1 Zulauf Metadata",
+                                   MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                   {
+                                       new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                       new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                       new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                   },
+                               },
+                               Id = Guid.NewGuid(),
+                               ForestId = forest3,
+                               Fqdn = "dc1.zulauf.net",
+                               FsmoRoles = new List<FsmoRole>
                            {
                                FsmoRole.PdcEmulator,
                                FsmoRole.RidMaster,
                                FsmoRole.InfrastructureMaster
                            },
-                           Backups = new List<Backup>
+                               Backups = new List<Backup>
                            {
                                new Backup
                                {
@@ -924,7 +992,7 @@ internal static class DatabaseSeeder
                                    }
                                }
                            },
-                           Attributes = new List<ObjectAttribute>
+                               Attributes = new List<ObjectAttribute>
                            {
                                new()
                                {
@@ -956,25 +1024,32 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
+                               AdminGroup = new()
+                               {
+                                   UserObjects = new List<UserObject>
+                                   {
+                                       new() { User = new() { ForestId = forest3, Id = Guid.NewGuid(), FirstName = "Jesse", LastName = "McGhee" } }
+                                   }
+                               },
                                Metadata = new()
-                            {
-                                MetadataType = "DC2 Zulauf Metadata",
-                                MetadataKeyValuePairs = new List<MetadataKeyValue>
-                                {
-                                    new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
-                                    new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
-                                },
-                            },
-                           Id = Guid.NewGuid(),
-                           ForestId = forest3,
-                           Fqdn = "dc2.zulauf.net",
-                           FsmoRoles = new List<FsmoRole>
+                               {
+                                    MetadataType = "DC2 Zulauf Metadata",
+                                    MetadataKeyValuePairs = new List<MetadataKeyValue>
+                                    {
+                                        new() { Key = "Key1", Value = Random.Shared.Next(0, 1000) },
+                                        new() { Key = "Key2", Value = Random.Shared.Next(0, 1000) },
+                                        new() { Key = "Key3", Value = Random.Shared.Next(0, 1000) },
+                                    },
+                               },
+                               Id = Guid.NewGuid(),
+                               ForestId = forest3,
+                               Fqdn = "dc2.zulauf.net",
+                               FsmoRoles = new List<FsmoRole>
                            {
                                FsmoRole.SchemaMaster,
                                FsmoRole.DomainNamingMaster
                            },
-                           Backups = new List<Backup>
+                               Backups = new List<Backup>
                            {
                                new Backup
                                {
@@ -1034,7 +1109,7 @@ internal static class DatabaseSeeder
                                    }
                                }
                            },
-                           Attributes = new List<ObjectAttribute>
+                               Attributes = new List<ObjectAttribute>
                            {
                                new()
                                {

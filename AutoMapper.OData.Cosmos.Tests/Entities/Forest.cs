@@ -4,7 +4,6 @@ namespace AutoMapper.OData.Cosmos.Tests.Entities;
 
 public sealed record Forest : EntityBase
 {    
-    public Guid ForestId { get; init; }
     public string Name { get; init; } = default!;
     public Credentials? ForestWideCredentials { get; init; } = default!;
     public Metadata Metadata { get; init; } = default!;

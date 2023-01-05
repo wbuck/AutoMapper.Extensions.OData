@@ -15,7 +15,7 @@ namespace AutoMapper.AspNet.OData.Visitors
         private MemberFilterAppender(List<PathSegment> pathSegments, ODataQueryContext context) 
             : base(pathSegments, context)
         {
-            this.collectionSegment = this.pathSegments.First(e => e.MemberType.IsList());
+            this.collectionSegment = this.pathSegments.Last(e => e.MemberType.IsList());
         }
 
         public static Expression AppendFilters(Expression expression, List<PathSegment> pathSegments, ODataQueryContext context) =>

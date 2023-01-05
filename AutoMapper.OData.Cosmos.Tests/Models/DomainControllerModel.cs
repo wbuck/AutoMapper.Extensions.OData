@@ -13,7 +13,7 @@ public sealed record DomainControllerModel
         = new List<ObjectAttributeModel>();
     public ICollection<BackupModel> Backups { get; init; } =
         new List<BackupModel>();
-
+    public AdminGroupModel AdminGroup { get; init; } = default!;
     public ICollection<FsmoRole> FsmoRoles { get; init; } =
          new List<FsmoRole>();
 }

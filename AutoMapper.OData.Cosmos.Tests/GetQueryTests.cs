@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.OData.Extensions;
 using Microsoft.AspNetCore.OData.Query;
 using System.Diagnostics;
+using System.Linq;
 
 namespace AutoMapper.OData.Cosmos.Tests;
 
@@ -578,7 +579,7 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async Task ForestModelFilterEqByNestedChildComplexCollection_WithMatches()
+    public async Task ForestModelFilterEqOnNestedEntityInComplexCollection_WithMatches()
     {
         const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=FullyQualifiedDomainName eq 'dc1.abernathy.com')&orderby=ForestName asc";
         Test(Get<ForestModel, Forest>(query));
@@ -595,7 +596,7 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async Task ForestModelFilterContainsByNestedChildComplexCollection_WithMatches()
+    public async Task ForestModelFilterContainsOnNestedEntityInComplexCollection_WithMatches()
     {
         const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=contains(FullyQualifiedDomainName, 'dc1'))&orderby=ForestName asc";
         Test(Get<ForestModel, Forest>(query));
@@ -605,12 +606,64 @@ public sealed class GetQueryTests
         static void Test(ICollection<ForestModel> collection)
         {
             Assert.Equal(3, collection.Count);
-            Assert.Equal(1, collection.ElementAt(0).DomainControllers.Count);
+            Assert.Single(collection.ElementAt(0).DomainControllers);
             Assert.Equal("dc1.abernathy.com", collection.ElementAt(0).DomainControllers.First().Entry.Dc.FullyQualifiedDomainName);
-            Assert.Equal(1, collection.ElementAt(1).DomainControllers.Count);
+            Assert.Single(collection.ElementAt(1).DomainControllers);
             Assert.Equal("dc1.rolfson.com", collection.ElementAt(1).DomainControllers.First().Entry.Dc.FullyQualifiedDomainName);
-            Assert.Equal(1, collection.ElementAt(2).DomainControllers.Count);
+            Assert.Single(collection.ElementAt(2).DomainControllers);
             Assert.Equal("dc1.zulauf.net", collection.ElementAt(2).DomainControllers.First().Entry.Dc.FullyQualifiedDomainName);
+        }
+    }
+
+    [Fact]
+    public async Task ForestModelFilterEqOnNestedNestedEntityInComplexCollection_WithMatches()
+    {
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc($expand=AdminGroup/UserObjects/User($filter=FirstName eq 'Edgar'))&orderby=ForestName asc";
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {            
+            Assert.Equal(3, collection.Count);
+            Assert.Single(collection.ElementAt(0).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User));
+            Assert.Empty(collection.ElementAt(1).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User));
+            Assert.Empty(collection.ElementAt(2).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User));
+        }
+    }
+
+    [Fact]
+    public async Task ForestModelFilterContainsOnNestedNestedEntityInComplexCollection_WithMatches()
+    {
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc($expand=AdminGroup/UserObjects/User($filter=contains(LastName, 'McGhee')))&orderby=ForestName asc";
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, collection.Count);
+            Assert.Single(collection.ElementAt(0).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User));
+            Assert.Empty(collection.ElementAt(1).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User));
+            Assert.Single(collection.ElementAt(2).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User));
+        }
+    }
+
+    [Fact]
+    public async Task ForestModelFilterContainsOnNestedEntityInComplexCollection_And_FilterContainsOnNestedNestedEntityInComplexCollection_WithMatches()
+    {
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=FullyQualifiedDomainName eq 'dc2.abernathy.com';$expand=AdminGroup/UserObjects/User($filter=contains(LastName, 'McGhee')))&orderby=ForestName asc";
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, collection.Count);
+            Assert.Single(collection.ElementAt(0).DomainControllers);
+            Assert.Single(collection.ElementAt(0).DomainControllers.SelectMany(e => e.Entry.Dc.AdminGroup.UserObjects).Select(u => u.User));
+            Assert.Empty(collection.ElementAt(1).DomainControllers);
+            Assert.Empty(collection.ElementAt(2).DomainControllers);
         }
     }
 

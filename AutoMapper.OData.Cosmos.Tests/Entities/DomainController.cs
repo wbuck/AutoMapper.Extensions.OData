@@ -2,7 +2,6 @@
 
 public sealed record DomainController : EntityBase
 {    
-    public Guid ForestId { get; init; }
     public string Fqdn { get; init; } = default!;
     public Metadata Metadata { get; init; } = default!;
     public Backup? SelectedBackup { get; init; }
@@ -10,6 +9,7 @@ public sealed record DomainController : EntityBase
         = new List<ObjectAttribute>();
     public ICollection<Backup> Backups { get; init; } 
         = new List<Backup>();
+    public AdminGroup AdminGroup { get; init; } = default!;
     public ICollection<FsmoRole> FsmoRoles { get; init; } 
         = new List<FsmoRole>();
 }
