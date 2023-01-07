@@ -1,4 +1,6 @@
-﻿namespace AutoMapper.OData.Cosmos.Tests.Entities;
+﻿using System.Text.Json.Serialization;
+
+namespace AutoMapper.OData.Cosmos.Tests.Entities;
 
 public enum FsmoRole
 {

@@ -92,6 +92,7 @@ internal static class DatabaseSeeder
                         {
                             Dc = new()
                             {
+                                Status = ForestStatus.Healthy,
                                 AdminGroup = new()
                                 {
                                     UserObjects = new List<UserObject>
@@ -114,10 +115,10 @@ internal static class DatabaseSeeder
                                 ForestId = forest1,
                                 Fqdn = "dc1.abernathy.com",
                                 FsmoRoles = new List<FsmoRole>
-                           {
-                               FsmoRole.PdcEmulator,
-                               FsmoRole.DomainNamingMaster
-                           },
+                                {
+                                    FsmoRole.PdcEmulator,
+                                    FsmoRole.DomainNamingMaster
+                                },
                                 Backups = new List<Backup>
                            {
                                new Backup
@@ -191,6 +192,7 @@ internal static class DatabaseSeeder
                         {
                             Dc = new()
                             {
+                                Status = ForestStatus.Healthy,
                                 AdminGroup = new()
                                 {
                                     UserObjects = new List<UserObject>
@@ -288,6 +290,7 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
+                               Status = ForestStatus.Healthy,
                                AdminGroup = new()
                                {
                                    UserObjects = new List<UserObject>
@@ -367,6 +370,7 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
+                               Status = ForestStatus.Healthy,
                                AdminGroup = new()
                                {
                                    UserObjects = new List<UserObject>
@@ -528,6 +532,7 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
+                               Status = ForestStatus.Healthy,
                                AdminGroup = new()
                                {
                                    UserObjects = new List<UserObject>
@@ -550,9 +555,9 @@ internal static class DatabaseSeeder
                                ForestId = forest2,
                                Fqdn = "dc1.rolfson.com",
                                FsmoRoles = new List<FsmoRole>
-                           {
-                               FsmoRole.PdcEmulator
-                           },
+                               {
+                                   FsmoRole.PdcEmulator
+                               },
                                Backups = new List<Backup>
                            {
                                new Backup
@@ -607,6 +612,7 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
+                               Status = ForestStatus.Healthy,
                                AdminGroup = new()
                                {
                                    UserObjects = new List<UserObject>
@@ -723,6 +729,7 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
+                               Status = ForestStatus.Healthy,
                                AdminGroup = new()
                                {
                                    UserObjects = new List<UserObject>
@@ -780,6 +787,7 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
+                               Status = ForestStatus.Healthy,
                                AdminGroup = new()
                                {
                                    UserObjects = new List<UserObject>
@@ -944,6 +952,7 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
+                               Status = ForestStatus.NotHealthy,
                                AdminGroup = new()
                                {
                                    UserObjects = new List<UserObject>
@@ -965,11 +974,11 @@ internal static class DatabaseSeeder
                                ForestId = forest3,
                                Fqdn = "dc1.zulauf.net",
                                FsmoRoles = new List<FsmoRole>
-                           {
-                               FsmoRole.PdcEmulator,
-                               FsmoRole.RidMaster,
-                               FsmoRole.InfrastructureMaster
-                           },
+                               {
+                                   FsmoRole.PdcEmulator,
+                                   FsmoRole.RidMaster,
+                                   FsmoRole.InfrastructureMaster
+                               },
                                Backups = new List<Backup>
                            {
                                new Backup
@@ -1024,6 +1033,7 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
+                               Status = ForestStatus.Healthy,
                                AdminGroup = new()
                                {
                                    UserObjects = new List<UserObject>

@@ -729,6 +729,42 @@ public sealed class GetQueryTests
     }
 
     [Fact]
+    public async Task ForestModel_FilterAnyOnPrimitiveCollection_ShouldReturnSingleEntity2()
+    {
+        //$filter=fsmoRoles/any(f: cast(f, Edm.String) eq 'RidMaster')
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=FsmoRoles/any(role: role eq 'PdcEmulator'))";
+        //const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=Status eq 'NotHealthy')";
+        //const string query = "/forest?$filter=Status eq 'NotHealthy'";
+        //const string query = "/forest?$filter=Status/any(value: value eq 'NotHealthy')";
+
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Single(collection);
+            Assert.Equal("Zulauf Forest", collection.First().ForestName);
+        }
+    }
+
+    [Fact]
+    public async Task ForestModel_FilterAnyOnPrimitiveCollection_ShouldReturnSingleEntity()
+    {
+        const string query = "/forest?$filter=Values/any(value: value eq 6389)";
+
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Single(collection);
+            Assert.Equal("Zulauf Forest", collection.First().ForestName);
+        }
+    }
+
+    [Fact]
     public async Task ForestSelectValues_NestedFilter_ShouldReturnFilteredLiteralCollectionOfValues()
     {
         const string query = "/forest?$select=Values($filter=$this gt 1 and $this lt 101)&$orderby=ForestName";
@@ -751,6 +787,31 @@ public sealed class GetQueryTests
                 Assert.Equal(expected, model.Values);
             }
         }
+    }
+
+    [Fact]
+    public async Task SkipBeyondAllElementsOnRootNoOrderBy()
+    {
+        const string query = "/forest?$skip=3";
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+        Test(Get<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Empty(collection);
+        }
+    }
+
+    [Fact]
+    public async Task CancellationThrowsException()
+    {
+        var cancelledToken = new CancellationTokenSource(TimeSpan.Zero).Token;
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => 
+            GetAsync<ForestModel, Forest>("/forest?$count=true", querySettings: new QuerySettings 
+            { 
+                AsyncSettings = new AsyncSettings { CancellationToken = cancelledToken } 
+            }));
     }
 
     private Task<ICollection<TModel>> GetUsingCustomNameSpace<TModel, TData>(string query,

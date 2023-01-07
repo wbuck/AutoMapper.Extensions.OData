@@ -1,4 +1,6 @@
-﻿namespace AutoMapper.OData.Cosmos.Tests.Models;
+﻿using AutoMapper.OData.Cosmos.Tests.Entities;
+
+namespace AutoMapper.OData.Cosmos.Tests.Models;
 
 internal sealed record ForestModel
 {

@@ -12,6 +12,7 @@ public sealed record DomainController : EntityBase
     public AdminGroup AdminGroup { get; init; } = default!;
     public ICollection<FsmoRole> FsmoRoles { get; init; } 
         = new List<FsmoRole>();
+    public ForestStatus Status { get; init; }
 }
 
 
