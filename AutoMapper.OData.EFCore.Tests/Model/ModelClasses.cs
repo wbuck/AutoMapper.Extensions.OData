@@ -130,6 +130,9 @@ namespace AutoMapper.OData.EFCore.Tests.Model
         public char[] CharArrayProp { get; set; }
         public XElement XElementProp { get; set; }
 
+        public ICollection<SimpleEnumModel> SimpleEnumCollection { get; set; }
+        public ICollection<SimpleEnumModel?> NullableEnumCollection { get; set; }
+
         public SimpleEnumModel SimpleEnumProp { get; set; }
         public FlagsEnumModel FlagsEnumProp { get; set; }
         public LongEnumModel LongEnumProp { get; set; }

@@ -127,6 +127,9 @@ namespace AutoMapper.OData.EFCore.Tests.Data
         public char[] CharArrayProp { get; set; }
         public XElement XElementProp { get; set; }
 
+        public ICollection<SimpleEnum> SimpleEnumCollection { get; set; }
+        public ICollection<SimpleEnum?> NullableEnumCollection { get; set; }
+
         public SimpleEnum SimpleEnumProp { get; set; }
         public FlagsEnum FlagsEnumProp { get; set; }
         public LongEnum LongEnumProp { get; set; }

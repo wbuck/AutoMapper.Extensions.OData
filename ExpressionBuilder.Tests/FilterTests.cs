@@ -447,6 +447,96 @@ namespace ExpressionBuilder.Tests
             Assert.True(result);
         }
 
+        #region Enum Tests
+
+        [Theory]
+        [InlineData("LongEnumProp eq 'ThirdLong'", "$it => (Convert($it.LongEnumProp) == 2)")]
+        [InlineData("FlagsEnumProp eq 'Four'", "$it => (Convert($it.FlagsEnumProp) == 4)")]
+        [InlineData("SimpleEnumProp eq 'First'", "$it => (Convert($it.SimpleEnumProp) == 0)")]
+        [InlineData("NullableSimpleEnumProp eq 'First'", "$it => (Convert($it.NullableSimpleEnumProp) == Convert(0))")]
+        [InlineData("SimpleEnumCollection/any(value: value eq 'First')", "$it => $it.SimpleEnumCollection.Any(value => (Convert(value) == 0))")]
+        [InlineData("NullableEnumCollection/any(value: value eq 'First')", "$it => $it.NullableEnumCollection.Any(value => (Convert(value) == Convert(0)))")]
+        [InlineData("NullableEnumCollection/any(value: value eq null)", "$it => $it.NullableEnumCollection.Any(value => (Convert(value) == null))")]
+        [InlineData("SimpleEnumCollection/all(value: value eq 'First')", "$it => $it.SimpleEnumCollection.All(value => (Convert(value) == 0))")]
+        [InlineData("NullableEnumCollection/all(value: value eq 'First')", "$it => $it.NullableEnumCollection.All(value => (Convert(value) == Convert(0)))")]
+        [InlineData("NullableEnumCollection/all(value: value eq null)", "$it => $it.NullableEnumCollection.All(value => (Convert(value) == null))")]
+        [InlineData("SimpleEnumCollection/any(value: cast(value, Edm.String) eq 'First')", "$it => $it.SimpleEnumCollection.Any(value => (value.ToString() == \"First\"))")]
+        [InlineData("NullableEnumCollection/any(value: cast(value, Edm.String) eq 'First')", "$it => $it.NullableEnumCollection.Any(value => (IIF(value.HasValue, value.Value.ToString(), null) == \"First\"))")]
+        [InlineData("cast(SimpleEnumProp, Edm.String) eq 'First'", "$it => ($it.SimpleEnumProp.ToString() == \"First\")")]
+        [InlineData("cast(NullableSimpleEnumProp, Edm.String) eq 'First'", "$it => (IIF($it.NullableSimpleEnumProp.HasValue, $it.NullableSimpleEnumProp.Value.ToString(), null) == \"First\")")]
+        [InlineData("SimpleEnumProp in ('First', 'Second')", "$it => System.Collections.Generic.List`1[System.Int32].Contains(Convert($it.SimpleEnumProp))")]
+        [InlineData("NullableSimpleEnumProp in ('First', 'Second')", "$it => System.Collections.Generic.List`1[System.Nullable`1[System.Int32]].Contains(Convert($it.NullableSimpleEnumProp))")]
+        [InlineData("cast('123',ExpressionBuilder.Tests.Data.SimpleEnum) ne null", "$it => (Convert(123) != null)")]
+        [InlineData("cast(ExpressionBuilder.Tests.Data.SimpleEnum'First',Edm.String) eq 'First'", "$it => (First.ToString() == \"First\")")]
+        [InlineData("cast(SimpleEnumProp,Edm.String) eq 'First'", "$it => ($it.SimpleEnumProp.ToString() == \"First\")")]
+        [InlineData("cast(FlagsEnumProp,Edm.String) eq 'Two'", "$it => ($it.FlagsEnumProp.ToString() == \"Two\")")]
+        [InlineData("cast(LongEnumProp,Edm.String) eq 'FourthLong'", "$it => ($it.LongEnumProp.ToString() == \"FourthLong\")")]
+        [InlineData("cast(NullableSimpleEnumProp,Edm.String) eq 'First'", "$it => (IIF($it.NullableSimpleEnumProp.HasValue, $it.NullableSimpleEnumProp.Value.ToString(), null) == \"First\")")]
+        [InlineData("cast(ExpressionBuilder.Tests.Data.SimpleEnum'1',Edm.String) eq 'Second'", "$it => (Second.ToString() == \"Second\")")]
+        [InlineData("cast(StringProp,ExpressionBuilder.Tests.Data.SimpleEnum) eq null", "$it => (null == null)")]
+        [InlineData("cast(StringProp,ExpressionBuilder.Tests.Data.FlagsEnum) eq null", "$it => (null == null)")]
+        public void Assorted_EnumTests(string filterString, string expectedResult)
+        {
+            //act
+            var filter = GetFilter<DataTypes>(filterString);
+
+            //assert
+            AssertFilterStringIsCorrect(filter, expectedResult);
+        }
+
+        [Fact]
+        public void EnumInExpression()
+        {
+            //act
+            var filter = GetFilter<DataTypes>("SimpleEnumProp in ('First', 'Second')");
+            var constant = (ConstantExpression)((MethodCallExpression)filter.Body).Arguments[0];
+            var values = (IList<int>)constant.Value;
+
+            //assert
+            AssertFilterStringIsCorrect(filter, "$it => System.Collections.Generic.List`1[System.Int32].Contains(Convert($it.SimpleEnumProp))");
+            Assert.Equal(new[] { 0, 1 }, values);
+        }
+
+        [Fact]
+        public void EnumInExpression_WithNullValue_Throws()
+        {
+            //assert
+            var exception = Assert.Throws<ODataException>(() => GetFilter<DataTypes>("SimpleEnumProp in ('First', null)"));
+            Assert.Equal
+            (
+                "A null value was found with the expected type 'ExpressionBuilder.Tests.Data.SimpleEnum[Nullable=False]'. The expected type 'ExpressionBuilder.Tests.Data.SimpleEnum[Nullable=False]' does not allow null values.",
+                exception.Message
+            );
+        }
+
+        [Fact]
+        public void EnumInExpression_NullableEnum_WithNullable()
+        {
+            //act
+            var filter = GetFilter<DataTypes>("NullableSimpleEnumProp in ('First', 'Second')");
+            var constant = (ConstantExpression)((MethodCallExpression)filter.Body).Arguments[0];
+            var values = (IList<int?>)constant.Value;
+
+            //assert
+            AssertFilterStringIsCorrect(filter, "$it => System.Collections.Generic.List`1[System.Nullable`1[System.Int32]].Contains(Convert($it.NullableSimpleEnumProp))");
+            Assert.Equal(new int?[] { (int)SimpleEnum.First, (int)SimpleEnum.Second }, values);
+        }
+
+        [Fact]
+        public void EnumInExpression_NullableEnum_WithNullValue()
+        {
+            //act
+            var filter = GetFilter<DataTypes>("NullableSimpleEnumProp in ('First', null)");
+            var constant = (ConstantExpression)((MethodCallExpression)filter.Body).Arguments[0];
+            var values = (IList<int?>)constant.Value;
+
+            //assert
+            AssertFilterStringIsCorrect(filter, "$it => System.Collections.Generic.List`1[System.Nullable`1[System.Int32]].Contains(Convert($it.NullableSimpleEnumProp))");
+            Assert.Equal(new int?[] { (int)SimpleEnum.First, null }, values);
+        }
+
+        #endregion
+
         #region Any/All
         [Fact]
         public void AnyOnNavigationEnumerableCollections()
@@ -1895,58 +1985,7 @@ namespace ExpressionBuilder.Tests
             //assert
             AssertFilterStringIsCorrect(filter1, "$it => (($it.LongProp < 987654321) AndAlso ($it.LongProp > 123456789))");
             AssertFilterStringIsCorrect(filter2, "$it => (($it.LongProp < -987654321) AndAlso ($it.LongProp > -123456789))");
-        }
-
-        [Fact]
-        public void EnumInExpression()
-        {
-            //act
-            var filter = GetFilter<DataTypes>("SimpleEnumProp in ('First', 'Second')");
-            var constant = (ConstantExpression)((MethodCallExpression)filter.Body).Arguments[0];
-            var values = (IList<SimpleEnum>)constant.Value;
-
-            //assert
-            AssertFilterStringIsCorrect(filter, "$it => System.Collections.Generic.List`1[ExpressionBuilder.Tests.Data.SimpleEnum].Contains($it.SimpleEnumProp)");
-            Assert.Equal(new[] { SimpleEnum.First, SimpleEnum.Second }, values);
-        }
-
-        [Fact]
-        public void EnumInExpression_WithNullValue_Throws()
-        {
-            //assert
-            var exception = Assert.Throws<ODataException>(() => GetFilter<DataTypes>("SimpleEnumProp in ('First', null)"));
-            Assert.Equal
-            (
-                "A null value was found with the expected type 'ExpressionBuilder.Tests.Data.SimpleEnum[Nullable=False]'. The expected type 'ExpressionBuilder.Tests.Data.SimpleEnum[Nullable=False]' does not allow null values.",
-                exception.Message
-            );
-        }
-
-        [Fact]
-        public void EnumInExpression_NullableEnum_WithNullable()
-        {
-            //act
-            var filter = GetFilter<DataTypes>("NullableSimpleEnumProp in ('First', 'Second')");
-            var constant = (ConstantExpression)((MethodCallExpression)filter.Body).Arguments[0];
-            var values = (IList<SimpleEnum?>)constant.Value;
-
-            //assert
-            AssertFilterStringIsCorrect(filter, "$it => System.Collections.Generic.List`1[System.Nullable`1[ExpressionBuilder.Tests.Data.SimpleEnum]].Contains($it.NullableSimpleEnumProp)");
-            Assert.Equal(new SimpleEnum?[] { SimpleEnum.First, SimpleEnum.Second }, values);
-        }
-
-        [Fact]
-        public void EnumInExpression_NullableEnum_WithNullValue()
-        {
-            //act
-            var filter = GetFilter<DataTypes>("NullableSimpleEnumProp in ('First', null)");
-            var constant = (ConstantExpression)((MethodCallExpression)filter.Body).Arguments[0];
-            var values = (IList<SimpleEnum?>)constant.Value;
-
-            //assert
-            AssertFilterStringIsCorrect(filter, "$it => System.Collections.Generic.List`1[System.Nullable`1[ExpressionBuilder.Tests.Data.SimpleEnum]].Contains($it.NullableSimpleEnumProp)");
-            Assert.Equal(new SimpleEnum?[] { SimpleEnum.First, null }, values);
-        }
+        }        
 
         [Fact]
         public void RealLiteralSuffixes()
@@ -2161,9 +2200,6 @@ namespace ExpressionBuilder.Tests
         [InlineData("cast(StringProp,Edm.String) eq '123'", "$it => ($it.StringProp == \"123\")")]
         [InlineData("cast(DateTimeOffsetProp,Edm.String) eq '123'", "$it => ($it.DateTimeOffsetProp.ToString() == \"123\")")]
         [InlineData("cast(TimeSpanProp,Edm.String) eq '123'", "$it => ($it.TimeSpanProp.ToString() == \"123\")")]
-        [InlineData("cast(SimpleEnumProp,Edm.String) eq '123'", "$it => (Convert($it.SimpleEnumProp).ToString() == \"123\")")]
-        [InlineData("cast(FlagsEnumProp,Edm.String) eq '123'", "$it => (Convert($it.FlagsEnumProp).ToString() == \"123\")")]
-        [InlineData("cast(LongEnumProp,Edm.String) eq '123'", "$it => (Convert($it.LongEnumProp).ToString() == \"123\")")]
         [InlineData("cast(NullableIntProp,Edm.String) eq '123'", "$it => (IIF($it.NullableIntProp.HasValue, $it.NullableIntProp.Value.ToString(), null) == \"123\")")]
         [InlineData("cast(NullableLongProp,Edm.String) eq '123'", "$it => (IIF($it.NullableLongProp.HasValue, $it.NullableLongProp.Value.ToString(), null) == \"123\")")]
         [InlineData("cast(NullableSingleProp,Edm.String) eq '123'", "$it => (IIF($it.NullableSingleProp.HasValue, $it.NullableSingleProp.Value.ToString(), null) == \"123\")")]
@@ -2173,14 +2209,18 @@ namespace ExpressionBuilder.Tests
         [InlineData("cast(NullableByteProp,Edm.String) eq '123'", "$it => (IIF($it.NullableByteProp.HasValue, $it.NullableByteProp.Value.ToString(), null) == \"123\")")]
         [InlineData("cast(NullableGuidProp,Edm.String) eq '123'", "$it => (IIF($it.NullableGuidProp.HasValue, $it.NullableGuidProp.Value.ToString(), null) == \"123\")")]
         [InlineData("cast(NullableDateTimeOffsetProp,Edm.String) eq '123'", "$it => (IIF($it.NullableDateTimeOffsetProp.HasValue, $it.NullableDateTimeOffsetProp.Value.ToString(), null) == \"123\")")]
-        [InlineData("cast(NullableTimeSpanProp,Edm.String) eq '123'", "$it => (IIF($it.NullableTimeSpanProp.HasValue, $it.NullableTimeSpanProp.Value.ToString(), null) == \"123\")")]
-        [InlineData("cast(NullableSimpleEnumProp,Edm.String) eq '123'", "$it => (IIF($it.NullableSimpleEnumProp.HasValue, Convert($it.NullableSimpleEnumProp.Value).ToString(), null) == \"123\")")]
+        [InlineData("cast(NullableTimeSpanProp,Edm.String) eq '123'", "$it => (IIF($it.NullableTimeSpanProp.HasValue, $it.NullableTimeSpanProp.Value.ToString(), null) == \"123\")")]        
         [InlineData("cast(IntProp,Edm.Int64) eq 123", "$it => (Convert($it.IntProp) == 123)")]
         [InlineData("cast(NullableLongProp,Edm.Double) eq 1.23", "$it => (Convert($it.NullableLongProp) == 1.23)")]
         [InlineData("cast(2147483647,Edm.Int16) ne null", "$it => (Convert(Convert(2147483647)) != null)")]
-        [InlineData("cast(ExpressionBuilder.Tests.Data.SimpleEnum'1',Edm.String) eq '1'", "$it => (Convert(Second).ToString() == \"1\")")]
         [InlineData("cast(cast(cast(IntProp,Edm.Int64),Edm.Int16),Edm.String) eq '123'", "$it => (Convert(Convert($it.IntProp)).ToString() == \"123\")")]
         [InlineData("cast('123',ExpressionBuilder.Tests.Data.SimpleEnum) ne null", "$it => (Convert(123) != null)")]
+        [InlineData("cast(ExpressionBuilder.Tests.Data.SimpleEnum'First',Edm.String) eq 'First'", "$it => (First.ToString() == \"First\")")]  
+        [InlineData("cast(SimpleEnumProp,Edm.String) eq 'First'", "$it => ($it.SimpleEnumProp.ToString() == \"First\")")]
+        [InlineData("cast(FlagsEnumProp,Edm.String) eq 'Two'", "$it => ($it.FlagsEnumProp.ToString() == \"Two\")")]
+        [InlineData("cast(LongEnumProp,Edm.String) eq 'FourthLong'", "$it => ($it.LongEnumProp.ToString() == \"FourthLong\")")]
+        [InlineData("cast(NullableSimpleEnumProp,Edm.String) eq 'First'", "$it => (IIF($it.NullableSimpleEnumProp.HasValue, $it.NullableSimpleEnumProp.Value.ToString(), null) == \"First\")")]
+        [InlineData("cast(ExpressionBuilder.Tests.Data.SimpleEnum'1',Edm.String) eq 'Second'", "$it => (Second.ToString() == \"Second\")")]
         public void CastMethod_Succeeds(string filterString, string expectedResult)
         {
             //act
@@ -2940,7 +2980,7 @@ namespace ExpressionBuilder.Tests
         [InlineData("DateTimeOffsetProp eq @p", "2001-01-01T12:00:00.000+08:00", "$it => ($it.DateTimeOffsetProp == 01/01/2001 12:00:00 +08:00)")]
         [InlineData("TimeSpanProp eq @p", "duration'P8DT23H59M59.9999S'", "$it => ($it.TimeSpanProp == 8.23:59:59.9999000)")]
         [InlineData("GuidProp eq @p", "00000000-0000-0000-0000-000000000000", "$it => ($it.GuidProp == 00000000-0000-0000-0000-000000000000)")]
-        [InlineData("SimpleEnumProp eq @p", "ExpressionBuilder.Tests.Data.SimpleEnum'First'", "$it => ($it.SimpleEnumProp == First)")]
+        [InlineData("SimpleEnumProp eq @p", "ExpressionBuilder.Tests.Data.SimpleEnum'First'", "$it => (Convert($it.SimpleEnumProp) == 0)")]
         // Parameter alias value is null.
         [InlineData("NullableIntProp eq @p", "null", "$it => ($it.NullableIntProp == null)")]
         [InlineData("NullableBoolProp eq @p", "null", "$it => ($it.NullableBoolProp == null)")]
@@ -2951,7 +2991,7 @@ namespace ExpressionBuilder.Tests
         [InlineData("NullableDateTimeOffsetProp eq @p", "null", "$it => ($it.NullableDateTimeOffsetProp == null)")]
         [InlineData("NullableTimeSpanProp eq @p", "null", "$it => ($it.NullableTimeSpanProp == null)")]
         [InlineData("NullableGuidProp eq @p", "null", "$it => ($it.NullableGuidProp == null)")]
-        [InlineData("NullableSimpleEnumProp eq @p", "null", "$it => ($it.NullableSimpleEnumProp == null)")]
+        [InlineData("NullableSimpleEnumProp eq @p", "null", "$it => (Convert($it.NullableSimpleEnumProp) == null)")]
         // Parameter alias value is property.
         [InlineData("@p eq 1", "IntProp", "$it => ($it.IntProp == 1)")]
         [InlineData("@p eq true", "NullableBoolProp", "$it => ($it.NullableBoolProp == Convert(True))")]
@@ -2962,7 +3002,7 @@ namespace ExpressionBuilder.Tests
         [InlineData("@p eq 2001-01-01T12:00:00.000+08:00", "DateTimeOffsetProp", "$it => ($it.DateTimeOffsetProp == 01/01/2001 12:00:00 +08:00)")]
         [InlineData("@p eq duration'P8DT23H59M59.9999S'", "TimeSpanProp", "$it => ($it.TimeSpanProp == 8.23:59:59.9999000)")]
         [InlineData("@p eq 00000000-0000-0000-0000-000000000000", "GuidProp", "$it => ($it.GuidProp == 00000000-0000-0000-0000-000000000000)")]
-        [InlineData("@p eq ExpressionBuilder.Tests.Data.SimpleEnum'First'", "SimpleEnumProp", "$it => ($it.SimpleEnumProp == First)")]
+        [InlineData("@p eq ExpressionBuilder.Tests.Data.SimpleEnum'First'", "SimpleEnumProp", "$it => (Convert($it.SimpleEnumProp) == 0)")]
         // Parameter alias value has built-in functions.
         [InlineData("@p eq 'abc'", "substring(StringProp,5)", "$it => ($it.StringProp.Substring(5) == \"abc\")")]
         [InlineData("2 eq @p", "IntProp add 1", "$it => (2 == ($it.IntProp + 1))")]
@@ -2990,7 +3030,7 @@ namespace ExpressionBuilder.Tests
         [InlineData("NullableDoubleProp eq @p", "$it => ($it.NullableDoubleProp == null)")]
         [InlineData("StringProp eq @p", "$it => ($it.StringProp == null)")]
         [InlineData("NullableDateTimeOffsetProp eq @p", "$it => ($it.NullableDateTimeOffsetProp == null)")]
-        [InlineData("NullableSimpleEnumProp eq @p", "$it => ($it.NullableSimpleEnumProp == null)")]
+        [InlineData("NullableSimpleEnumProp eq @p", "$it => (Convert($it.NullableSimpleEnumProp) == null)")]
         [InlineData("EntityProp/AlternateAddresses/any(a: a/City eq @p)", "$it => $it.EntityProp.AlternateAddresses.Any(a => (a.City == null))")]
         public void ParameterAlias_AssumedToBeNull_ValueNotFound(string filterString, string expectedExpression)
         {
@@ -3182,7 +3222,7 @@ namespace ExpressionBuilder.Tests
             var filter = GetFilter<DataTypes>("SimpleEnumProp in ('First', 'Second')");
 
             //assert
-            AssertFilterStringIsCorrect(filter, "$it => System.Collections.Generic.List`1[ExpressionBuilder.Tests.Data.SimpleEnum].Contains($it.SimpleEnumProp)");
+            AssertFilterStringIsCorrect(filter, "$it => System.Collections.Generic.List`1[System.Int32].Contains(Convert($it.SimpleEnumProp))");
         }
         #endregion parameter alias for filter query option
 

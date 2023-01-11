@@ -732,8 +732,8 @@ public sealed class GetQueryTests
     public async Task ForestModel_FilterAnyOnPrimitiveCollection_ShouldReturnSingleEntity2()
     {
         //$filter=fsmoRoles/any(f: cast(f, Edm.String) eq 'RidMaster')
-        const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=FsmoRoles/any(role: role eq 'PdcEmulator'))";
-        //const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=Status eq 'NotHealthy')";
+        //const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=FsmoRoles/any(role: role eq 'PdcEmulator'))";
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=Status eq 'NotHealthy')";
         //const string query = "/forest?$filter=Status eq 'NotHealthy'";
         //const string query = "/forest?$filter=Status/any(value: value eq 'NotHealthy')";
 

@@ -8,84 +8,113 @@ using LogicBuilder.Expressions.Utils.ExpressionBuilder.Lambda;
 using LogicBuilder.Expressions.Utils.ExpressionBuilder.Logical;
 using LogicBuilder.Expressions.Utils.ExpressionBuilder.Operand;
 using LogicBuilder.Expressions.Utils.ExpressionBuilder.StringOperators;
-using LogicBuilder.Expressions.Utils.ExpressionDescriptors;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.OData;
 using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 
 namespace AutoMapper.AspNet.OData
 {
-    public class ConvertOperator : IExpressionPart
-    {
-        public ConvertOperator(IExpressionPart operand, System.Type type)
-        {
-            Operand = operand;
-            Type = type;
-        }
-
-        public IExpressionPart Operand { get; private set; }
-        public System.Type Type { get; private set; }
-
-        public Expression Build() => Build(Operand.Build());
-
-        private Expression Build(Expression operandExpression)
-            => Expression.Convert(operandExpression, Type);
-    }
-
-    public sealed class ConvertEnumToIntOperator : IExpressionPart
+    
+    public sealed class ConvertEnumToUnderlyingOperator : IExpressionPart
     {
         private readonly IExpressionPart expressionPart;
 
-        public ConvertEnumToIntOperator(IExpressionPart expressionPart)
-        {
+        public ConvertEnumToUnderlyingOperator(IExpressionPart expressionPart)
+        {            
             this.expressionPart = expressionPart;
         }
 
         public Expression Build() => 
             Build(this.expressionPart.Build());
 
+        private Expression GetConstantExpression(ConstantExpression constant, Type underlyingEnumType)
+        {
+            var property = constant.Value.GetType()
+                .GetProperty(nameof(ConstantContainer<object>.TypedProperty));
+
+            if (property is not null)
+            {
+                object value = property.GetValue(constant.Value);
+                return GetConstant(value, underlyingEnumType);
+            }
+
+            return GetConstant(constant.Value, underlyingEnumType);
+
+            static Expression GetConstant(object value, Type type) =>
+                Expression.Constant
+                (
+                    Convert.ChangeType(value, type),
+                    type
+                );
+        }
+
         private Expression Build(Expression expression)
         {
-            if (expression is ParameterExpression param && param.Type.IsEnum)
+            Type underlyingType = expression.Type.ToNullableUnderlyingType();
+
+            if (!underlyingType.IsEnum)
+                return expression;
+
+            Type underlyingEnumType = underlyingType.GetEnumUnderlyingType();
+
+            if (expression is ParameterExpression)
             {
-                var expr = Expression.Convert(expression, typeof(int));
-                return expr;
+                return GetConvertExpression(expression, underlyingEnumType);               
             }
             else if (expression is MemberExpression memberExpression)
             {                
-                if (memberExpression.Expression is ConstantExpression constantExpression)
-                {
-                    //ConstantContainer<int> container = new(3);
-
-                    //var expr = Expression.MakeMemberAccess
-                    //(
-                    //    Expression.Constant(container),
-                    //    typeof(ConstantContainer<int>).GetProperty(nameof(ConstantContainer<int>.TypedProperty))
-                    //);
-                    var property = constantExpression.Value.GetType().GetProperty(nameof(ConstantContainer<object>.TypedProperty));
-                    int value = (int)property.GetValue(constantExpression.Value);
-                    var expr = Expression.Constant(value);
-                    return expr;
-                }
-                else
-                {
-                    var expr = Expression.Convert(expression, typeof(int));
-                    return expr;
-                }
+                if (memberExpression.Expression is ConstantExpression constant)                
+                    return GetConstantExpression(constant, underlyingEnumType);                
+                else                
+                    return GetConvertExpression(expression, underlyingEnumType);                
             }
             
             return expression;
         }
+
+        private Expression GetConvertExpression(Expression expression, Type underlyingEnumType)
+        {
+            Type conversionType = expression.Type.IsNullableType()
+                ? underlyingEnumType.ToNullable()
+                : underlyingEnumType;
+
+            return Expression.Convert(expression, conversionType);
+        }
+    }    
+
+    public sealed class ToStringConvertOperator : IExpressionPart
+    {
+        private readonly IExpressionPart source;
+
+        public ToStringConvertOperator(IExpressionPart source) =>        
+            this.source = source;
+        
+        public Expression Build() => Build(this.source.Build());
+
+        private Expression Build(Expression expression) => expression.Type switch
+        {
+            Type type when type.IsNullableType() => ConvertNullable(expression),
+            _ => expression.GetObjectToStringCall()
+        };
+
+        private static Expression ConvertNullable(Expression expression)
+        {
+            Expression memberAccess = expression.MakeValueSelectorAccessIfNullable();
+            return Expression.Condition
+            (
+                expression.MakeHasValueSelector(),
+                memberAccess.GetObjectToStringCall(),
+                Expression.Constant(null, typeof(string))
+            );
+        }
     }
+
     public class FilterHelper
     {
         private readonly IDictionary<string, ParameterExpression> parameters;
@@ -143,37 +172,20 @@ namespace AutoMapper.AspNet.OData
                 _ => throw new ArgumentException(nameof(queryNode)),
             };
 
-        // WARREN
         private IExpressionPart GetConstantOperandFilterPart(ConstantNode constantNode)
         {
             Type constantType = constantNode.Value is null 
                 ? typeof(object) 
                 : GetClrType(constantNode.TypeReference);
 
-            return constantType switch
-            {
-                Type type when type.IsEnum => GetEnumFilterPart(type),
-                _ => GetFilterPart(constantType)
-            };
+            return GetFilterPart(constantType.ToNullableUnderlyingType());
 
             IExpressionPart GetFilterPart(Type constantType)
                 => new ConstantOperator
                 (
                     GetConstantNodeValue(constantNode, constantType),
-                    constantType.IsEnum ? constantType.GetEnumUnderlyingType() : constantType
+                    constantType
                 );
-
-            IExpressionPart GetEnumFilterPart(Type enumType)
-            {
-                Type underlyingType = enumType.GetEnumUnderlyingType();
-                object value = GetConstantNodeValue(constantNode, enumType);
-
-                return new ConstantOperator
-                (
-                    Convert.ChangeType(value, underlyingType),
-                    underlyingType
-                );
-            }
         }
 
         private IExpressionPart GetFilterPart(CollectionNode collectionNode)
@@ -190,11 +202,23 @@ namespace AutoMapper.AspNet.OData
         }
 
         private IExpressionPart GetInFilterPart(InNode inNode)
-            => new InOperator
+        {
+            return new InOperator
             (
-                GetFilterPart(inNode.Left),
+                GetLeftPart(inNode.Left),
                 GetFilterPart(inNode.Right)
             );
+
+            IExpressionPart GetLeftPart(SingleValueNode node)
+            {
+                var filterPart = GetFilterPart(node);
+                if (ShouldConvertEnumToInt(node))
+                    return new ConvertEnumToUnderlyingOperator(filterPart);
+
+                return filterPart;
+            }
+        }
+            
 
         private IExpressionPart GetBinaryOperatorFilterPart(BinaryOperatorNode binaryOperatorNode)
         {
@@ -212,13 +236,14 @@ namespace AutoMapper.AspNet.OData
                 right = new ConvertToNumericTimeOperator(right);
             }
 
-            //if (ShouldConvertEnumToInt(binaryOperatorNode))
-            //{
-            //    left = new ConvertEnumToIntOperator(left);
-            //    right = new ConvertEnumToIntOperator(right);
-            //    Debugger.Break();
-            //}
-
+            if (ShouldConvertEnumToInt(binaryOperatorNode.Left))
+            {
+                left = new ConvertEnumToUnderlyingOperator(left);
+            }
+            if (ShouldConvertEnumToInt(binaryOperatorNode.Right))
+            {
+                right = new ConvertEnumToUnderlyingOperator(right);
+            }
 
             switch (binaryOperatorNode.OperatorKind)
             {
@@ -377,16 +402,6 @@ namespace AutoMapper.AspNet.OData
                 nonResourceRangeVariableReferenceNode.RangeVariable.Name
             );
             LiteralName = parameter.ParameterName;
-
-            if (nonResourceRangeVariableReferenceNode.TypeReference is IEdmEnumTypeReference typeReference)
-            {
-                return new ConvertOperator
-                (
-                    parameter,
-                    GetClrType(typeReference).GetEnumUnderlyingType()
-                );
-            }
-            
             return parameter;
         }
             
@@ -527,10 +542,10 @@ namespace AutoMapper.AspNet.OData
 
         private IExpressionPart GetCastResourceFilterPart(List<QueryNode> arguments)
         {
-            if (!(arguments[0] is SingleValueNode sourceNode))
+            if (arguments[0] is not SingleValueNode sourceNode)
                 throw new ArgumentException("Expected SingleValueNode for source node.");
 
-            if (!(arguments[1] is ConstantNode typeNode))
+            if (arguments[1] is not ConstantNode typeNode)
                 throw new ArgumentException("Expected ConstantNode for type node.");
 
             return Convert
@@ -549,24 +564,22 @@ namespace AutoMapper.AspNet.OData
 
                 if (ShouldConvertTypes(operandType, conversionType, sourceNode))
                 {
-
                     return new CastOperator
                     (
                         GetFilterPart(sourceNode),
                         conversionType
                     );
                 }
-
                 return GetFilterPart(sourceNode);
             }
         }
 
         private IExpressionPart GetCastFilterPart(List<QueryNode> arguments)
         {
-            if (!(arguments[0] is SingleValueNode sourceNode))
+            if (arguments[0] is not SingleValueNode sourceNode)
                 throw new ArgumentException("Expected SingleValueNode for source node.");
 
-            if (!(arguments[1] is ConstantNode typeNode))
+            if (arguments[1] is not ConstantNode typeNode)
                 throw new ArgumentException("Expected ConstantNode for type node.");
 
             return Convert
@@ -586,12 +599,12 @@ namespace AutoMapper.AspNet.OData
                         || (!operandType.IsLiteralType() && !operandType.ToNullableUnderlyingType().IsEnum))
                         return new ConstantOperator(null);
 
-                    if (conversionType == typeof(string))
-                        return new ConvertToStringOperator(GetFilterPart(sourceNode));
-
+                    if (conversionType == typeof(string))                    
+                        return new ToStringConvertOperator(GetFilterPart(sourceNode));
+                    
                     if (conversionType.IsEnum)
                     {
-                        if (!(sourceNode is ConstantNode enumSourceNode))
+                        if (sourceNode is not ConstantNode enumSourceNode)
                         {
                             if (GetClrType(sourceNode.TypeReference) == typeof(string))
                                 return new ConstantOperator(null);
@@ -734,27 +747,40 @@ namespace AutoMapper.AspNet.OData
 
         private IExpressionPart GetCollectionConstantFilterPart(CollectionConstantNode collectionNode)
         {
-            Type elemenType = GetClrType(collectionNode.ItemType);
+            Type elementType = GetClrType(collectionNode.ItemType);
+            Type actualType = elementType.ToNullableUnderlyingType();
 
-            return new CollectionConstantOperator
-            (
-                GetCollectionParameter(elemenType.ToNullableUnderlyingType()),
-                elemenType
-            );
-
-            ICollection<object> GetCollectionParameter(Type underlyingType)
+            return actualType switch
             {
-                if (!underlyingType.IsEnum)
-                    return collectionNode.Collection.Select(item => item.Value).ToList();
+                Type type when type.IsEnum => GetEnumConstantOperator(),
+                _ => GetConstantOperator()
+            };
 
-                return collectionNode.Collection.Select
+            CollectionConstantOperator GetConstantOperator() =>
+                new
                 (
-                    item => GetConstantNodeValue(item, underlyingType)
-                ).ToList();
+                    collectionNode.Collection.Select(item => item.Value).ToList(),
+                    elementType
+                );
+            
+            CollectionConstantOperator GetEnumConstantOperator()
+            {
+                Type underlyingType = actualType.GetEnumUnderlyingType();
+                Type conversionType = elementType.IsNullableType() ? underlyingType.ToNullable() : underlyingType;                               
+
+                return new
+                (
+                    GetCollection(underlyingType),
+                    elementType.IsNullableType() ? underlyingType.ToNullable() : underlyingType
+                );
+
+                List<object> GetCollection(Type underlyingType) =>
+                    collectionNode.Collection.Select(item => item.Value is null 
+                    ? null 
+                    : Convert.ChangeType(GetConstantNodeValue(item, actualType), underlyingType)).ToList();
             }
         }
 
-        // WARREN YOU ADDED THE INT CAST HERE.
         private static object GetConstantNodeValue(ConstantNode constantNode, Type enumType)
             => constantNode.Value is ODataEnumValue oDataEnum
                 ? GetEnumValue(oDataEnum, enumType)
@@ -794,7 +820,6 @@ namespace AutoMapper.AspNet.OData
                         )
                     );
                 }
-
                 return new MemberSelectorOperator
                 (
                     propertyName,
@@ -873,21 +898,18 @@ namespace AutoMapper.AspNet.OData
 #endif
         }
 
-        private bool ShouldConvertEnumToInt(BinaryOperatorNode binaryOperatorNode)
+        private bool ShouldConvertEnumToInt(SingleValueNode node)
         {
-            if (OperandIsNullConstant(binaryOperatorNode.Left) || OperandIsNullConstant(binaryOperatorNode.Right))
+            if (OperandIsNullConstant(node))
                 return false;
 
             return ShouldConvert
             (
-                GetClrType(binaryOperatorNode.Left.TypeReference).ToNullableUnderlyingType(),
-                GetClrType(binaryOperatorNode.Right.TypeReference).ToNullableUnderlyingType()
+                GetClrType(node.TypeReference).ToNullableUnderlyingType()
             );
 
-            static bool ShouldConvert(Type lhs, Type rhs)
-            {
-                return lhs.IsEnum && rhs.IsEnum;
-            }
+            static bool ShouldConvert(Type type) =>
+                type.IsEnum;
         }
 
         private bool ShouldConvertToNumericTime(BinaryOperatorNode binaryOperatorNode)
