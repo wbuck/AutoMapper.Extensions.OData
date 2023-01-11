@@ -729,13 +729,9 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async Task ForestModel_FilterAnyOnPrimitiveCollection_ShouldReturnSingleEntity2()
+    public async Task ForestModel_FilterAnyOnNestedEntityEnumCollection_ShouldReturnMatchingDCs()
     {
-        //$filter=fsmoRoles/any(f: cast(f, Edm.String) eq 'RidMaster')
-        //const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=FsmoRoles/any(role: role eq 'PdcEmulator'))";
-        const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=Status eq 'NotHealthy')";
-        //const string query = "/forest?$filter=Status eq 'NotHealthy'";
-        //const string query = "/forest?$filter=Status/any(value: value eq 'NotHealthy')";
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=FsmoRoles/any(role: role eq 'PdcEmulator'))";
 
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
@@ -743,8 +739,32 @@ public sealed class GetQueryTests
 
         static void Test(ICollection<ForestModel> collection)
         {
-            Assert.Single(collection);
-            Assert.Equal("Zulauf Forest", collection.First().ForestName);
+            Assert.Equal(3, collection.Count);
+            Assert.Single(collection.ElementAt(0).DomainControllers);
+            Assert.True(collection.ElementAt(0).DomainControllers.Single().Entry.Dc.FsmoRoles.Contains(FsmoRole.PdcEmulator));
+            Assert.Single(collection.ElementAt(1).DomainControllers);
+            Assert.True(collection.ElementAt(1).DomainControllers.Single().Entry.Dc.FsmoRoles.Contains(FsmoRole.PdcEmulator));
+            Assert.Single(collection.ElementAt(2).DomainControllers);
+            Assert.True(collection.ElementAt(2).DomainControllers.Single().Entry.Dc.FsmoRoles.Contains(FsmoRole.PdcEmulator));
+        }
+    }
+
+    [Fact]
+    public async Task ForestModel_FilterEqOnNestedEntityEnumPropertyStoredAsStringInDb_ShouldReturnMatchingDCs()
+    {                
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=cast(Status, Edm.String) eq 'NotHealthy')&orderby=ForestName desc";        
+
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, collection.Count);
+            Assert.Single(collection.ElementAt(0).DomainControllers);
+            Assert.Equal(DcStatus.NotHealthy, collection.ElementAt(0).DomainControllers.Single().Entry.Dc.Status);
+            Assert.Empty(collection.ElementAt(1).DomainControllers);            
+            Assert.Empty(collection.ElementAt(2).DomainControllers);            
         }
     }
 

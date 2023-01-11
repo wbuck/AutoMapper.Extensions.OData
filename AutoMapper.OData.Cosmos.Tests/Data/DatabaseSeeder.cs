@@ -92,7 +92,7 @@ internal static class DatabaseSeeder
                         {
                             Dc = new()
                             {
-                                Status = ForestStatus.Healthy,
+                                Status = DcStatus.Healthy,
                                 AdminGroup = new()
                                 {
                                     UserObjects = new List<UserObject>
@@ -192,7 +192,7 @@ internal static class DatabaseSeeder
                         {
                             Dc = new()
                             {
-                                Status = ForestStatus.Healthy,
+                                Status = DcStatus.Healthy,
                                 AdminGroup = new()
                                 {
                                     UserObjects = new List<UserObject>
@@ -290,7 +290,7 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
-                               Status = ForestStatus.Healthy,
+                               Status = DcStatus.Healthy,
                                AdminGroup = new()
                                {
                                    UserObjects = new List<UserObject>
@@ -370,7 +370,7 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
-                               Status = ForestStatus.Healthy,
+                               Status = DcStatus.Healthy,
                                AdminGroup = new()
                                {
                                    UserObjects = new List<UserObject>
@@ -532,7 +532,7 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
-                               Status = ForestStatus.Healthy,
+                               Status = DcStatus.Healthy,
                                AdminGroup = new()
                                {
                                    UserObjects = new List<UserObject>
@@ -612,7 +612,7 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
-                               Status = ForestStatus.Healthy,
+                               Status = DcStatus.Healthy,
                                AdminGroup = new()
                                {
                                    UserObjects = new List<UserObject>
@@ -729,7 +729,7 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
-                               Status = ForestStatus.Healthy,
+                               Status = DcStatus.Healthy,
                                AdminGroup = new()
                                {
                                    UserObjects = new List<UserObject>
@@ -787,7 +787,7 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
-                               Status = ForestStatus.Healthy,
+                               Status = DcStatus.Healthy,
                                AdminGroup = new()
                                {
                                    UserObjects = new List<UserObject>
@@ -952,7 +952,7 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
-                               Status = ForestStatus.NotHealthy,
+                               Status = DcStatus.NotHealthy,
                                AdminGroup = new()
                                {
                                    UserObjects = new List<UserObject>
@@ -1033,7 +1033,7 @@ internal static class DatabaseSeeder
                        {
                            Dc = new()
                            {
-                               Status = ForestStatus.Healthy,
+                               Status = DcStatus.Healthy,
                                AdminGroup = new()
                                {
                                    UserObjects = new List<UserObject>
