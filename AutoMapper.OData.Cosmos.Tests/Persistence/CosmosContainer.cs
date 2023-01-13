@@ -4,6 +4,7 @@ using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Containers;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Fluent;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
@@ -67,7 +68,7 @@ public sealed class CosmosContainer : IAsyncLifetime
         {
             ConnectionMode = ConnectionMode.Gateway,
             HttpClientFactory = () => this.testContainer.HttpClient,
-            AllowBulkExecution = true,
+            AllowBulkExecution = true,           
             SerializerOptions = new() { PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase }
         });
 
@@ -75,14 +76,21 @@ public sealed class CosmosContainer : IAsyncLifetime
         {
             var databaseResponse = await client
                 .CreateDatabaseIfNotExistsAsync(DatabaseId, 4000, cancellationToken: cancellationToken)
-                .ConfigureAwait(false);           
-
-            var containerResponse = await databaseResponse.Database
-                .CreateContainerIfNotExistsAsync(ContainerId, PartitionKey, 4000, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
 
-            var dbContainer = containerResponse.Container;
-            await dbContainer.SeedAsync(cancellationToken).ConfigureAwait(false);
+            var containerResponse = await databaseResponse.Database.DefineContainer(ContainerId, PartitionKey)
+                .WithIndexingPolicy()
+                    .WithIncludedPaths()
+                        .Path("/*")
+                    .Attach()
+                    .WithCompositeIndex()
+                        .Path("/name")
+                        .Path("/createdDate")
+                    .Attach()
+                .Attach()
+                .CreateIfNotExistsAsync(4000, cancellationToken).ConfigureAwait(false);
+                                
+            await containerResponse.Container.SeedAsync(cancellationToken).ConfigureAwait(false);
         }
         catch
         {

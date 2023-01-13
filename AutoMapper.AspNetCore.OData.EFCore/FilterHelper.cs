@@ -119,7 +119,7 @@ namespace AutoMapper.AspNet.OData
     {
         private readonly IDictionary<string, ParameterExpression> parameters;
         private static readonly IDictionary<EdmTypeStructure, Type> typesCache = TypeExtensions.GetEdmToClrTypeMappings();
-        private static readonly HashSet<string> literals = new() { "$this", "$it" };
+        private static readonly HashSet<string> supportedLiterals = new() { "$this", "$it" };
         private string literalName = "$it";
         private readonly IEdmModel edmModel;        
         
@@ -135,7 +135,7 @@ namespace AutoMapper.AspNet.OData
             get => this.literalName;
             private set => this.literalName = value switch
             {
-                var literal when literals.Contains(literal) => literal,
+                var literal when supportedLiterals.Contains(literal) => literal,
                 _ => this.literalName
             };
         }        

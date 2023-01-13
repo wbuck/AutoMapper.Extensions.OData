@@ -7,8 +7,6 @@ using AutoMapper.OData.Cosmos.Tests.Persistence;
 using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.OData.Extensions;
 using Microsoft.AspNetCore.OData.Query;
-using System.Diagnostics;
-using System.Linq;
 
 namespace AutoMapper.OData.Cosmos.Tests;
 
@@ -37,6 +35,21 @@ public sealed class GetQueryTests
             .AddLogging();
 
         serviceProvider = services.BuildServiceProvider();
+    }
+
+    [Fact]
+    public async Task OrderBy()
+    {
+        const string query = "/forest?$orderby=ForestName asc, CreatedDate asc";
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(1, collection.Count);
+            Assert.Equal("Rolfson Forest", collection.First().ForestName);
+        }
     }
 
     [Fact]
@@ -725,6 +738,25 @@ public sealed class GetQueryTests
             Assert.All(collection
                 .SelectMany(m => m.DomainControllers)
                 .SelectMany(entry => entry.Entry.Dc.Backups), backup => Assert.Single(backup.Values));
+        }
+    }
+
+    [Fact]
+    public async Task ForestModel_SelectNestedFilterOnEnumCollection()
+    {
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc($select=FsmoRoles($filter=$this eq 'RidMaster'))&$filter=ForestName eq 'Zulauf Forest'";
+
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Single(collection);
+            Assert.Equal(2, collection.ElementAt(0).DomainControllers.Count);
+            Assert.Single(collection.ElementAt(0).DomainControllers.ElementAt(0).Entry.Dc.FsmoRoles);
+            Assert.Empty(collection.ElementAt(0).DomainControllers.ElementAt(1).Entry.Dc.FsmoRoles);
+            Assert.Equal(FsmoRole.RidMaster, collection.ElementAt(0).DomainControllers.ElementAt(0).Entry.Dc.FsmoRoles.Single());            
         }
     }
 
