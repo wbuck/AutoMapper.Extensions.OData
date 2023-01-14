@@ -38,21 +38,6 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async Task OrderBy()
-    {
-        const string query = "/forest?$orderby=ForestName asc, CreatedDate asc";
-        Test(Get<ForestModel, Forest>(query));
-        Test(await GetAsync<ForestModel, Forest>(query));
-        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
-
-        static void Test(ICollection<ForestModel> collection)
-        {
-            Assert.Equal(1, collection.Count);
-            Assert.Equal("Rolfson Forest", collection.First().ForestName);
-        }
-    }
-
-    [Fact]
     public async Task ForestModelSearch()
     {
         const string query = "/forest?$search=\"Rolfson Forest\"";

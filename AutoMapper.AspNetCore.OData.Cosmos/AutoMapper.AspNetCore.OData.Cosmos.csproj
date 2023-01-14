@@ -39,6 +39,8 @@
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\ODataQueryContextExtentions.cs" Link="ODataQueryContextExtentions.cs" />
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\ODataQueryOptionsExtensions.cs" Link="ODataQueryOptionsExtensions.cs" />
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\ODataSettings.cs" Link="ODataSettings.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\Operators\ConvertEnumToUnderlyingOperator.cs" Link="Operators\ConvertEnumToUnderlyingOperator.cs" />
+    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\Operators\ToStringConvertOperator.cs" Link="Operators\ToStringConvertOperator.cs" />
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\OrderBySetting.cs" Link="OrderBySetting.cs" />
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\ProjectionSettings.cs" Link="ProjectionSettings.cs" />
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\QuerySettings.cs" Link="QuerySettings.cs" />
@@ -65,6 +67,10 @@
 
   <ItemGroup>
   	<FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Operators\" />
   </ItemGroup>
 
 </Project>

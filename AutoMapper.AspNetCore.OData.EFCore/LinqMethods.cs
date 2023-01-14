@@ -14,7 +14,7 @@ internal class LinqMethods
         GetGenericMethod(_ => Queryable.Where(default(IQueryable<int>)!, default(Expression<Func<int, bool>>)!));
 
     private static readonly MethodInfo _enumerableWhereMethod =
-        GetGenericMethod(_ => Enumerable.Where(default(IEnumerable<bool>), i => i));
+        GetGenericMethod(_ => Enumerable.Where(default(IEnumerable<bool>)!, i => i));
 
     private static readonly MethodInfo _queryableSelectMethod =
         GetGenericMethod(_ => Queryable.Select(default(IQueryable<int>)!, i => i));
@@ -41,7 +41,7 @@ internal class LinqMethods
         GetGenericMethod(_ => Enumerable.OrderByDescending(default(IQueryable<int>)!, i => i));
 
     private static readonly MethodInfo _enumerableToListMethod =
-        GetGenericMethod(_ => Enumerable.ToList(default(IEnumerable<int>)));
+        GetGenericMethod(_ => Enumerable.ToList(default(IEnumerable<int>)!));
 
     public static MethodInfo EnumerableWhereMethod =>
         _enumerableWhereMethod;

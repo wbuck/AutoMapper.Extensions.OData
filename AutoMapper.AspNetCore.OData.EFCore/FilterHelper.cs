@@ -1,4 +1,5 @@
-﻿using LogicBuilder.Expressions.Utils;
+﻿using AutoMapper.AspNet.OData.Operators;
+using LogicBuilder.Expressions.Utils;
 using LogicBuilder.Expressions.Utils.ExpressionBuilder;
 using LogicBuilder.Expressions.Utils.ExpressionBuilder.Arithmetic;
 using LogicBuilder.Expressions.Utils.ExpressionBuilder.Cacnonical;
@@ -20,101 +21,6 @@ using System.Reflection;
 
 namespace AutoMapper.AspNet.OData
 {
-    
-    public sealed class ConvertEnumToUnderlyingOperator : IExpressionPart
-    {
-        private readonly IExpressionPart expressionPart;
-
-        public ConvertEnumToUnderlyingOperator(IExpressionPart expressionPart)
-        {            
-            this.expressionPart = expressionPart;
-        }
-
-        public Expression Build() => 
-            Build(this.expressionPart.Build());
-
-        private Expression GetConstantExpression(ConstantExpression constant, Type underlyingEnumType)
-        {
-            var property = constant.Value.GetType()
-                .GetProperty(nameof(ConstantContainer<object>.TypedProperty));
-
-            if (property is not null)
-            {
-                object value = property.GetValue(constant.Value);
-                return GetConstant(value, underlyingEnumType);
-            }
-
-            return GetConstant(constant.Value, underlyingEnumType);
-
-            static Expression GetConstant(object value, Type type) =>
-                Expression.Constant
-                (
-                    Convert.ChangeType(value, type),
-                    type
-                );
-        }
-
-        private Expression Build(Expression expression)
-        {
-            Type underlyingType = expression.Type.ToNullableUnderlyingType();
-
-            if (!underlyingType.IsEnum)
-                return expression;
-
-            Type underlyingEnumType = underlyingType.GetEnumUnderlyingType();
-
-            if (expression is ParameterExpression)
-            {
-                return GetConvertExpression(expression, underlyingEnumType);               
-            }
-            else if (expression is MemberExpression memberExpression)
-            {                
-                if (memberExpression.Expression is ConstantExpression constant)                
-                    return GetConstantExpression(constant, underlyingEnumType);                
-                else                
-                    return GetConvertExpression(expression, underlyingEnumType);                
-            }
-            
-            return expression;
-        }
-
-        private Expression GetConvertExpression(Expression expression, Type underlyingEnumType)
-        {
-            Type conversionType = expression.Type.IsNullableType()
-                ? underlyingEnumType.ToNullable()
-                : underlyingEnumType;
-
-            return Expression.Convert(expression, conversionType);
-        }
-    }    
-
-    public sealed class ToStringConvertOperator : IExpressionPart
-    {
-        private readonly IExpressionPart source;
-
-        public ToStringConvertOperator(IExpressionPart source) =>        
-            this.source = source;
-        
-        public Expression Build() => Build(this.source.Build());
-
-        private Expression Build(Expression expression) => expression.Type switch
-        {
-            Type type when type.IsNullableType() => ConvertNullable(expression),
-            _ => expression.GetObjectToStringCall()
-        };
-
-        private static Expression ConvertNullable(Expression expression)
-        {
-            Expression memberAccess = expression.MakeValueSelectorAccessIfNullable();
-            return Expression.Condition
-            (
-                expression.MakeHasValueSelector(),
-                memberAccess.GetObjectToStringCall(),
-                Expression.Constant(null, typeof(string))
-            );
-        }
-    }
-
     public class FilterHelper
     {
         private readonly IDictionary<string, ParameterExpression> parameters;

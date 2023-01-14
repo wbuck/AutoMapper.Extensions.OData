@@ -37,7 +37,7 @@ internal static class ExpressionUtils
     private static Expression GetSelectExpression(IEnumerable<PathSegment> expansions, Expression parent, List<LambdaExpression> memberSelectors, string parameterName)
     {
         ParameterExpression parameter = Expression.Parameter(parent.GetUnderlyingElementType(), parameterName.ChildParameterName());
-        Expression selectorBody = BuildSelectorExpression(parameter, expansions.ToList(), memberSelectors, parameter.Name);
+        Expression selectorBody = BuildSelectorExpression(parameter, expansions.ToList(), memberSelectors, parameter.Name!);
         return Expression.Call
         (
             EnumerableSelectMethod.MakeGenericMethod(parameter.Type, selectorBody.Type),
