@@ -29,7 +29,7 @@ namespace AutoMapper.AspNet.OData
         {
             return new ParameterReplacer(source, target).Visit(expression);
         }
-        
+
         /// <summary>
         /// Returns a lambda expression representing the filter
         /// </summary>
@@ -68,7 +68,7 @@ namespace AutoMapper.AspNet.OData
 
             return (Expression<Func<T, bool>>)(whereMethodCallExpression.Arguments[1].Unquote() as LambdaExpression);
         }
-        
+
         public static Expression<Func<T, bool>> ToFilterExpression<T>(this ODataQueryOptions<T> options,
             HandleNullPropagationOption handleNullPropagation = HandleNullPropagationOption.Default,
             TimeZoneInfo timeZone = null)
@@ -79,14 +79,14 @@ namespace AutoMapper.AspNet.OData
             }
 
             var parameter = Expression.Parameter(typeof(T), "$it");
-            
+
             Expression filterExpression = null;
             if (options.Filter is not null)
             {
                 var raw = options.Filter.ToFilterExpression<T>(handleNullPropagation, timeZone);
                 filterExpression = raw.Body.ReplaceParameter(raw.Parameters[0], parameter);
             }
-            
+
             Expression searchExpression = null;
             if (options.Search is not null)
             {
@@ -126,7 +126,7 @@ namespace AutoMapper.AspNet.OData
 
         public static Expression GetOrderByMethod<T>(this Expression expression,
             ODataQueryOptions<T> options, ODataSettings oDataSettings = null)
-        {            
+        {
             if (NoQueryableMethod(options, oDataSettings))
                 return null;
 
@@ -153,25 +153,25 @@ namespace AutoMapper.AspNet.OData
                     ? options.Top.Value
                     : oDataSettings.PageSize;
             }
-        }        
+        }
 
         public static Expression GetQueryableMethod(this Expression expression,
             ODataQueryContext context, OrderByClause orderByClause, Type type, int? skip, int? top)
-        {            
+        {
             if (orderByClause is null && skip is null && top is null)
                 return null;
 
             if (orderByClause is null && (skip is not null || top is not null))
-            {                       
+            {
                 var orderBySettings = context.FindSortableProperties(type);
 
                 if (orderBySettings is null)
                     return null;
 
-               return expression
-                   .GetDefaultOrderByCall(orderBySettings)
-                   .GetSkipCall(skip)
-                   .GetTakeCall(top);
+                return expression
+                    .GetDefaultOrderByCall(orderBySettings)
+                    .GetSkipCall(skip)
+                    .GetTakeCall(top);
             }
 
             return expression
@@ -199,12 +199,12 @@ namespace AutoMapper.AspNet.OData
 
         private static Expression GetDefaultOrderByCall(this Expression expression, OrderBySetting settings)
         {
-            return settings.ThenBy is null 
+            return settings.ThenBy is null
                 ? GetMethodCall()
                 : GetMethodCall().GetDefaultThenByCall(settings.ThenBy);
 
-            Expression GetMethodCall() => 
-                expression.GetOrderByCall(settings.Name, nameof(Queryable.OrderBy));            
+            Expression GetMethodCall() =>
+                expression.GetOrderByCall(settings.Name, nameof(Queryable.OrderBy));
         }
 
         private static Expression GetOrderByCall(this Expression expression, OrderByClause orderByClause, ODataQueryContext context)
@@ -263,7 +263,7 @@ namespace AutoMapper.AspNet.OData
                         countNode,
                         orderByClause.Direction == OrderByDirection.Ascending
                             ? ThenBy
-                            : ThenByDescending, 
+                            : ThenByDescending,
                         context
                     ),
                     SingleValuePropertyAccessNode propertyNode => expression.GetOrderByCall
@@ -410,7 +410,7 @@ namespace AutoMapper.AspNet.OData
             {
                 countSelector = param.MakeSelector(countNode.GetPropertyPath()).GetCountCall();
             }
-            
+
             return Expression.Call
             (
                 expression.Type.IsIQueryable() ? typeof(Queryable) : typeof(Enumerable),
@@ -575,7 +575,7 @@ namespace AutoMapper.AspNet.OData
         }
 
         [Obsolete("\"LambdaExpression GetFilterExpression(this FilterClause filterClause, Type type, ODataQueryContext context)\"")]
-        public static LambdaExpression GetFilterExpression(this FilterClause filterClause, Type type) 
+        public static LambdaExpression GetFilterExpression(this FilterClause filterClause, Type type)
             => filterClause.GetFilterExpression(type, null);
 
         public static LambdaExpression GetFilterExpression(this FilterClause filterClause, Type type, ODataQueryContext context)
@@ -583,7 +583,7 @@ namespace AutoMapper.AspNet.OData
             var parameters = new Dictionary<string, ParameterExpression>();
             return new FilterHelper(parameters, context)
                 .GetFilterPart(filterClause.Expression)
-                .GetFilter(type, parameters, filterClause.RangeVariable.Name);
+                .GetFilter(type, parameters, filterClause.RangeVariable.Name);                
         }
 
         private static Expression Unquote(this Expression exp)
@@ -785,3 +785,4 @@ namespace AutoMapper.AspNet.OData
         public FilterClause FilterClause { get; set; }
     }
 }
+

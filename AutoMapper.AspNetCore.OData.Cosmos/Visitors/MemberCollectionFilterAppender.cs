@@ -56,7 +56,7 @@ namespace AutoMapper.AspNet.OData.Visitors
             (
                 LinqMethods.EnumerableWhereMethod.MakeGenericMethod(elementType),
                 memberAssignment.Expression,
-                clause.GetFilterExpression(elementType, this.context)
+                clause.GenerateFilterExpression(elementType, this.context)
             ).ToListCall(elementType);
         }
 

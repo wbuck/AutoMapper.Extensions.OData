@@ -7,12 +7,35 @@ using System.Linq.Expressions;
 using System.Linq;
 using LogicBuilder.Expressions.Utils;
 using AutoMapper.Internal;
+using Microsoft.AspNetCore.OData.Query;
+using Microsoft.OData.UriParser;
 using static AutoMapper.AspNet.OData.LinqMethods;
 
 namespace AutoMapper.AspNet.OData;
 
 internal static class ExpressionUtils
 {
+    public static LambdaExpression GenerateFilterExpression(this FilterClause filterClause, Type type, ODataQueryContext context)
+    {
+        var parameters = new Dictionary<string, ParameterExpression>();
+        return new FilterHelper(parameters, context)
+            .GetFilterPart(filterClause.Expression)
+            .GetFilter(type, parameters, filterClause.RangeVariable.Name)
+            .ReplaceParameter(type);
+    }
+
+    // It's illegal with the Cosmos DB provider to use a parameter
+    // that starts with the '$' character.
+    private static LambdaExpression ReplaceParameter(this LambdaExpression lambda, Type parameterType)
+    {
+        ParameterExpression param = lambda.Parameters
+            .SingleOrDefault(p => p.Name.StartsWith('$'));
+
+        return param is not null
+            ? (LambdaExpression)lambda.ReplaceParameter(param, Expression.Parameter(parameterType, param.Name[1..]))
+            : lambda;
+    }
+
     public static ICollection<Expression<Func<TSource, object>>> BuildIncludes<TSource>(
         this IEnumerable<List<PathSegment>> includes, List<List<PathSegment>> selects)
             where TSource : class
@@ -207,8 +230,6 @@ internal static class ExpressionUtils
         }
         return expression;
     }
-
-
 
     private static string ChildParameterName(this string currentParameterName)
     {
