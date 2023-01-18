@@ -581,24 +581,10 @@ namespace AutoMapper.AspNet.OData
         public static LambdaExpression GetFilterExpression(this FilterClause filterClause, Type type, ODataQueryContext context)
         {
             var parameters = new Dictionary<string, ParameterExpression>();
-            FilterHelper helper = new(parameters, context);
-
-            return helper
+            return new FilterHelper(parameters, context)
                 .GetFilterPart(filterClause.Expression)
-                .GetFilter(type, parameters, helper.LiteralName)
-                .ReplaceParameter(type);
+                .GetFilter(type, parameters, filterClause.RangeVariable.Name);
         }
-
-        private static LambdaExpression ReplaceParameter(this LambdaExpression lambda, Type parameterType)
-        {
-            ParameterExpression param = lambda.Parameters
-                .SingleOrDefault(p => p.Name == "$this");
-
-            return param is not null
-                ? (LambdaExpression)lambda.ReplaceParameter(param, Expression.Parameter(parameterType, "i0"))
-                : lambda;
-        }
-            
 
         private static Expression Unquote(this Expression exp)
             => exp.NodeType == ExpressionType.Quote

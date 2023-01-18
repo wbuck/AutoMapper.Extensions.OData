@@ -23,28 +23,18 @@ namespace AutoMapper.AspNet.OData
 {
     public class FilterHelper
     {
-        private readonly IDictionary<string, ParameterExpression> parameters;
-        private static readonly IDictionary<EdmTypeStructure, Type> typesCache = TypeExtensions.GetEdmToClrTypeMappings();
-        private static readonly HashSet<string> supportedLiterals = new() { "$this", "$it" };
-        private string literalName = "$it";
-        private readonly IEdmModel edmModel;        
-        
-
         public FilterHelper(IDictionary<string, ParameterExpression> parameters, ODataQueryContext context)
         {
             this.parameters = parameters;
             this.edmModel = context.Model;
         }
-       
-        public string LiteralName 
-        {
-            get => this.literalName;
-            private set => this.literalName = value switch
-            {
-                var literal when supportedLiterals.Contains(literal) => literal,
-                _ => this.literalName
-            };
-        }        
+
+        private const string DollarThis = "$this";
+        private const string DollarIt = "$it";
+
+        private readonly IDictionary<string, ParameterExpression> parameters;
+        private static readonly IDictionary<EdmTypeStructure, Type> typesCache = TypeExtensions.GetEdmToClrTypeMappings();
+        private readonly IEdmModel edmModel;
 
         public IExpressionPart GetFilterPart(SingleValueNode singleValueNode)
         {
@@ -76,23 +66,7 @@ namespace AutoMapper.AspNet.OData
                 SingleValueNode singleValueNode => GetFilterPart(singleValueNode),
                 CollectionNode collectionNode => GetFilterPart(collectionNode),
                 _ => throw new ArgumentException(nameof(queryNode)),
-            };
-
-        private IExpressionPart GetConstantOperandFilterPart(ConstantNode constantNode)
-        {
-            Type constantType = constantNode.Value is null 
-                ? typeof(object) 
-                : GetClrType(constantNode.TypeReference);
-
-            return GetFilterPart(constantType.ToNullableUnderlyingType());
-
-            IExpressionPart GetFilterPart(Type constantType)
-                => new ConstantOperator
-                (
-                    GetConstantNodeValue(constantNode, constantType),
-                    constantType
-                );
-        }
+            };        
 
         private IExpressionPart GetFilterPart(CollectionNode collectionNode)
         {
@@ -106,26 +80,7 @@ namespace AutoMapper.AspNet.OData
                 _ => throw new ArgumentException($"Unsupported {collectionNode.Kind.GetType().Name} value: {collectionNode.Kind}"),
             };
         }
-
-        private IExpressionPart GetInFilterPart(InNode inNode)
-        {
-            return new InOperator
-            (
-                GetLeftPart(inNode.Left),
-                GetFilterPart(inNode.Right)
-            );
-
-            IExpressionPart GetLeftPart(SingleValueNode node)
-            {
-                var filterPart = GetFilterPart(node);
-                if (ShouldConvertEnumToInt(node))
-                    return new ConvertEnumToUnderlyingOperator(filterPart);
-
-                return filterPart;
-            }
-        }
-            
-
+                    
         private IExpressionPart GetBinaryOperatorFilterPart(BinaryOperatorNode binaryOperatorNode)
         {
             var left = GetFilterPart(binaryOperatorNode.Left);
@@ -299,30 +254,20 @@ namespace AutoMapper.AspNet.OData
                 GetClrType(singleResourceCastNode.TypeReference)
             );
 
-        //WARREN
         private IExpressionPart GetNonResourceRangeVariableReferenceNodeFilterPart(NonResourceRangeVariableReferenceNode nonResourceRangeVariableReferenceNode)
-        {
-            var parameter = new ParameterOperator
+            => new ParameterOperator
             (
                 parameters,
-                nonResourceRangeVariableReferenceNode.RangeVariable.Name
+                ReplaceDollarThisParameter(nonResourceRangeVariableReferenceNode.RangeVariable.Name)
             );
-            LiteralName = parameter.ParameterName;
-            return parameter;
-        }
-            
 
         private IExpressionPart GetResourceRangeVariableReferenceNodeFilterPart(ResourceRangeVariableReferenceNode resourceRangeVariableReferenceNode)
-        {
-            var parameter = new ParameterOperator
+            => new ParameterOperator
             (
                 parameters,
-                resourceRangeVariableReferenceNode.RangeVariable.Name
+                ReplaceDollarThisParameter(resourceRangeVariableReferenceNode.RangeVariable.Name)
             );
-            LiteralName = parameter.ParameterName;
-            return parameter;
-        }
-            
+
 
         private bool IsTrueConstantExpression(SingleValueNode node)
         {
@@ -841,6 +786,43 @@ namespace AutoMapper.AspNet.OData
 #else
                     && (leftType == typeof(TimeOfDay) || rightType == typeof(TimeOfDay));
 #endif
-        }        
+        }
+
+        private IExpressionPart GetConstantOperandFilterPart(ConstantNode constantNode)
+        {
+            Type constantType = constantNode.Value is null
+                ? typeof(object)
+                : GetClrType(constantNode.TypeReference);
+
+            return GetFilterPart(constantType.ToNullableUnderlyingType());
+
+            IExpressionPart GetFilterPart(Type constantType)
+                => new ConstantOperator
+                (
+                    GetConstantNodeValue(constantNode, constantType),
+                    constantType
+                );
+        }
+
+        private IExpressionPart GetInFilterPart(InNode inNode)
+        {
+            return new InOperator
+            (
+                GetLeftPart(inNode.Left),
+                GetFilterPart(inNode.Right)
+            );
+
+            IExpressionPart GetLeftPart(SingleValueNode node)
+            {
+                var filterPart = GetFilterPart(node);
+                if (ShouldConvertEnumToInt(node))
+                    return new ConvertEnumToUnderlyingOperator(filterPart);
+
+                return filterPart;
+            }
+        }
+
+        private static string ReplaceDollarThisParameter(string rangeVariableName) =>
+           rangeVariableName == DollarThis ? DollarIt : rangeVariableName;
     }
 }

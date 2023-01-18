@@ -58,11 +58,11 @@ namespace AutoMapper.AspNet.OData.Visitors
             var parameters = new Dictionary<string, ParameterExpression>();
 
             Type memberType = this.pathSegments.Last().ElementType;
-            FilterHelper helper = new(parameters, this.context);
+            FilterClause clause = GetFilter();
 
-            LambdaExpression lambdaExpression = helper
-                .GetFilterPart(GetFilter().Expression)
-                .GetFilter(memberType, parameters, helper.LiteralName);
+            LambdaExpression lambdaExpression = new FilterHelper(parameters, this.context)
+                .GetFilterPart(clause.Expression)
+                .GetFilter(memberType, parameters, clause.RangeVariable.Name);
 
             lambdaExpression = Expression.Lambda
             (
