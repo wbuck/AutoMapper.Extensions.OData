@@ -16,5 +16,5 @@ public sealed record DomainControllerModel
     public AdminGroupModel AdminGroup { get; init; } = default!;
     public ICollection<FsmoRole> FsmoRoles { get; init; } =
          new List<FsmoRole>();
-    public DcStatus Status { get; init; }
+    public DcStatusModel Status { get; init; }
 }

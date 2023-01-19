@@ -29,7 +29,7 @@ internal static class DatabaseSeeder
                     },
                     Id = Guid.NewGuid(),
                     ForestId = forest1,
-                    Fqdn = "dc1.abernathy.com",
+                    Fqdn = "dc1.abernathy.com",                    
                     FsmoRoles = new List<FsmoRole>
                     {
                         FsmoRole.PdcEmulator,
@@ -69,6 +69,7 @@ internal static class DatabaseSeeder
                 Id = Guid.NewGuid(),
                 ForestId = forest1,
                 Name = "Abernathy Forest",
+                Status = ForestStatus.Healthy,
                 ForestWideCredentials = new()
                 {
                     Username = "AbernathyAdministrator",
@@ -508,6 +509,7 @@ internal static class DatabaseSeeder
                 },
                 Id = Guid.NewGuid(),
                 Name = "Rolfson Forest",
+                Status = ForestStatus.Recovering,
                 ForestId = forest2,
                 ForestWideCredentials = new()
                 {
@@ -928,6 +930,7 @@ internal static class DatabaseSeeder
                 },
                 Id = Guid.NewGuid(),
                 Name = "Zulauf Forest",
+                Status = ForestStatus.NotHealthy,
                 ForestId = forest3,
                 ForestWideCredentials = new()
                 {

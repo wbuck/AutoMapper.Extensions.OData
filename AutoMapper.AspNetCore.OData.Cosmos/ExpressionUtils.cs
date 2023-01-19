@@ -9,7 +9,8 @@ using LogicBuilder.Expressions.Utils;
 using AutoMapper.Internal;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.OData.UriParser;
-using static AutoMapper.AspNet.OData.LinqMethods;
+using System.Reflection.Metadata;
+
 
 namespace AutoMapper.AspNet.OData;
 
@@ -21,20 +22,17 @@ internal static class ExpressionUtils
         return new FilterHelper(parameters, context)
             .GetFilterPart(filterClause.Expression)
             .GetFilter(type, parameters, filterClause.RangeVariable.Name)
-            .ReplaceParameter(type);
+            .ReplaceParameter();
     }
 
-    // It's illegal with the Cosmos DB provider to use a parameter
-    // that starts with the '$' character.
-    private static LambdaExpression ReplaceParameter(this LambdaExpression lambda, Type parameterType)
-    {
-        ParameterExpression param = lambda.Parameters
-            .SingleOrDefault(p => p.Name.StartsWith('$'));
-
-        return param is not null
-            ? (LambdaExpression)lambda.ReplaceParameter(param, Expression.Parameter(parameterType, param.Name[1..]))
-            : lambda;
-    }
+    // Parameters that start with the '$' character are illegal
+    // in Cosmos DB.
+    private static LambdaExpression ReplaceParameter(this LambdaExpression lambda) =>
+        lambda.Parameters.Where(p => p.Name?.StartsWith('$') ?? false).Aggregate
+        (
+            lambda, 
+            (expr, param) => (LambdaExpression)expr.ReplaceParameter(param, Expression.Parameter(param.Type, param.Name[1..]))
+        );
 
     public static ICollection<Expression<Func<TSource, object>>> BuildIncludes<TSource>(
         this IEnumerable<List<PathSegment>> includes, List<List<PathSegment>> selects)
@@ -63,7 +61,7 @@ internal static class ExpressionUtils
         Expression selectorBody = BuildSelectorExpression(parameter, expansions.ToList(), memberSelectors, parameter.Name!);
         return Expression.Call
         (
-            EnumerableSelectMethod.MakeGenericMethod(parameter.Type, selectorBody.Type),
+            LinqMethods.EnumerableSelectMethod.MakeGenericMethod(parameter.Type, selectorBody.Type),
             parent,
             Expression.Lambda
             (
@@ -141,7 +139,7 @@ internal static class ExpressionUtils
                     typeof(Func<,>).MakeGenericType(new[] { sourceExpression.Type, typeof(object) }),
                     Expression.Call
                     (
-                        EnumerableSelectMethod.MakeGenericMethod(parent.GetUnderlyingElementType(), typeof(object)),
+                        LinqMethods.EnumerableSelectMethod.MakeGenericMethod(parent.GetUnderlyingElementType(), typeof(object)),
                         parent,
                         selector
                     ),
@@ -219,7 +217,7 @@ internal static class ExpressionUtils
 
                 expression = Expression.Call
                 (
-                    EnumerableSelectMethod.MakeGenericMethod(elementType, lambda.ReturnType),
+                    LinqMethods.EnumerableSelectMethod.MakeGenericMethod(elementType, lambda.ReturnType),
                     expression,
                     lambda
                 );

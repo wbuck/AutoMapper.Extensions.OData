@@ -1,6 +1,6 @@
-﻿namespace AutoMapper.OData.Cosmos.Tests.Entities;
+﻿namespace AutoMapper.OData.Cosmos.Tests.Models;
 
-public enum ForestStatus
+public enum ForestStatusModel
 {
     Healthy,
     NotHealthy,
@@ -9,5 +9,3 @@ public enum ForestStatus
     Discovering,
     Unknown
 }
-
-

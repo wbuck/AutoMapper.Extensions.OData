@@ -14,6 +14,8 @@ public sealed record Forest : EntityBase
     public ICollection<int> Values { get; init; } =
         new List<int>();
 
+    public ForestStatus Status { get; init; }
+
     [JsonProperty("_etag")]
     public string ETag { get; init; } = default!;
 }

@@ -138,7 +138,7 @@ public static class QueryableExtensions
                 : mapper.ProjectTo(query, projectionSettings?.Parameters, GetIncludes());
 
         Expression<Func<TModel, object>>[] GetIncludes() => 
-            includeProperties?.ToArray() ?? new Expression<Func<TModel, object>>[] { };
+            includeProperties?.ToArray() ?? Array.Empty<Expression<Func<TModel, object>>>();
     }
 
     private static void ApplyCountQuery<TModel, TData>(this IQueryable<TData> query,

@@ -779,7 +779,7 @@ public sealed class GetQueryTests
         {
             Assert.Equal(3, collection.Count);
             Assert.Single(collection.ElementAt(0).DomainControllers);
-            Assert.Equal(DcStatus.NotHealthy, collection.ElementAt(0).DomainControllers.Single().Entry.Dc.Status);
+            Assert.Equal(DcStatusModel.NotHealthy, collection.ElementAt(0).DomainControllers.Single().Entry.Dc.Status);
             Assert.Empty(collection.ElementAt(1).DomainControllers);            
             Assert.Empty(collection.ElementAt(2).DomainControllers);            
         }
