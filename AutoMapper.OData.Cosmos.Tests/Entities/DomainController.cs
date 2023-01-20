@@ -10,8 +10,8 @@ public sealed record DomainController : EntityBase
     public ICollection<Backup> Backups { get; init; } 
         = new List<Backup>();
     public AdminGroup AdminGroup { get; init; } = default!;
-    public ICollection<FsmoRole> FsmoRoles { get; init; } 
-        = new List<FsmoRole>();
+    public FsmoRole[] FsmoRoles { get; init; } 
+        = Array.Empty<FsmoRole>();
     public DcStatus Status { get; init; }
 }
 

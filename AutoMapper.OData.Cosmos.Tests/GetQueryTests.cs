@@ -727,7 +727,7 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async Task ForestModel_SelectNestedFilterOnEnumCollection()
+    public async Task ForestModel_SelectNestedFilterOnEnumCollectionEqOperator()
     {
         const string query = "/forest?$expand=DomainControllers/Entry/Dc($select=FsmoRoles($filter=$this eq 'RidMaster'))&$filter=ForestName eq 'Zulauf Forest'";
 
@@ -746,6 +746,26 @@ public sealed class GetQueryTests
     }
 
     [Fact]
+    public async Task ForestModel_SelectNestedFilterOnEnumCollectionInOperator()
+    {
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc($select=FsmoRoles($filter=$this in ('RidMaster', 'DomainNamingMaster')))&$filter=ForestName eq 'Zulauf Forest'";
+
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Single(collection);
+            Assert.Equal(2, collection.First().DomainControllers.Count);
+            Assert.Single(collection.First().DomainControllers.First().Entry.Dc.FsmoRoles);
+            Assert.Single(collection.First().DomainControllers.Last().Entry.Dc.FsmoRoles);
+            Assert.Contains(FsmoRole.RidMaster, collection.First().DomainControllers.First().Entry.Dc.FsmoRoles);
+            Assert.Contains(FsmoRole.DomainNamingMaster, collection.First().DomainControllers.Last().Entry.Dc.FsmoRoles);
+        }
+    }
+
+    [Fact]
     public async Task ForestModel_FilterAnyOnNestedEntityEnumCollection_ShouldReturnMatchingDCs()
     {
         const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=FsmoRoles/any(role: role eq 'PdcEmulator'))";
@@ -758,11 +778,59 @@ public sealed class GetQueryTests
         {
             Assert.Equal(3, collection.Count);
             Assert.Single(collection.ElementAt(0).DomainControllers);
-            Assert.True(collection.ElementAt(0).DomainControllers.Single().Entry.Dc.FsmoRoles.Contains(FsmoRole.PdcEmulator));
+            Assert.Contains(FsmoRole.PdcEmulator, collection.ElementAt(0).DomainControllers.Single().Entry.Dc.FsmoRoles);
             Assert.Single(collection.ElementAt(1).DomainControllers);
-            Assert.True(collection.ElementAt(1).DomainControllers.Single().Entry.Dc.FsmoRoles.Contains(FsmoRole.PdcEmulator));
+            Assert.Contains(FsmoRole.PdcEmulator, collection.ElementAt(1).DomainControllers.Single().Entry.Dc.FsmoRoles);
             Assert.Single(collection.ElementAt(2).DomainControllers);
-            Assert.True(collection.ElementAt(2).DomainControllers.Single().Entry.Dc.FsmoRoles.Contains(FsmoRole.PdcEmulator));
+            Assert.Contains(FsmoRole.PdcEmulator, collection.ElementAt(2).DomainControllers.Single().Entry.Dc.FsmoRoles);
+        }
+    }
+
+    [Fact]
+    public async Task ForestModel_FilterInOnNestedEntityEnumCollection_ShouldReturnMatchingDCs()
+    {
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc($filter=FsmoRoles/any(role: role in ('PdcEmulator', 'SchemaMaster')))";
+
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, collection.Count);
+            Assert.Equal(2, collection.ElementAt(0).DomainControllers.Count);
+            Assert.Contains(collection.ElementAt(0).DomainControllers.First().Entry.Dc.FsmoRoles, ContainsRole);
+            Assert.Contains(collection.ElementAt(0).DomainControllers.Last().Entry.Dc.FsmoRoles, ContainsRole);
+
+            Assert.Equal(2, collection.ElementAt(1).DomainControllers.Count);
+            Assert.Contains(collection.ElementAt(1).DomainControllers.First().Entry.Dc.FsmoRoles, ContainsRole);
+            Assert.Contains(collection.ElementAt(1).DomainControllers.Last().Entry.Dc.FsmoRoles, ContainsRole);
+
+            Assert.Equal(2, collection.ElementAt(2).DomainControllers.Count);
+            Assert.Contains(collection.ElementAt(2).DomainControllers.First().Entry.Dc.FsmoRoles, ContainsRole);
+            Assert.Contains(collection.ElementAt(2).DomainControllers.Last().Entry.Dc.FsmoRoles, ContainsRole);
+        }
+
+        static bool ContainsRole(FsmoRole role) =>
+            role == FsmoRole.PdcEmulator || role == FsmoRole.SchemaMaster;
+    }
+
+    [Fact]
+    public async Task ShouldFail()
+    {
+        const string query = "/forest?$filter=Status in ('NotHealthy', 'Recovering')";
+
+        Test(Get<ForestModel, Forest>(query));
+        Test(await GetAsync<ForestModel, Forest>(query));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query));
+
+        static void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, collection.Count);
+            Assert.Single(collection.ElementAt(0).DomainControllers);
+            Assert.Equal(DcStatusModel.NotHealthy, collection.ElementAt(0).DomainControllers.Single().Entry.Dc.Status);
+            Assert.Empty(collection.ElementAt(1).DomainControllers);
+            Assert.Empty(collection.ElementAt(2).DomainControllers);
         }
     }
 

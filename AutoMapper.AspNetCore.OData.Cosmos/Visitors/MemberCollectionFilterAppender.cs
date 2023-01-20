@@ -51,13 +51,19 @@ namespace AutoMapper.AspNet.OData.Visitors
 
         private Expression GetBindingExpression(MemberAssignment memberAssignment, FilterClause clause)
         {
-            Type elementType = memberAssignment.Expression.Type.GetCurrentType();
-            return Expression.Call
+            Type memberType = memberAssignment.Member.GetMemberType();
+            Type elementType = memberType.GetCurrentType();
+
+            MethodCallExpression callExpression = Expression.Call
             (
                 LinqMethods.EnumerableWhereMethod.MakeGenericMethod(elementType),
                 memberAssignment.Expression,
                 clause.GenerateFilterExpression(elementType, this.context)
-            ).ToListCall(elementType);
+            );
+
+            return memberType.IsArray
+                ? callExpression.ToArrayCall(elementType)
+                : callExpression.ToListCall(elementType);
         }
 
         private ODataExpansionOptions ToExpansion(in PathSegment pathSegment) =>

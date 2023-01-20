@@ -30,7 +30,7 @@ internal static class DatabaseSeeder
                     Id = Guid.NewGuid(),
                     ForestId = forest1,
                     Fqdn = "dc1.abernathy.com",                    
-                    FsmoRoles = new List<FsmoRole>
+                    FsmoRoles = new FsmoRole[]
                     {
                         FsmoRole.PdcEmulator,
                         FsmoRole.DomainNamingMaster
@@ -115,7 +115,7 @@ internal static class DatabaseSeeder
                                 Id = Guid.NewGuid(),
                                 ForestId = forest1,
                                 Fqdn = "dc1.abernathy.com",
-                                FsmoRoles = new List<FsmoRole>
+                                FsmoRoles = new FsmoRole[]
                                 {
                                     FsmoRole.PdcEmulator,
                                     FsmoRole.DomainNamingMaster
@@ -214,7 +214,7 @@ internal static class DatabaseSeeder
                                 Id = Guid.NewGuid(),
                                 ForestId = forest1,
                                 Fqdn = "dc2.abernathy.com",
-                                FsmoRoles = new List<FsmoRole>
+                                FsmoRoles = new FsmoRole[]
                            {
                                FsmoRole.RidMaster
                            },
@@ -313,7 +313,7 @@ internal static class DatabaseSeeder
                                Id = Guid.NewGuid(),
                                ForestId = forest1,
                                Fqdn = "dc3.abernathy.com",
-                               FsmoRoles = new List<FsmoRole>
+                               FsmoRoles = new FsmoRole[]
                            {
                                FsmoRole.InfrastructureMaster
                            },
@@ -392,7 +392,7 @@ internal static class DatabaseSeeder
                                Id = Guid.NewGuid(),
                                ForestId = forest1,
                                Fqdn = "dc4.abernathy.com",
-                               FsmoRoles = new List<FsmoRole>
+                               FsmoRoles = new FsmoRole[]
                            {
                                FsmoRole.SchemaMaster
                            },
@@ -472,7 +472,7 @@ internal static class DatabaseSeeder
                     Id = Guid.NewGuid(),
                     ForestId = forest2,
                     Fqdn = "dc1.rolfson.com",
-                    FsmoRoles = new List<FsmoRole>
+                    FsmoRoles = new FsmoRole[]
                     {
                         FsmoRole.PdcEmulator
                     },
@@ -556,7 +556,7 @@ internal static class DatabaseSeeder
                                Id = Guid.NewGuid(),
                                ForestId = forest2,
                                Fqdn = "dc1.rolfson.com",
-                               FsmoRoles = new List<FsmoRole>
+                               FsmoRoles = new FsmoRole[]
                                {
                                    FsmoRole.PdcEmulator
                                },
@@ -635,7 +635,7 @@ internal static class DatabaseSeeder
                                 Id = Guid.NewGuid(),
                                 ForestId = forest2,
                                 Fqdn = "dc2.rolfson.com",
-                                FsmoRoles = new List<FsmoRole>
+                                FsmoRoles = new FsmoRole[]
                            {
                                FsmoRole.SchemaMaster
                            },
@@ -752,7 +752,7 @@ internal static class DatabaseSeeder
                                Id = Guid.NewGuid(),
                                ForestId = forest2,
                                Fqdn = "dc3.rolfson.com",
-                               FsmoRoles = new List<FsmoRole>
+                               FsmoRoles = new FsmoRole[]
                            {
                                FsmoRole.InfrastructureMaster,
                                FsmoRole.RidMaster
@@ -811,7 +811,7 @@ internal static class DatabaseSeeder
                                Id = Guid.NewGuid(),
                                ForestId = forest2,
                                Fqdn = "dc4.rolfson.com",
-                               FsmoRoles = new List<FsmoRole>
+                               FsmoRoles = new FsmoRole[]
                            {
                                FsmoRole.DomainNamingMaster
                            },
@@ -891,7 +891,7 @@ internal static class DatabaseSeeder
                     Id = Guid.NewGuid(),
                     ForestId = forest3,
                     Fqdn = "dc1.zulauf.net",
-                    FsmoRoles = new List<FsmoRole>
+                    FsmoRoles = new FsmoRole[]
                     {
                         FsmoRole.PdcEmulator,
                         FsmoRole.RidMaster,
@@ -976,7 +976,7 @@ internal static class DatabaseSeeder
                                Id = Guid.NewGuid(),
                                ForestId = forest3,
                                Fqdn = "dc1.zulauf.net",
-                               FsmoRoles = new List<FsmoRole>
+                               FsmoRoles = new FsmoRole[]
                                {
                                    FsmoRole.PdcEmulator,
                                    FsmoRole.RidMaster,
@@ -1057,7 +1057,7 @@ internal static class DatabaseSeeder
                                Id = Guid.NewGuid(),
                                ForestId = forest3,
                                Fqdn = "dc2.zulauf.net",
-                               FsmoRoles = new List<FsmoRole>
+                               FsmoRoles = new FsmoRole[]
                            {
                                FsmoRole.SchemaMaster,
                                FsmoRole.DomainNamingMaster

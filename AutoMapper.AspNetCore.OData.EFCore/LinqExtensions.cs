@@ -608,6 +608,13 @@ namespace AutoMapper.AspNet.OData
                 expression
             );
 
+        internal static MethodCallExpression ToArrayCall(this Expression expression, Type elementType) =>
+            Expression.Call
+            (
+                LinqMethods.EnumerableToArrayMethod.MakeGenericMethod(elementType),
+                expression
+            );
+
         private static Expression<Func<TSource, object>> BuildSelectorExpression<TSource>(string fullName, string parameterName = "i")
         {
             ParameterExpression param = Expression.Parameter(typeof(TSource), parameterName);

@@ -14,7 +14,7 @@ public sealed record DomainControllerModel
     public ICollection<BackupModel> Backups { get; init; } =
         new List<BackupModel>();
     public AdminGroupModel AdminGroup { get; init; } = default!;
-    public ICollection<FsmoRole> FsmoRoles { get; init; } =
-         new List<FsmoRole>();
+    public FsmoRole[] FsmoRoles { get; init; }
+        = Array.Empty<FsmoRole>();
     public DcStatusModel Status { get; init; }
 }
