@@ -7,7 +7,6 @@ using Microsoft.OData.ModelBuilder;
 using Microsoft.OData.UriParser;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace ExpressionBuilder.Tests
@@ -39,13 +38,6 @@ namespace ExpressionBuilder.Tests
             }
         }
 
-        public static FilterClause GetFilterClause<T>(string filter, IServiceProvider serviceProvider) where T : class
-            => GetFilterClause<T>
-            (
-                new Dictionary<string, string> { ["$filter"] = filter },
-                serviceProvider
-            );
-
         public static SelectExpandClause GetSelectExpandClause<T>(IDictionary<string, string> queryOptions) where T : class
         {
             IEdmModel model = GetModel<T>();
@@ -60,8 +52,15 @@ namespace ExpressionBuilder.Tests
                 queryOptions
             );
 
-            return parser.ParseSelectAndExpand();            
+            return parser.ParseSelectAndExpand();
         }
+
+        public static FilterClause GetFilterClause<T>(string filter, IServiceProvider serviceProvider) where T : class
+            => GetFilterClause<T>
+            (
+                new Dictionary<string, string> { ["$filter"] = filter },
+                serviceProvider
+            );
 
         public static FilterClause GetFilterClause<T>(IDictionary<string, string> queryOptions, IServiceProvider serviceProvider, bool useFilterOption = false) where T : class
         {
@@ -87,7 +86,7 @@ namespace ExpressionBuilder.Tests
                     queryOptions["$filter"]
                 );
             }
-           
+
             return parser.ParseFilter();
         }
 

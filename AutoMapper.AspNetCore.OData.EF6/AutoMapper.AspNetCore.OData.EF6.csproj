@@ -38,8 +38,6 @@
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\ODataQueryContextExtentions.cs" Link="ODataQueryContextExtentions.cs" />
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\ODataQueryOptionsExtensions.cs" Link="ODataQueryOptionsExtensions.cs" />
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\ODataSettings.cs" Link="ODataSettings.cs" />
-    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\Operators\ConvertEnumToUnderlyingOperator.cs" Link="Operators\ConvertEnumToUnderlyingOperator.cs" />
-    <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\Operators\ToStringConvertOperator.cs" Link="Operators\ToStringConvertOperator.cs" />
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\OrderBySetting.cs" Link="OrderBySetting.cs" />
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\ProjectionSettings.cs" Link="ProjectionSettings.cs" />
     <Compile Include="..\AutoMapper.AspNetCore.OData.EFCore\Properties\Resources.Designer.cs" Link="Properties\Resources.Designer.cs" />
@@ -74,7 +72,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Operators\" />
     <Folder Include="Visitors\" />
     <Folder Include="Properties\" />
   </ItemGroup>

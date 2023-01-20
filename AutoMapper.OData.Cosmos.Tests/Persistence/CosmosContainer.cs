@@ -31,8 +31,8 @@ public sealed class CosmosContainer : IAsyncLifetime
     {
         JsonConvert.DefaultSettings = () => new JsonSerializerSettings
         {
-            ContractResolver = new CamelCasePropertyNamesContractResolver(),
-            Converters = new List<JsonConverter> { new StringEnumConverter() }
+            ContractResolver = new CamelCasePropertyNamesContractResolver()
+            //Converters = new List<JsonConverter> { new StringEnumConverter() }
         };
 
         this.configuration = new();
