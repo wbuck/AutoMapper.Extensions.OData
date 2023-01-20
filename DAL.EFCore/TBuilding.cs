@@ -7,7 +7,6 @@ namespace DAL.EFCore
     [Table("OB_TBuilding")]
     public class TBuilding
     {
-
         [Column("pkBID")]
         [Required, Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Int32 Id { get; set; }
@@ -21,6 +20,8 @@ namespace DAL.EFCore
 
         [ForeignKey("Builder")]
         public Int32 BuilderId { get; set; }
+
+        public BuildingType BuildingType { get; set; }
 
         public TBuilder Builder { get; set; }
 

@@ -39,9 +39,9 @@ namespace AutoMapper.OData.EFCore.Tests.Data
                 CreatedDate = new DateTime(2012, 12, 12),
                 Buildings = new List<TBuilding>
                 {
-                    new TBuilding { Identity =  Guid.NewGuid(), LongName = "Two L1", BuilderId = builders.First(b => b.Name == "John").Id  },
-                    new TBuilding { Identity =  Guid.NewGuid(), LongName = "Two L2", BuilderId = builders.First(b => b.Name == "Mark").Id  },
-                    new TBuilding { Identity =  Guid.NewGuid(), LongName = "Two L3", BuilderId = builders.First(b => b.Name == "Mark").Id  }
+                    new TBuilding { Identity =  Guid.NewGuid(), LongName = "Two L1", BuilderId = builders.First(b => b.Name == "John").Id, BuildingType = BuildingType.Business },
+                    new TBuilding { Identity =  Guid.NewGuid(), LongName = "Two L2", BuilderId = builders.First(b => b.Name == "Mark").Id, BuildingType = BuildingType.Residential },
+                    new TBuilding { Identity =  Guid.NewGuid(), LongName = "Two L3", BuilderId = builders.First(b => b.Name == "Mark").Id, BuildingType = BuildingType.Industrial }
                 }
             });
             context.SaveChanges();

@@ -14,6 +14,8 @@ using Microsoft.AspNetCore.OData.Extensions;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Logging;
 using Xunit;
 
 namespace AutoMapper.OData.EFCore.Tests
@@ -42,6 +44,7 @@ namespace AutoMapper.OData.EFCore.Tests
                 (
                     options =>
                     {
+                        options.EnableSensitiveDataLogging();
                         options.UseInMemoryDatabase("MyDbContext");
                         options.UseInternalServiceProvider(new ServiceCollection().AddEntityFrameworkInMemoryDatabase().BuildServiceProvider());
                     },
@@ -266,6 +269,22 @@ namespace AutoMapper.OData.EFCore.Tests
         public async void OpsTenantExpandBuildingsNoFilterAndOrderBy()
         {
             string query = "/opstenant?$top=5&$expand=Buildings&$orderby=Name desc";
+            Test(Get<OpsTenant, TMandator>(query));
+            Test(await GetAsync<OpsTenant, TMandator>(query));
+            Test(await GetUsingCustomNameSpace<OpsTenant, TMandator>(query));
+
+            void Test(ICollection<OpsTenant> collection)
+            {
+                Assert.Equal(2, collection.Count);
+                Assert.Equal(3, collection.First().Buildings.Count);
+                Assert.Equal("Two", collection.First().Name);
+            }
+        }
+
+        [Fact]
+        public async void OpsTenantExpandBuildingsAndFilterBuildings()
+        {
+            string query = "/opstenant?$top=5&$expand=Buildings($filter=BuildingType eq 'Business')&$orderby=Name desc";
             Test(Get<OpsTenant, TMandator>(query));
             Test(await GetAsync<OpsTenant, TMandator>(query));
             Test(await GetUsingCustomNameSpace<OpsTenant, TMandator>(query));
@@ -859,6 +878,7 @@ namespace AutoMapper.OData.EFCore.Tests
                         {
                             ProductID = 1,
                             ProductName = "ProductOne",
+                            Ranking = SimpleEnum.First,   
                             AlternateAddresses = new Address[]
                             {
                                 new Address { AddressID = 1, City = "CityOne" },
@@ -870,6 +890,7 @@ namespace AutoMapper.OData.EFCore.Tests
                         {
                             ProductID = 2,
                             ProductName = "ProductTwo",
+                            Ranking = SimpleEnum.Second,                            
                             AlternateAddresses = Array.Empty<Address>( ),
                             SupplierAddress = new Address { City = "B" }
                         },
@@ -877,6 +898,7 @@ namespace AutoMapper.OData.EFCore.Tests
                         {
                             ProductID = 3,
                             ProductName = "ProductThree",
+                            Ranking = SimpleEnum.Third,                            
                             AlternateAddresses = Array.Empty<Address>( ),
                             SupplierAddress = new Address { City = "C" }
                         },
@@ -900,6 +922,7 @@ namespace AutoMapper.OData.EFCore.Tests
                         {
                             ProductID = 4,
                             ProductName = "ProductFour",
+                            Ranking = SimpleEnum.Fourth,
                             AlternateAddresses = Array.Empty<Address>( ),
                             SupplierAddress = new Address { City = "D" }
                         },
@@ -907,6 +930,7 @@ namespace AutoMapper.OData.EFCore.Tests
                         {
                             ProductID = 5,
                             ProductName = "ProductFive",
+                            Ranking = SimpleEnum.First,
                             AlternateAddresses = new Address[]
                             {
                                 new Address { AddressID = 3, City = "CityThree" },
@@ -926,6 +950,43 @@ namespace AutoMapper.OData.EFCore.Tests
                     }
                 }
             }.AsQueryable();
+
+        [Fact]
+        public async void FilterExpandedEntity()
+        {
+            string query = "/CategoryModel?$expand=Products($filter=Ranking eq 'First')";
+            Test
+            (
+                Get<CategoryModel, Category>
+                (
+                    query,
+                    GetCategories()
+                )
+            );
+            Test
+            (
+                await GetAsync<CategoryModel, Category>
+                (
+                    query,
+                    GetCategories()
+                )
+            );
+            Test
+            (
+                await GetUsingCustomNameSpace<CategoryModel, Category>
+                (
+                    query,
+                    GetCategories()
+                )
+            );
+
+            static void Test(ICollection<CategoryModel> collection)
+            {
+                Assert.Equal(2, collection.Count);
+                Assert.Single(collection.First().Products);
+                Assert.Single(collection.Last().Products);
+            }
+        }
 
         [Fact]
         public async void FilteringOnRoot_AndChildCollection_WithMatches()

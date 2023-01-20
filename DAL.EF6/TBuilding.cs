@@ -21,6 +21,8 @@ namespace DAL.EF6
         [ForeignKey("Builder")]
         public Int32 BuilderId { get; set; }
 
+        public BuildingType BuildingType { get; set; }
+
         public TBuilder Builder { get; set; }
 
         public TMandator Mandator { get; set; }

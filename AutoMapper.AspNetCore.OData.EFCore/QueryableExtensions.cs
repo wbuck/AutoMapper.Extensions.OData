@@ -66,7 +66,9 @@ namespace AutoMapper.AspNet.OData
                 querySettings?.ODataSettings?.HandleNullPropagation ?? HandleNullPropagationOption.False,
                 querySettings?.ODataSettings?.TimeZone);
             query.ApplyOptions(mapper, filter, options, querySettings);
-            return query.GetQueryable(mapper, options, querySettings, filter);
+            var test = query.GetQueryable(mapper, options, querySettings, filter);
+            return test;
+
         }
 
         public static ICollection<TModel> Get<TModel, TData>(this IQueryable<TData> query, IMapper mapper,
