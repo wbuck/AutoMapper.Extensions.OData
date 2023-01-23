@@ -7,6 +7,9 @@ internal sealed class ForestMapping : Profile
 {
 	public ForestMapping()
 	{
+
+        CreateMap<ForestStatusModel, ForestStatus>();
+        CreateMap<ForestStatus, ForestStatusModel>();
         CreateMap<MetadataKeyValue, MetadataKeyValueModel>()
             .ForAllMembers(opts => opts.ExplicitExpansion());
 
