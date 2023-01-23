@@ -9,7 +9,7 @@ internal sealed class ForestMapping : Profile
 	{
 
         CreateMap<ForestStatusModel, ForestStatus>();
-        CreateMap<ForestStatus, ForestStatusModel>();
+        //CreateMap<ForestStatus, ForestStatusModel>();
         CreateMap<MetadataKeyValue, MetadataKeyValueModel>()
             .ForAllMembers(opts => opts.ExplicitExpansion());
 

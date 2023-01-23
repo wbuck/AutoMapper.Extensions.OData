@@ -816,9 +816,9 @@ public sealed class GetQueryTests
     }
 
     [Fact]
-    public async Task ShouldFail()
+    public async Task ForestModel_UsingInFilter_OnRootEnumProperty()
     {
-        const string query = "/forest?$filter=Status in ('NotHealthy', 'Recovering')";
+        const string query = "/forest?$filter=Status in ('NotHealthy', 'Recovering')&$orderby=ForestName";
 
         Test(Get<ForestModel, Forest>(query));
         Test(await GetAsync<ForestModel, Forest>(query));
@@ -826,11 +826,9 @@ public sealed class GetQueryTests
 
         static void Test(ICollection<ForestModel> collection)
         {
-            Assert.Equal(3, collection.Count);
-            Assert.Single(collection.ElementAt(0).DomainControllers);
-            Assert.Equal(DcStatusModel.NotHealthy, collection.ElementAt(0).DomainControllers.Single().Entry.Dc.Status);
-            Assert.Empty(collection.ElementAt(1).DomainControllers);
-            Assert.Empty(collection.ElementAt(2).DomainControllers);
+            Assert.Equal(2, collection.Count);
+            Assert.Equal(ForestStatusModel.Recovering, collection.First().Status);
+            Assert.Equal(ForestStatusModel.NotHealthy, collection.Last().Status);            
         }
     }
 
