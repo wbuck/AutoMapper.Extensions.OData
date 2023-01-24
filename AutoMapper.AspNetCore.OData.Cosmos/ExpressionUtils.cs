@@ -31,7 +31,7 @@ internal static class ExpressionUtils
         lambda.Parameters.Where(p => p.Name?.StartsWith('$') ?? false).Aggregate
         (
             lambda, 
-            (expr, param) => (LambdaExpression)expr.ReplaceParameter(param, Expression.Parameter(param.Type, param.Name[1..]))
+            (expr, param) => (LambdaExpression)expr.ReplaceParameter(param, Expression.Parameter(param.Type, param.Name![1..]))
         );
 
     public static ICollection<Expression<Func<TSource, object>>> BuildIncludes<TSource>(
