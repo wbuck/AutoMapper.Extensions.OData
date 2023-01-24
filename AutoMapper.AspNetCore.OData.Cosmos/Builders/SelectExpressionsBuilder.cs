@@ -7,34 +7,13 @@ using System.Linq.Expressions;
 using System.Linq;
 using LogicBuilder.Expressions.Utils;
 using AutoMapper.Internal;
-using Microsoft.AspNetCore.OData.Query;
-using Microsoft.OData.UriParser;
-using System.Reflection.Metadata;
 
 
 namespace AutoMapper.AspNet.OData;
 
-internal static class ExpressionUtils
+internal static class SelectExpressionsBuilder
 {
-    public static LambdaExpression GenerateFilterExpression(this FilterClause filterClause, Type type, ODataQueryContext context)
-    {
-        var parameters = new Dictionary<string, ParameterExpression>();
-        return new FilterHelper(parameters, context)
-            .GetFilterPart(filterClause.Expression)
-            .GetFilter(type, parameters, filterClause.RangeVariable.Name)
-            .ReplaceParameter();
-    }
-
-    // Parameters that start with the '$' character are illegal
-    // in Cosmos DB.
-    private static LambdaExpression ReplaceParameter(this LambdaExpression lambda) =>
-        lambda.Parameters.Where(p => p.Name?.StartsWith('$') ?? false).Aggregate
-        (
-            lambda, 
-            (expr, param) => (LambdaExpression)expr.ReplaceParameter(param, Expression.Parameter(param.Type, param.Name![1..]))
-        );
-
-    public static ICollection<Expression<Func<TSource, object>>> BuildIncludes<TSource>(
+    public static ICollection<Expression<Func<TSource, object>>> BuildSelectExpressions<TSource>(
         this IEnumerable<List<PathSegment>> includes, List<List<PathSegment>> selects)
             where TSource : class
     {
@@ -174,7 +153,7 @@ internal static class ExpressionUtils
         selectors.AddRange
         (
             selects
-                .Select(path => path.BuildSelectorBodies(parentBody))
+                .Select(path => path.GetSelects(parentBody))
                 .Select(expression => Expression.Lambda
                 (
                     typeof(Func<,>).MakeGenericType(new[] { param.Type, typeof(object) }),
@@ -184,7 +163,7 @@ internal static class ExpressionUtils
         );
     }
 
-    private static Expression BuildSelectorBodies(this IReadOnlyList<PathSegment> pathSegments, Expression expression)
+    private static Expression GetSelects(this IReadOnlyList<PathSegment> pathSegments, Expression expression)
     {
         if (!pathSegments.Any())
             return expression;
@@ -193,9 +172,14 @@ internal static class ExpressionUtils
 
         for (int i = 0; i < pathSegments.Count; i++)
         {
-            if (!parentType.IsList() || parentType.IsListOfLiteralTypes())
+            if (!parentType.IsList() || parentType.IsListOfValueTypes())
             {
-                var memberExpression = Expression.MakeMemberAccess(expression, pathSegments[i].Member);
+                MemberExpression memberExpression = Expression.MakeMemberAccess
+                (
+                    expression, 
+                    pathSegments[i].Member
+                );
+
                 expression = memberExpression.Type.IsValueType
                     ? Expression.Convert(memberExpression, typeof(object))
                     : memberExpression;
@@ -204,14 +188,18 @@ internal static class ExpressionUtils
             }
             else
             {
-                Type elementType = parentType.GetGenericArguments().First();
+                Type elementType = parentType.GetUnderlyingElementType();
                 ParameterExpression parameter = Expression.Parameter(elementType, "i1");
 
-                MemberExpression memberExpression = Expression.MakeMemberAccess(parameter, pathSegments[i].Member);
+                MemberExpression memberExpression = Expression.MakeMemberAccess
+                (
+                    parameter, 
+                    pathSegments[i].Member
+                );
 
                 LambdaExpression lambda = Expression.Lambda
                 (
-                    pathSegments.Skip(i + 1).ToList().BuildSelectorBodies(memberExpression),
+                    pathSegments.Skip(i + 1).ToList().GetSelects(memberExpression),
                     parameter
                 );
 

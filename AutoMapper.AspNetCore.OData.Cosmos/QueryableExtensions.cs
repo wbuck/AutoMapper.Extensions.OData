@@ -3,10 +3,8 @@ using AutoMapper.Extensions.ExpressionMapping;
 using LogicBuilder.Expressions.Utils;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.Azure.Cosmos.Linq;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow.RecordIO;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
@@ -20,7 +18,7 @@ public static class QueryableExtensions
         IMapper mapper, ODataQueryOptions<TModel> options, QuerySettings querySettings = null)
          where TModel : class
     {
-        IQueryable<TModel> modelQuery = query.GetQuery(mapper, options, querySettings);
+        IQueryable<TModel> modelQuery = GetQuery(query, mapper, options, querySettings);
         return modelQuery.ToArray();
     }
 
@@ -28,8 +26,8 @@ public static class QueryableExtensions
         IMapper mapper, ODataQueryOptions<TModel> options, QuerySettings querySettings = null)
             where TModel : class
     {
-        IQueryable<TModel> modelQuery = await query
-            .GetQueryAsync(mapper, options, querySettings).ConfigureAwait(false);
+        IQueryable<TModel> modelQuery = 
+            await GetQueryAsync(query, mapper, options, querySettings).ConfigureAwait(false);
 
         return await modelQuery.ExecuteQueryAsync(querySettings.GetCancellationToken())
             .ConfigureAwait(false);
@@ -41,6 +39,10 @@ public static class QueryableExtensions
         ODataQueryOptions<TModel> options, 
         QuerySettings querySettings = null) where TModel : class
     {
+        query = query ?? throw new ArgumentNullException(nameof(query));
+        mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        options = options ?? throw new ArgumentNullException(nameof(options));
+
         Expression<Func<TModel, bool>> filter = options.ToFilterExpression(
             querySettings?.ODataSettings?.HandleNullPropagation ?? HandleNullPropagationOption.False,
             querySettings?.ODataSettings?.TimeZone);
@@ -59,6 +61,10 @@ public static class QueryableExtensions
         ODataQueryOptions<TModel> options,
         QuerySettings querySettings = null) where TModel : class
     {
+        query = query ?? throw new ArgumentNullException(nameof(query));
+        mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        options = options ?? throw new ArgumentNullException(nameof(options));
+
         Expression<Func<TModel, bool>> filter = options.ToFilterExpression(
             querySettings?.ODataSettings?.HandleNullPropagation ?? HandleNullPropagationOption.False,
             querySettings?.ODataSettings?.TimeZone);
@@ -80,7 +86,7 @@ public static class QueryableExtensions
         var expansions = options.GetExpansions();
 
         var includes = expansions
-            .BuildIncludes<TModel>(selects)
+            .BuildSelectExpressions<TModel>(selects)
             .ToList();
 
         return query.GetQuery
@@ -248,4 +254,7 @@ public static class QueryableExtensions
         List<List<PathSegment>> GetMemberCollectionFilters() =>
             selects.Where(s => s.Last().MemberType.IsList()).ToList();
     }
+
+    private static CancellationToken GetCancellationToken(this QuerySettings querySettings) =>
+        querySettings?.AsyncSettings?.CancellationToken ?? CancellationToken.None;
 }

@@ -66,7 +66,7 @@ namespace AutoMapper.AspNet.OData.Visitors
                 : callExpression.ToListCall(elementType);
         }
 
-        private ODataExpansionOptions ToExpansion(in PathSegment pathSegment) =>
+        private static ODataExpansionOptions ToExpansion(in PathSegment pathSegment) =>
             new()
             {
                 MemberName = pathSegment.MemberName,

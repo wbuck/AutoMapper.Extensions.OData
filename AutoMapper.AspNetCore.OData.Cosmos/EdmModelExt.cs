@@ -14,8 +14,8 @@ internal static class EdmModelExt
        GetComplexTypeSelects(new(), new(), parentType, edmModel);
 
     private static List<List<PathSegment>> GetComplexTypeSelects(
-        List<List<PathSegment>> expansions,
-        List<PathSegment> currentExpansions,
+        List<List<PathSegment>> selects,
+        List<PathSegment> currentSelects,
         Type parentType,
         IEdmModel edmModel,
         in int depth = 0)
@@ -28,8 +28,8 @@ internal static class EdmModelExt
             Type memberType = member.GetMemberType();
 
             List<PathSegment> pathSegments = i == 0
-                ? currentExpansions
-                : new(currentExpansions.Take(depth));
+                ? currentSelects
+                : new(currentSelects.Take(depth));
 
             pathSegments.Add(new PathSegment
             (
@@ -40,31 +40,31 @@ internal static class EdmModelExt
             ));
 
             Type elementType = pathSegments.Last().ElementType;
-            var memberSelects = elementType.GetLiteralSelects(pathSegments);
+            List<List<PathSegment>> memberSelects = elementType.GetValueTypeMembersSelects(pathSegments);
 
             if (memberSelects.Any())
-                expansions.AddRange(memberSelects);
+                selects.AddRange(memberSelects);
             else
-                expansions.Add(new(pathSegments));
+                selects.Add(new(pathSegments));
             
-            GetComplexTypeSelects(expansions, pathSegments, elementType, edmModel, depth + 1);
+            GetComplexTypeSelects(selects, pathSegments, elementType, edmModel, depth + 1);
         }
 
-        return expansions;
+        return selects;
     }
 
     private static IReadOnlyList<MemberInfo> GetComplexMembers(this IEdmModel edmModel, Type parentType)
     {
-        MemberInfo[] members = parentType.GetPropertiesAndFields();
+        MemberInfo[] members = parentType.GetFieldsAndProperties();
         List<MemberInfo> complexMembers = new(members.Length);
 
         var complexTypes = edmModel.SchemaElements.OfType<IEdmComplexType>();
 
         foreach (var member in members)
         {
-            var memberType = member.GetMemberType().GetCurrentType();
+            Type memberType = member.GetMemberType().GetCurrentType();
 
-            if (!member.IsListOfLiteralTypes() && !memberType.IsLiteralType() &&
+            if (!member.IsListOfValueTypes() && !memberType.IsLiteralType() &&
                 complexTypes.Any(c => c.Name.Equals(memberType.Name, StringComparison.Ordinal)))
             {
                 complexMembers.Add(member);

@@ -11,7 +11,7 @@ using System.Reflection;
 
 namespace AutoMapper.AspNet.OData;
 
-internal static partial class ExpansionHelper
+internal static class SelectPathsBuilder
 {
     public static List<List<PathSegment>> GetSelects<TModel>(this ODataQueryOptions<TModel> options)
     {
@@ -24,7 +24,7 @@ internal static partial class ExpansionHelper
         {
             // If there are no selects or only selects for expanded entities,
             // we need to expand the complex types on the root entity.
-            return parentType.GetLiteralAndComplexSelects(edmModel);
+            return parentType.GetValueAndComplexMemberSelects(edmModel);
         }        
 
         return selects.ToList().BuildSelectPaths(parentType, edmModel, new(), new());
@@ -54,7 +54,7 @@ internal static partial class ExpansionHelper
             ? currentPath
             : currentPath.ToNewList();
 
-        BuildPathSegments(selectedPaths.First(), segments, depth);
+        BuildPathSegments(selectedPaths[0], segments, depth);
 
         if (depth == 0 || !currentPath.Equals(segments))
             paths.Add(segments);
@@ -158,7 +158,7 @@ internal static partial class ExpansionHelper
         PathSegment pathSegment = pathSegments.Last();
         Type memberType = pathSegment.ElementType;
 
-        var memberSelects = memberType.GetLiteralTypeMembers()
+        var memberSelects = memberType.GetValueOrListOrValueTypeMembers()
             .Select(m => AddPathSegment(m, EdmTypeKind.Primitive, pathSegments.ToNewList()));
 
         var complexPaths = edmModel.GetComplexTypeSelects(memberType).Select
@@ -248,7 +248,7 @@ internal static partial class ExpansionHelper
             return pathSegments.GetSelectPaths<PathSelectItem>().ToList() switch
             {
                 var selects when selects.Any() => selects.BuildSelectPaths(parentType, edmModel, new(), new()),
-                _ => parentType.GetLiteralAndComplexSelects(edmModel)
+                _ => parentType.GetValueAndComplexMemberSelects(edmModel)
             };
         }
         return null;
