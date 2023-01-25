@@ -17,23 +17,7 @@ internal static class TypeExt
         BindingFlags.FlattenHierarchy | 
         BindingFlags.IgnoreCase;
 
-    public static List<List<PathSegment>> GetValueAndComplexMemberSelects(this Type parentType, IEdmModel edmModel) =>
-        parentType.GetValueTypeMembersSelects().Concat(edmModel.GetComplexTypeSelects(parentType)).ToList();
-
-    public static List<List<PathSegment>> GetValueTypeMembersSelects(this Type parentType, List<PathSegment>? pathSegments = null) =>
-        parentType.GetValueOrListOrValueTypeMembers()
-            .Select(member => new List<PathSegment>(pathSegments ?? Enumerable.Empty<PathSegment>())
-            {
-                new
-                (
-                    member,
-                    parentType,
-                    member.GetMemberType(),
-                    EdmTypeKind.Primitive
-                )
-            }).ToList();
-
-    public static MemberInfo[] GetValueOrListOrValueTypeMembers(this Type parentType)
+    public static MemberInfo[] GetValueOrListOfValueTypeMembers(this Type parentType)
     {
         if (parentType.IsList())
             return Array.Empty<MemberInfo>();

@@ -1,11 +1,13 @@
 ﻿#nullable enable
 
 using LogicBuilder.Expressions.Utils;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Reflection;
 
@@ -158,7 +160,7 @@ internal static class SelectPathsBuilder
         PathSegment pathSegment = pathSegments.Last();
         Type memberType = pathSegment.ElementType;
 
-        var memberSelects = memberType.GetValueOrListOrValueTypeMembers()
+        var memberSelects = memberType.GetValueOrListOfValueTypeMembers()
             .Select(m => AddPathSegment(m, EdmTypeKind.Primitive, pathSegments.ToNewList()));
 
         var complexPaths = edmModel.GetComplexTypeSelects(memberType).Select
@@ -184,50 +186,19 @@ internal static class SelectPathsBuilder
             ));
             return pathSegments;
         }
-    }
-
-    private static List<PathSegment> ToNewList(this IEnumerable<PathSegment> pathSegments) =>
-        new(pathSegments.Select
-        (
-            p => new PathSegment
-            (
-                p.Member,
-                p.ParentType,
-                p.MemberType,
-                p.EdmTypeKind
-            ))
-        );  
-
-    private static FilterOptions? GetFilter(this ODataPathSegment pathSegment, ExpandedNavigationSelectItem pathSegments)
-    {
-        if (pathSegments.PathToNavigationProperty.Last().Identifier.Equals(pathSegment.Identifier)
-            && pathSegments.FilterOption is not null)
-        {
-            return new(pathSegments.FilterOption);
-        }
-        return null;
-    }
+    }     
 
     private static QueryOptions? GetQuery(this ODataPathSegment pathSegment, ExpandedNavigationSelectItem pathSegments)
     {
         if (!pathSegments.PathToNavigationProperty.Last().Identifier.Equals(pathSegment.Identifier))
             return null;
 
-        if (pathSegments.OrderByOption is not null || pathSegments.SkipOption.HasValue || pathSegments.TopOption.HasValue)
-            return new(pathSegments.OrderByOption!, (int?)pathSegments.SkipOption, (int?)pathSegments.TopOption);
-
-        return null;
-    }
-
-    private static FilterOptions? GetFilter(this ODataPathSegment pathSegment, PathSelectItem pathSegments)
-    {
-        if (pathSegments.SelectedPath.Last().Identifier.Equals(pathSegment.Identifier)
-            && pathSegments.FilterOption is not null)
-        {
-            return new(pathSegments.FilterOption);
-        }
-
-        return null;
+        return GetQueryOptions
+        (
+            pathSegments.OrderByOption,
+            pathSegments.SkipOption,
+            pathSegments.TopOption
+        );
     }
 
     private static QueryOptions? GetQuery(this ODataPathSegment pathSegment, PathSelectItem pathSegments)
@@ -235,11 +206,39 @@ internal static class SelectPathsBuilder
         if (!pathSegments.SelectedPath.Last().Identifier.Equals(pathSegment.Identifier))
             return null;
 
-        if (pathSegments.OrderByOption is not null || pathSegments.SkipOption.HasValue || pathSegments.TopOption.HasValue)
-            return new(pathSegments.OrderByOption!, (int?)pathSegments.SkipOption, (int?)pathSegments.TopOption);
-
-        return null;
+        return GetQueryOptions
+        (
+            pathSegments.OrderByOption, 
+            pathSegments.SkipOption, 
+            pathSegments.TopOption
+        );
     }
+
+    private static QueryOptions? GetQueryOptions(OrderByClause? clause, long? skip, long? top) 
+        => clause is not null || skip is not null || top is not null 
+        ? new(clause!, (int?)skip, (int?)top)
+        : null;
+
+
+    private static FilterOptions? GetFilter(this ODataPathSegment pathSegment, SelectItem pathSegments)         
+    {
+        var (identifer, filterOption) = pathSegments switch
+        {
+            ExpandedNavigationSelectItem item => GetNavigationFilter(item),
+            PathSelectItem item => GetPathSelectFilter(item),
+            _ => throw new NotSupportedException($"Unknown {nameof(SelectItem)} type.")
+        };
+
+        return identifer.Equals(pathSegment.Identifier) && filterOption is not null
+            ? new(filterOption)
+            : null;
+
+        static (string, FilterClause?) GetNavigationFilter(ExpandedNavigationSelectItem item) =>
+            (item.PathToNavigationProperty.Last().Identifier, item.FilterOption);
+
+        static (string, FilterClause?) GetPathSelectFilter(PathSelectItem item) =>
+            (item.SelectedPath.Last().Identifier, item.FilterOption);
+    }     
 
     private static List<List<PathSegment>>? GetSelects(this ODataPathSegment pathSegment, ExpandedNavigationSelectItem pathSegments, Type parentType, IEdmModel edmModel)
     {
@@ -254,12 +253,30 @@ internal static class SelectPathsBuilder
         return null;
     }
 
-    private static IEnumerable<TPathType> GetSelectPaths<TPathType>(this ExpandedNavigationSelectItem item) where TPathType : SelectItem =>
-        item.SelectAndExpand?.SelectedItems.OfType<TPathType>() ?? Enumerable.Empty<TPathType>();
+    private static IEnumerable<T> GetSelectPaths<T>(this SelectItem selectItem) where T: SelectItem
+    {
+        return selectItem switch
+        {
+            ExpandedNavigationSelectItem item => GetItems<T>(item.SelectAndExpand),
+            PathSelectItem item => GetItems<T>(item.SelectAndExpand),
+            _ => throw new NotSupportedException($"Unknown {nameof(SelectItem)} type.")
+        };        
+    }
+    private static IEnumerable<T> GetSelectPaths<T>(this ODataQueryOptions options) where T : SelectItem =>
+        GetItems<T>(options.SelectExpand?.SelectExpandClause);
 
-    private static IEnumerable<TPathType> GetSelectPaths<TPathType>(this PathSelectItem item) where TPathType : SelectItem =>
-        item.SelectAndExpand?.SelectedItems.OfType<TPathType>() ?? Enumerable.Empty<TPathType>();
+    private static IEnumerable<T> GetItems<T>(SelectExpandClause? clause) =>
+            clause?.SelectedItems.OfType<T>() ?? Enumerable.Empty<T>();
 
-    private static IEnumerable<TPathType> GetSelectPaths<TPathType>(this ODataQueryOptions options) where TPathType : SelectItem =>
-        options.SelectExpand?.SelectExpandClause?.SelectedItems.OfType<TPathType>() ?? Enumerable.Empty<TPathType>();
+    private static List<PathSegment> ToNewList(this IEnumerable<PathSegment> pathSegments) =>
+        new(pathSegments.Select
+        (
+            p => new PathSegment
+            (
+                p.Member,
+                p.ParentType,
+                p.MemberType,
+                p.EdmTypeKind
+            ))
+        );
 }

@@ -1,5 +1,6 @@
 ﻿#nullable enable
 
+using AutoMapper;
 using LogicBuilder.Expressions.Utils;
 using Microsoft.OData.Edm;
 using System;
@@ -8,8 +9,25 @@ using System.Linq;
 using System.Reflection;
 
 namespace AutoMapper.AspNet.OData;
-internal static class EdmModelExt
+
+internal static class ComplexTypeSelectPathsBuilder
 {
+    public static List<List<PathSegment>> GetValueAndComplexMemberSelects(this Type parentType, IEdmModel edmModel) =>
+        parentType.GetValueTypeMembersSelects().Concat(edmModel.GetComplexTypeSelects(parentType)).ToList();
+
+    public static List<List<PathSegment>> GetValueTypeMembersSelects(this Type parentType, List<PathSegment>? pathSegments = null) =>
+        parentType.GetValueOrListOfValueTypeMembers()
+            .Select(member => new List<PathSegment>(pathSegments ?? Enumerable.Empty<PathSegment>())
+            {
+                new
+                (
+                    member,
+                    parentType,
+                    member.GetMemberType(),
+                    EdmTypeKind.Primitive
+                )
+            }).ToList();
+
     public static List<List<PathSegment>> GetComplexTypeSelects(this IEdmModel edmModel, Type parentType) =>
        GetComplexTypeSelects(new(), new(), parentType, edmModel);
 
@@ -46,7 +64,7 @@ internal static class EdmModelExt
                 selects.AddRange(memberSelects);
             else
                 selects.Add(new(pathSegments));
-            
+
             GetComplexTypeSelects(selects, pathSegments, elementType, edmModel, depth + 1);
         }
 
