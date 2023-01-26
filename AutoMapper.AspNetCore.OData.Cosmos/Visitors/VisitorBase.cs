@@ -39,14 +39,6 @@ namespace AutoMapper.AspNet.OData.Visitors
 
         protected abstract Expression MatchedExpression(PathSegment pathSegment, MemberInitExpression node, MemberAssignment binding);
 
-        private static bool ListTypesAreEquivalent(Type bindingType, Type expansionType)
-        {
-            if (!bindingType.IsList() || !expansionType.IsList())
-                return false;
-
-            return bindingType.GetUnderlyingElementType() == expansionType.GetUnderlyingElementType();
-        }
-
         protected virtual bool GetMatchingBinding(MemberInitExpression node, PathSegment pathSegment, [MaybeNullWhen(false)] out MemberAssignment binding)
         {
             binding = node.Bindings.OfType<MemberAssignment>().FirstOrDefault(b =>

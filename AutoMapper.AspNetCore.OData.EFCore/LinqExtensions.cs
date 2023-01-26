@@ -163,13 +163,13 @@ namespace AutoMapper.AspNet.OData
 
             if (orderByClause is null && (skip is not null || top is not null))
             {
-                var orderBySettings = context.FindSortableProperties(type);
+               // var orderBySettings = context.FindSortableProperties(type);
 
-                if (orderBySettings is null)
-                    return null;
+                //if (orderBySettings is null)
+               //     return null;
 
                 return expression
-                    .GetDefaultOrderByCall(orderBySettings)
+                   // .GetDefaultOrderByCall(orderBySettings)
                     .GetSkipCall(skip)
                     .GetTakeCall(top);
             }

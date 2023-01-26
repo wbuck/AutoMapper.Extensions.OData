@@ -377,6 +377,52 @@ public sealed class GetQueryTests
     }
 
     [Fact]
+    public async Task ForestModel_ExpandDc_NestedSkipAndTop()
+    {
+        string query = "/forest?$skip=2&$top=1&$expand=DomainControllers/Entry/Dc($top=1; $skip=2)";
+        ODataQueryOptions<ForestModel> options = ODataHelpers.GetODataQueryOptions<ForestModel>
+        (
+            query,
+            serviceProvider
+        );
+        Test(Get<ForestModel, Forest>(query, options));
+        Test(await GetAsync<ForestModel, Forest>(query, options));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query, options));
+
+        void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, options.Request.ODataFeature().TotalCount);
+            Assert.Equal(1, collection.Count);
+            Assert.Equal("Abernathy Forest", collection.First().ForestName);
+            Assert.Equal(4, collection.First().DomainControllers.Count);
+            Assert.Equal(7, collection.First().DomainControllers.Sum(dc => dc.Entry.Dc.Backups.Count));
+        }
+    }
+
+    [Fact]
+    public async Task ForestModel_ExpandDc_NestedSkipAndTop2()
+    {
+        string query = "/forest?$select=Values($top=1)";
+        ODataQueryOptions<ForestModel> options = ODataHelpers.GetODataQueryOptions<ForestModel>
+        (
+            query,
+            serviceProvider
+        );
+        Test(Get<ForestModel, Forest>(query, options));
+        Test(await GetAsync<ForestModel, Forest>(query, options));
+        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query, options));
+
+        void Test(ICollection<ForestModel> collection)
+        {
+            Assert.Equal(3, options.Request.ODataFeature().TotalCount);
+            Assert.Equal(1, collection.Count);
+            Assert.Equal("Abernathy Forest", collection.First().ForestName);
+            Assert.Equal(4, collection.First().DomainControllers.Count);
+            Assert.Equal(7, collection.First().DomainControllers.Sum(dc => dc.Entry.Dc.Backups.Count));
+        }
+    }
+
+    [Fact]
     public async Task ForestModelExpandDcExpandBackupOrderByForestNameSkipTakeWithCount()
     {
         string query = "/forest?$skip=2&$top=1&$expand=DomainControllers/Entry/Dc($expand=Backups)&$orderby=ForestName desc&$count=true";

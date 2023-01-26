@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -226,15 +227,17 @@ public static class QueryableExtensions
         List<List<PathSegment>> memberFilters = GetMemberFilters();
         List<List<PathSegment>> collectionFilters = GetMemberCollectionFilters();
 
-        //List<List<ODataExpansionOptions>> methods = new();// GetQueryMethods();
+        List<List<PathSegment>> methods = GetQueryMethods();
 
-        if (!memberFilters.Any() && !collectionFilters.Any() /*&& !methods.Any()*/)
+        if (!memberFilters.Any() && !collectionFilters.Any() && !methods.Any())
             return query;
 
         Expression expression = query.Expression;
 
-        //if (methods.Any())
-        //    expression = UpdateProjectionMethodExpression(expression);
+        methods.ForEach
+        (
+            segments => expression = QueryMethodAppender.AppendFilters(expression, segments, context)
+        );
 
         memberFilters.ForEach
         (
@@ -249,10 +252,27 @@ public static class QueryableExtensions
         return query.Provider.CreateQuery<TModel>(expression);
 
         List<List<PathSegment>> GetMemberFilters() =>
-            selects.Where(s => !s.Last().MemberType.IsList()).ToList();
+            selects.Where(s => 
+            {
+                ref PathSegment lastSegment = ref GetLastSegment(s);
+                return !lastSegment.MemberType.IsList() && lastSegment.FilterOptions is not null;
+            }).ToList();
 
         List<List<PathSegment>> GetMemberCollectionFilters() =>
-            selects.Where(s => s.Last().MemberType.IsList()).ToList();
+            selects.Where(s => 
+            {
+                ref PathSegment lastSegment = ref GetLastSegment(s);
+                return lastSegment.MemberType.IsList() && lastSegment.FilterOptions is not null;
+            }).ToList();
+
+        List<List<PathSegment>> GetQueryMethods() =>
+            selects.Where(s => s.Last().QueryOptions is not null).ToList();
+
+        ref PathSegment GetLastSegment(List<PathSegment> pathSegments)
+        {
+            Span<PathSegment> segments = CollectionsMarshal.AsSpan(pathSegments);
+            return ref segments[^1];
+        }
     }
 
     private static CancellationToken GetCancellationToken(this QuerySettings querySettings) =>

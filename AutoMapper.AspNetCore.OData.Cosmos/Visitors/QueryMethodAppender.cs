@@ -1,108 +1,87 @@
-﻿using AutoMapper.Execution;
-using LogicBuilder.Expressions.Utils;
+﻿using LogicBuilder.Expressions.Utils;
 using Microsoft.AspNetCore.OData.Query;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow.Layouts;
 using Microsoft.OData.UriParser;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Xml.Linq;
+using System.Runtime.InteropServices;
 
 namespace AutoMapper.AspNet.OData.Visitors
 {
-    internal sealed class QueryMethodAppender : ExpressionVisitor
+    internal sealed class QueryMethodAppender : VisitorBase
     {
-        private readonly List<ODataExpansionOptions> expansionPath;
-        private readonly ODataQueryContext context;
-        private int currentIndex;
+        private readonly PathSegment collectionSegment;
 
-        public QueryMethodAppender(List<ODataExpansionOptions> expansions, ODataQueryContext context)
+        private QueryMethodAppender(List<PathSegment> pathSegments, ODataQueryContext context) 
+            : base(pathSegments, context)
         {
-            this.expansionPath = expansions;
-            this.context = context;
-            this.currentIndex = 0;
+            this.collectionSegment = this.pathSegments.Last(e => e.MemberType.IsList());
         }
 
-        public static Expression AppendQuery(Expression expression, List<ODataExpansionOptions> expansions, ODataQueryContext context) =>
-            new QueryMethodAppender(expansions, context).Visit(expression);
+        public static Expression AppendFilters(Expression expression, List<PathSegment> pathSegments, ODataQueryContext context) =>
+            new QueryMethodAppender(pathSegments, context).Visit(expression);
 
-        protected override Expression VisitMemberInit(MemberInitExpression node)
+        protected override Expression MatchedExpression(PathSegment pathSegment, MemberInitExpression node, MemberAssignment binding)
         {
-            if (TryGetCurrent(out var expansion))
+            if (pathSegment != this.collectionSegment)
+                return base.VisitMemberInit(node);
+
+            return Expression.MemberInit
+            (
+                Expression.New(node.Type),
+                node.Bindings.OfType<MemberAssignment>().Select(UpdateBinding)
+            );
+
+            MemberAssignment UpdateBinding(MemberAssignment assignment)
             {
-                Type nodeType = node.Type.GetCurrentType();
-                Type parentType = expansion.ParentType.GetCurrentType();
+                if (assignment != binding)
+                    return assignment;
 
-                if (nodeType == parentType && GetBinding(out var binding))
-                {
-                    if (expansion.QueryOptions is not QueryOptions options)
-                    {
-                        Next();
-                        return base.VisitMemberInit(node);
-                    }
-
-                    return Expression.MemberInit
-                    (
-                        Expression.New(node.Type),
-                        node.Bindings.OfType<MemberAssignment>().Select(UpdateBinding)
-                    );
-
-                    MemberAssignment UpdateBinding(MemberAssignment assignment)
-                    {
-                        if (assignment != binding)
-                            return assignment;
-
-                        Next();
-                        return assignment.Expression switch
-                        {
-                            MethodCallExpression expr => assignment.Update(GetCallExpression(expr, expansion)),
-                            _ => assignment.Update(GetBindingExpression(assignment, options))
-                        };
-                    }
-                }
-            }
-            return base.VisitMemberInit(node);
-
-            bool GetBinding([MaybeNullWhen(false)] out MemberAssignment binding)
-            {
-                binding = node.Bindings.OfType<MemberAssignment>()
-                   .FirstOrDefault(b => b.Member.Name.Equals(expansion.MemberName));
-
-                return binding is not null;
+                return assignment.Update(GetBindingExpression(binding));
             }
         }
 
-        private Expression GetCallExpression(MethodCallExpression callExpression, ODataExpansionOptions expansion) =>
-            MethodAppender.AppendQueryMethod(callExpression, expansion, this.context);
-
-        private Expression GetBindingExpression(MemberAssignment memberAssignment, QueryOptions options)
+        private Expression GetBindingExpression(MemberAssignment binding)
         {
-            return memberAssignment.Expression;
-            //Type elementType = memberAssignment.Expression.Type.GetCurrentType();
-            //return Expression.Call
-            //(
-            //    LinqMethods.EnumerableWhereMethod.MakeGenericMethod(elementType),
-            //    memberAssignment.Expression,
-            //    clause.GetFilterExpression(elementType, context)
-            //).ToListCall(elementType);
-        }
+            Span<PathSegment> segments = CollectionsMarshal.AsSpan(this.pathSegments);
+            ref PathSegment lastSegment = ref segments[^1];
 
-        private void Next()
-        {
-            if (this.currentIndex < this.expansionPath.Count)
-                ++this.currentIndex;
+            Type elementType = this.collectionSegment.ElementType;
 
-        }
+            Expression expression = binding.Expression.NodeType == ExpressionType.Call
+                ? GetCallExpression(lastSegment)
+                : GetMemberAccessExpression(lastSegment);
 
-        private bool TryGetCurrent([MaybeNullWhen(false)] out ODataExpansionOptions options)
-        {
-            options = currentIndex < this.expansionPath.Count
-                ? this.expansionPath[this.currentIndex]
-                : null;
+            return expression;
 
-            return options is not null;
+            Expression GetCallExpression(in PathSegment segment) =>
+                TopAndSkipInserter.UpdateExpression
+                (
+                    binding.Expression,
+                    elementType,
+                    segment.QueryOptions,
+                    this.context
+                );
+
+            Expression GetMemberAccessExpression(in PathSegment segment)
+            {
+                Expression expression = binding.Expression.GetQueryableMethod
+                (
+                    this.context,
+                    segment.QueryOptions.OrderByClause,
+                    elementType,
+                    segment.QueryOptions.Skip,
+                    segment.QueryOptions.Top
+                );
+
+                return expression.Type.IsArray
+                    ? expression.ToArrayCall(elementType)
+                    : expression.ToListCall(elementType);
+            }
+                
         }
     }
 }
