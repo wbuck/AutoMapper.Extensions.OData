@@ -8,35 +8,31 @@ namespace AutoMapper.AspNet.OData
 {
     internal static class ODataQueryContextExtentions
     {
-        public static OrderBySetting FindSortableProperties(this ODataQueryContext context, Type type)
+        public static OrderBySetting? FindSortableProperties(this ODataQueryContext context, Type type)
         {
             context = context ?? throw new ArgumentNullException(nameof(context));
 
-            var entity = GetEntity();
-            return entity is not null 
-                ? FindProperties(entity) 
-                : throw new InvalidOperationException($"The type '{type.FullName}' has not been declared in the entity data model.");
+            IEdmSchemaElement? schemaElement = GetSchemaElement();
 
-            IEdmEntityType GetEntity()
+            if (schemaElement is null)
+                throw new InvalidOperationException($"The type '{type.FullName}' has not been declared in the entity data model.");
+
+            return FindProperties(schemaElement);
+            
+
+            IEdmSchemaElement? GetSchemaElement() =>
+                context.Model.SchemaElements
+                    .FirstOrDefault(e => (e is IEdmEntityType || e is IEdmComplexType) && e.Name == type.Name);
+            
+            static OrderBySetting? FindProperties(IEdmSchemaElement schemaElement)
             {
-                List<IEdmEntityType> entities = context.Model.SchemaElements.OfType<IEdmEntityType>().Where(e => e.Name == type.Name).ToList();
-                if (entities.Count == 1)
-                    return entities[0];
-
-                return null;
-            }
-
-            static OrderBySetting FindProperties(IEdmEntityType entity)
-            {
-                var propertyNames = entity.Key().Any() switch
+                var propertyNames = schemaElement switch
                 {
-                    true => entity.Key().Select(k => k.Name),
-                    false => entity.StructuralProperties()
-                        .Where(p => p.Type.IsPrimitive() && !p.Type.IsStream())
-                        .Select(p => p.Name)
-                        .OrderBy(n => n)
-                        .Take(1)
+                    IEdmEntityType entityType when entityType.ContainsKey() => entityType.Key().Select(p => p.Name),
+                    IEdmStructuredType structuredType => structuredType.GetSortableProperties().Take(1),
+                    _ => throw new NotSupportedException("The EDM element type is not supported.")
                 };
+
                 var orderBySettings = new OrderBySetting();
                 propertyNames.Aggregate(orderBySettings, (settings, name) =>
                 {
@@ -49,8 +45,16 @@ namespace AutoMapper.AspNet.OData
                     return settings.ThenBy;
                 });
                 return orderBySettings.Name is null ? null : orderBySettings;
-            }
-
+            }                              
         }
+
+        private static bool ContainsKey(this IEdmEntityType entityType)
+            => entityType.Key().Any();
+
+        private static IEnumerable<string> GetSortableProperties(this IEdmStructuredType structuredType) 
+            => structuredType.StructuralProperties()
+                .Where(p => p.Type.IsPrimitive() && !p.Type.IsStream())
+                .Select(p => p.Name)
+                .OrderBy(n => n);
     }
 }

@@ -163,13 +163,21 @@ namespace AutoMapper.AspNet.OData
 
             if (orderByClause is null && (skip is not null || top is not null))
             {
-               // var orderBySettings = context.FindSortableProperties(type);
+                if (type.IsLiteralType())
+                {
+                    return expression
+                        .GetPrimitiveOrderByCall(orderByClause)
+                        .GetSkipCall(skip)
+                        .GetTakeCall(top);
+                }
 
-                //if (orderBySettings is null)
-               //     return null;
+                var orderBySettings = context.FindSortableProperties(type);
+
+                if (orderBySettings is null)
+                    return null;
 
                 return expression
-                   // .GetDefaultOrderByCall(orderBySettings)
+                    .GetDefaultOrderByCall(orderBySettings)
                     .GetSkipCall(skip)
                     .GetTakeCall(top);
             }
@@ -185,6 +193,68 @@ namespace AutoMapper.AspNet.OData
             && options.Top is null
             && options.Skip is null
             && oDataSettings?.PageSize is null;
+
+        private static Expression GetPrimitiveThenByCall(this Expression expression, OrderByClause orderByClause)
+        {
+            const string ThenBy = nameof(Enumerable.ThenBy);
+            const string ThenByDescending = nameof(Enumerable.ThenByDescending);
+
+            return orderByClause.ThenBy is null
+                ? GetMethodCall()
+                : GetMethodCall().GetPrimitiveThenByCall(orderByClause.ThenBy);
+
+            Expression GetMethodCall()
+            {
+                Type elementType = expression.Type.GetUnderlyingElementType();
+                ParameterExpression parameter = Expression.Parameter(elementType, "p");
+
+                return expression.GetPrimitiveOrderByCall
+                (
+                     parameter,
+                     orderByClause.Direction == OrderByDirection.Ascending
+                        ? ThenBy
+                        : ThenByDescending
+                );
+            }
+        }
+
+        private static Expression GetPrimitiveOrderByCall(this Expression expression, OrderByClause? orderByClause = null)
+        {
+            const string OrderBy = nameof(Enumerable.OrderBy);
+            const string OrderByDescending = nameof(Enumerable.OrderByDescending);
+
+            return orderByClause?.ThenBy is null
+                ? GetMethodCall()
+                : GetMethodCall().GetPrimitiveThenByCall(orderByClause.ThenBy);
+
+            Expression GetMethodCall()
+            {
+                Type elementType = expression.Type.GetUnderlyingElementType();
+                ParameterExpression parameter = Expression.Parameter(elementType, "p");
+
+                string direction = orderByClause is null
+                    ? OrderBy
+                    : GetDirection(orderByClause.Direction);
+
+                return expression.GetPrimitiveOrderByCall
+                (
+                     parameter,
+                     direction
+                );
+            }
+            string GetDirection(OrderByDirection direction) 
+                => direction == OrderByDirection.Ascending ? OrderBy : OrderByDescending;
+        }
+
+        public static Expression GetPrimitiveOrderByCall(this Expression expression, ParameterExpression parameter, string methodName)
+            => Expression.Call
+            (
+                expression.Type.IsIQueryable() ? typeof(Queryable) : typeof(Enumerable),
+                methodName,
+                new[] { parameter.Type, parameter.Type },
+                expression,
+                Expression.Lambda(parameter, parameter)
+            );
 
 
         private static Expression GetDefaultThenByCall(this Expression expression, OrderBySetting settings)
@@ -422,7 +492,7 @@ namespace AutoMapper.AspNet.OData
                     countSelector
                 )
             );
-        }
+        }        
 
         public static Expression GetOrderByCall(this Expression expression, string memberFullName, string methodName, string selectorParameterName = "a")
         {

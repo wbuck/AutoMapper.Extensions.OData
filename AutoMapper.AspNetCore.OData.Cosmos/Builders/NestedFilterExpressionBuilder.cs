@@ -17,7 +17,7 @@ internal static class NestedFilterExpressionBuilder
         return new FilterHelper(parameters, context)
             .GetFilterPart(filterClause.Expression)
             .GetFilter(type, parameters, filterClause.RangeVariable.Name)
-            .ReplaceParameter();
+            .ReplaceParameter();        
     }
 
     // Parameters that start with the '$' character are illegal
@@ -26,6 +26,18 @@ internal static class NestedFilterExpressionBuilder
         lambda.Parameters.Where(p => p.Name?.StartsWith('$') ?? false).Aggregate
         (
             lambda,
-            (expr, param) => (LambdaExpression)expr.ReplaceParameter(param, Expression.Parameter(param.Type, param.Name![1..]))
+            (expr, param) => (LambdaExpression)expr.ReplaceParameter(param, param.NewParameter())
         );
+
+    private static ParameterExpression NewParameter(this ParameterExpression expression)
+    {
+        if (expression.Name is null)
+            return expression;
+
+        int index = expression.Name!.LastIndexOf('$');
+        string name = index < 0 ? expression.Name : expression.Name[(index + 1)..];
+        return Expression.Parameter(expression.Type, name);
+    }
+
+
 }

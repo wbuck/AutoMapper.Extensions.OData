@@ -8,6 +8,7 @@ internal sealed class DomainControllerMapping : Profile
 	public DomainControllerMapping()
 	{
         CreateMap<DomainControllerEntry, DomainControllerEntryModel>()
+            .ForMember(dest => dest.DateAdded, opts => opts.MapFrom(src => src.DateCreated))
             .ForAllMembers(opts => opts.ExplicitExpansion());
 
         CreateMap<Entry, EntryModel>()

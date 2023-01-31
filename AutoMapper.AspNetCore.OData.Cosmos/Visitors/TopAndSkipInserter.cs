@@ -1,6 +1,7 @@
 ﻿using LogicBuilder.Expressions.Utils;
 using Microsoft.AspNetCore.OData.Query;
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 
@@ -27,8 +28,8 @@ namespace AutoMapper.AspNet.OData.Visitors
             Type elementType = node.Type.GetCurrentType();
             if (node.Method.Name.Equals(nameof(Enumerable.Select)) && elementType == this.elementType)
             {
-                Expression collection = node.Arguments[0]; 
-                Expression expression = collection.GetQueryableMethod
+                //Expression collection = node.Arguments[0];
+                Expression expression = node.GetQueryableMethod
                 (
                     this.context,
                     this.options.OrderByClause,
@@ -37,11 +38,19 @@ namespace AutoMapper.AspNet.OData.Visitors
                     this.options.Top
                 );
 
-                return node.Update
+                ParameterExpression parameter = Expression.Parameter
                 (
-                    node.Object,
-                    new[] { expression, node.Arguments[1] }
+                    expression.Type.GetUnderlyingElementType(), 
+                    "it"
                 );
+                expression = DollarSignParameterReplacer.Replace(expression, parameter);
+                return expression;
+
+                //return node.Update
+                //(
+                //    node.Object,
+                //    new[] { expression, node.Arguments[1] }
+                //);
             }
             return base.VisitMethodCall(node);
         }

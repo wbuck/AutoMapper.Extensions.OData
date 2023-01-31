@@ -79,7 +79,7 @@ internal static class DatabaseSeeder
                 {
                     new()
                     {
-                        DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(12)),
+                        DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(12)),
                         DcCredentials = new()
                         {
                             Username = "administrator1",
@@ -179,7 +179,7 @@ internal static class DatabaseSeeder
                     },
                     new()
                     {
-                        DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(15)),
+                        DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(15)),
                         DcCredentials = new()
                         {
                             Username = "administrator2",
@@ -277,7 +277,7 @@ internal static class DatabaseSeeder
                     },
                     new()
                     {
-                       DateAdded = DateTime.Now,
+                       DateCreated = DateTime.Now,
                        DcCredentials = new()
                        {
                            Username = "administrator3",
@@ -357,7 +357,7 @@ internal static class DatabaseSeeder
                     },
                     new()
                     {
-                       DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(20)),
+                       DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(20)),
                        DcCredentials = new()
                        {
                            Username = "administrator4",
@@ -520,7 +520,7 @@ internal static class DatabaseSeeder
                 {
                     new()
                     {
-                       DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(50)),
+                       DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(50)),
                        DcCredentials = new()
                        {
                            Username = "administrator5",
@@ -600,7 +600,7 @@ internal static class DatabaseSeeder
                     },
                     new()
                     {
-                       DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(15)),
+                       DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(15)),
                        DcCredentials = new()
                        {
                            Username = "administrator1",
@@ -717,7 +717,7 @@ internal static class DatabaseSeeder
                     },
                     new()
                     {
-                       DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(1)),
+                       DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(1)),
                        DcCredentials = new()
                        {
                            Username = "administrator2",
@@ -775,7 +775,7 @@ internal static class DatabaseSeeder
                     },
                     new()
                     {
-                       DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(20)),
+                       DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(20)),
                        DcCredentials = new()
                        {
                            Username = "administrator3",
@@ -941,7 +941,7 @@ internal static class DatabaseSeeder
                 {
                     new()
                     {
-                       DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(50)),
+                       DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(50)),
                        DcCredentials = new()
                        {
                            Username = "administrator1",
@@ -1022,7 +1022,7 @@ internal static class DatabaseSeeder
                     },
                     new()
                     {
-                       DateAdded = DateTime.Now.Subtract(TimeSpan.FromDays(15)),
+                       DateCreated = DateTime.Now.Subtract(TimeSpan.FromDays(15)),
                        DcCredentials = new()
                        {
                            Username = "administrator1",

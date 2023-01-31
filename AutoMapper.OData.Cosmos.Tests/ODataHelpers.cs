@@ -1,4 +1,5 @@
 ﻿using AutoMapper.OData.Cosmos.Tests.Binder;
+using AutoMapper.OData.Cosmos.Tests.Models;
 using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.OData.Extensions;
 using Microsoft.AspNetCore.OData.Query;
