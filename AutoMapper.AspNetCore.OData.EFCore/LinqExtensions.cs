@@ -1,17 +1,13 @@
 ﻿using AutoMapper.AspNet.OData.Visitors;
 using LogicBuilder.Expressions.Utils;
 using LogicBuilder.Expressions.Utils.Expansions;
-using LogicBuilder.Expressions.Utils.ExpressionBuilder;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.OData.UriParser;
-using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Reflection.Metadata;
 
 namespace AutoMapper.AspNet.OData
 {
@@ -213,7 +209,7 @@ namespace AutoMapper.AspNet.OData
                 );
         }
 
-        private static Expression GetPrimitiveOrderByCall(this Expression expression, OrderByClause? orderByClause = null)
+        private static Expression GetPrimitiveOrderByCall(this Expression expression, OrderByClause orderByClause = null)
         {
             const string OrderBy = nameof(Enumerable.OrderBy);
             const string OrderByDescending = nameof(Enumerable.OrderByDescending);

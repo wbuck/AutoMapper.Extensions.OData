@@ -1,12 +1,7 @@
 ﻿using LogicBuilder.Expressions.Utils;
-using LogicBuilder.Expressions.Utils.Expansions;
 using Microsoft.AspNetCore.OData.Query;
-using Microsoft.AspNetCore.Razor.TagHelpers;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow.Layouts;
-using Microsoft.OData.UriParser;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.InteropServices;
@@ -83,39 +78,6 @@ namespace AutoMapper.AspNet.OData.Visitors
                     : queryExpression.ToListCall(elementType);
             }
                 
-        }
-
-        private LambdaExpression? BuildOrderByLambdaExpression(in PathSegment lastSegment)
-        {
-            Type elementType = this.collectionSegment.ElementType;
-            ParameterExpression parameter = Expression.Parameter(elementType, "c");
-
-            int count = this.pathSegments.IndexOf(this.collectionSegment) + 1;
-
-            if (count == 0)
-                return null;
-
-            Expression memberExpression = this.pathSegments
-                .Skip(count)
-                .Aggregate((Expression)parameter, (expression, next) => Expression.MakeMemberAccess(expression, next.Member));
-
-
-            var node = (SingleValuePropertyAccessNode)lastSegment.QueryOptions.OrderByClause.Expression;
-            string path = node.GetPropertyPath();
-
-            var test2 = (SingleValuePropertyAccessNode)lastSegment.QueryOptions.OrderByClause.ThenBy.Expression;
-            string path2 = test2.GetPropertyPath();
-
-            var member = lastSegment.MemberType.GetMember(path).First();
-            memberExpression = Expression.MakeMemberAccess(memberExpression, member);
-
-            var test = Expression.Lambda
-            (
-                memberExpression,
-                parameter
-            );
-            
-            return test;
         }
     }
 }
