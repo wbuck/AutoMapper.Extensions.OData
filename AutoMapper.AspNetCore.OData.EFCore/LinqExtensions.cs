@@ -4,6 +4,7 @@ using LogicBuilder.Expressions.Utils.Expansions;
 using LogicBuilder.Expressions.Utils.ExpressionBuilder;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.OData.UriParser;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -203,19 +204,13 @@ namespace AutoMapper.AspNet.OData
                 ? GetMethodCall()
                 : GetMethodCall().GetPrimitiveThenByCall(orderByClause.ThenBy);
 
-            Expression GetMethodCall()
-            {
-                Type elementType = expression.Type.GetUnderlyingElementType();
-                ParameterExpression parameter = Expression.Parameter(elementType, "p");
-
-                return expression.GetPrimitiveOrderByCall
+            Expression GetMethodCall() 
+                => expression.GetPrimitiveOrderByCall
                 (
-                     parameter,
                      orderByClause.Direction == OrderByDirection.Ascending
                         ? ThenBy
                         : ThenByDescending
                 );
-            }
         }
 
         private static Expression GetPrimitiveOrderByCall(this Expression expression, OrderByClause? orderByClause = null)
@@ -228,33 +223,32 @@ namespace AutoMapper.AspNet.OData
                 : GetMethodCall().GetPrimitiveThenByCall(orderByClause.ThenBy);
 
             Expression GetMethodCall()
-            {
-                Type elementType = expression.Type.GetUnderlyingElementType();
-                ParameterExpression parameter = Expression.Parameter(elementType, "p");
-
-                string direction = orderByClause is null
-                    ? OrderBy
-                    : GetDirection(orderByClause.Direction);
-
-                return expression.GetPrimitiveOrderByCall
+                => expression.GetPrimitiveOrderByCall
                 (
-                     parameter,
-                     direction
+                    orderByClause is null
+                        ? OrderBy
+                        : GetDirection(orderByClause.Direction)
                 );
-            }
+
             string GetDirection(OrderByDirection direction) 
                 => direction == OrderByDirection.Ascending ? OrderBy : OrderByDescending;
         }
 
-        public static Expression GetPrimitiveOrderByCall(this Expression expression, ParameterExpression parameter, string methodName)
-            => Expression.Call
+        public static Expression GetPrimitiveOrderByCall(this Expression expression, string methodName)
+        {
+            Type elementType = expression.Type.GetUnderlyingElementType();
+            ParameterExpression parameter = Expression.Parameter(elementType, "p");
+
+            return Expression.Call
             (
                 expression.Type.IsIQueryable() ? typeof(Queryable) : typeof(Enumerable),
                 methodName,
-                new[] { parameter.Type, parameter.Type },
+                new[] { elementType, elementType },
                 expression,
                 Expression.Lambda(parameter, parameter)
             );
+        }
+            
 
 
         private static Expression GetDefaultThenByCall(this Expression expression, OrderBySetting settings)
@@ -301,6 +295,13 @@ namespace AutoMapper.AspNet.OData
                             context,
                             orderByClause.RangeVariable.Name
                         );
+                    case NonResourceRangeVariableReferenceNode:
+                        return expression.GetPrimitiveOrderByCall
+                        (
+                            orderByClause.Direction == OrderByDirection.Ascending
+                                ? OrderBy
+                                : OrderByDescending
+                        );                        
                     default:
                         SingleValuePropertyAccessNode propertyNode = (SingleValuePropertyAccessNode)orderByNode;
                         return expression.GetOrderByCall
@@ -335,6 +336,12 @@ namespace AutoMapper.AspNet.OData
                             ? ThenBy
                             : ThenByDescending,
                         context
+                    ),
+                    NonResourceRangeVariableReferenceNode => expression.GetPrimitiveOrderByCall
+                    (
+                        orderByClause.Direction == OrderByDirection.Ascending
+                            ? ThenBy
+                            : ThenByDescending
                     ),
                     SingleValuePropertyAccessNode propertyNode => expression.GetOrderByCall
                     (

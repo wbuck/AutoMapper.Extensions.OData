@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.OData.Query;
+﻿#nullable enable
+
+using Microsoft.AspNetCore.OData.Query;
 using Microsoft.OData.Edm;
 using System;
 using System.Collections.Generic;

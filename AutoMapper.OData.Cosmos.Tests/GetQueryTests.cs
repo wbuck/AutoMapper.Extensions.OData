@@ -7,6 +7,9 @@ using AutoMapper.OData.Cosmos.Tests.Persistence;
 using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.OData.Extensions;
 using Microsoft.AspNetCore.OData.Query;
+using Microsoft.Azure.Cosmos;
+using System.Diagnostics;
+using System.Text.Json;
 
 namespace AutoMapper.OData.Cosmos.Tests;
 
@@ -375,97 +378,144 @@ public sealed class GetQueryTests
             Assert.Equal(new[] { "Zulauf Forest", "Rolfson Forest", "Abernathy Forest" }, collection.Select(m => m.ForestName));
         }
     }
+    
+    private sealed record Location
+    {
+        public int Start { get; init; }
+        public int End { get; init; }
+    }
+
+    private sealed record Error
+    {
+        public string Severity { get; init; } = default!;
+        public Location Location { get; init; } = default!;
+        public string Code { get; init; } = default!;
+        public string Message { get; init; } = default!;
+    }
+
+    private sealed record ErrorDetails
+    {
+        public Error[] Errors { get; init; } = Array.Empty<Error>();
+    }
+
+    private static ErrorDetails GetDetails(string jsonError) =>
+        JsonSerializer.Deserialize<ErrorDetails>(jsonError, new JsonSerializerOptions{ PropertyNameCaseInsensitive = true })!;
 
     [Fact]
-    public async Task WARREN_Test1()
+    public async Task FilterPrimitiveCollectionWithTopInSubqueryShouldFailBecauseTopInSubqueryIsNotSupportedByCosmosDb()
     {
-        string query = "/forest?$select=Values($top=1)";
-        ODataQueryOptions<ForestModel> options = ODataHelpers.GetODataQueryOptions<ForestModel>
-        (
-            query,
-            serviceProvider
-        );
-        Test(Get<ForestModel, Forest>(query, options));
-        Test(await GetAsync<ForestModel, Forest>(query, options));
-        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query, options));
+        const string query = "/forest?$select=Values($top=1)";
 
-        void Test(ICollection<ForestModel> collection)
+        Test(Assert.Throws<CosmosException>(() => Get<ForestModel, Forest>(query)));
+        Test(await Assert.ThrowsAsync<CosmosException>(() => GetAsync<ForestModel, Forest>(query)));
+        Test(await Assert.ThrowsAsync<CosmosException>(() => GetUsingCustomNameSpace<ForestModel, Forest>(query)));
+
+        static void Test(CosmosException ex)
         {
-            Assert.Equal(3, options.Request.ODataFeature().TotalCount);
-            Assert.Equal(1, collection.Count);
-            Assert.Equal("Abernathy Forest", collection.First().ForestName);
-            Assert.Equal(4, collection.First().DomainControllers.Count);
-            Assert.Equal(7, collection.First().DomainControllers.Sum(dc => dc.Entry.Dc.Backups.Count));
+            ErrorDetails details = GetDetails(ex.InnerException!.Message);
+            Assert.Equal(2, details.Errors.Length);
+
+            List<Error> errors = details.Errors.OrderBy(e => e.Message).ToList();
+            Assert.Equal("'ORDER BY' is not supported in subqueries.", errors[0].Message);
+            Assert.Equal("'TOP' is not supported in subqueries.", errors[1].Message);
         }
     }
 
     [Fact]
-    public async Task WARREN_Test2()
+    public async Task OrderByAndThenByOnPrimitiveCollectionShouldFailBecauseOrderByInSubqueryIsNotSupportedByCosmosDb()
     {
-        string query = "/forest?$expand=DomainControllers/Entry/Dc($top=1; $skip=2)";
-        ODataQueryOptions<ForestModel> options = ODataHelpers.GetODataQueryOptions<ForestModel>
-        (
-            query,
-            serviceProvider
-        );
+        const string query = "/forest?$select=Values($orderby=$this,$this)";
 
-        Test(Get<ForestModel, Forest>(query, options));
-        Test(await GetAsync<ForestModel, Forest>(query, options));
-        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query, options));
+        Test(Assert.Throws<CosmosException>(() => Get<ForestModel, Forest>(query)));
+        Test(await Assert.ThrowsAsync<CosmosException>(() => GetAsync<ForestModel, Forest>(query)));
+        Test(await Assert.ThrowsAsync<CosmosException>(() => GetUsingCustomNameSpace<ForestModel, Forest>(query)));
 
-        void Test(ICollection<ForestModel> collection)
+        static void Test(CosmosException ex)
         {
-            Assert.Equal(3, options.Request.ODataFeature().TotalCount);
-            Assert.Equal(1, collection.Count);
-            Assert.Equal("Abernathy Forest", collection.First().ForestName);
-            Assert.Equal(4, collection.First().DomainControllers.Count);
-            Assert.Equal(7, collection.First().DomainControllers.Sum(dc => dc.Entry.Dc.Backups.Count));
+            ErrorDetails details = GetDetails(ex.InnerException!.Message);
+            Assert.Single(details.Errors);
+
+            Error error = details.Errors[0];
+            Assert.Equal("'ORDER BY' is not supported in subqueries.", error.Message);
         }
     }
 
     [Fact]
-    public async Task WARREN_Test3()
+    public async Task OrderByOnPrimitiveCollectionShouldFailBecauseOrderByInSubqueryIsNotSupportedByCosmosDb()
     {
-        string query = "/forest?$expand=DomainControllers/Entry/Dc($orderby=FullyQualifiedDomainName,Metadata/MetadataType;$top=1;$skip=2)";
-        ODataQueryOptions<ForestModel> options = ODataHelpers.GetODataQueryOptions<ForestModel>
-        (
-            query,
-            serviceProvider
-        );
-        Test(Get<ForestModel, Forest>(query, options));
-        Test(await GetAsync<ForestModel, Forest>(query, options));
-        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query, options));
+        const string query = "/forest?$select=Values($orderby=$this)";
 
-        void Test(ICollection<ForestModel> collection)
+        Test(Assert.Throws<CosmosException>(() => Get<ForestModel, Forest>(query)));
+        Test(await Assert.ThrowsAsync<CosmosException>(() => GetAsync<ForestModel, Forest>(query)));
+        Test(await Assert.ThrowsAsync<CosmosException>(() => GetUsingCustomNameSpace<ForestModel, Forest>(query)));
+
+        static void Test(CosmosException ex)
         {
-            Assert.Equal(3, options.Request.ODataFeature().TotalCount);
-            Assert.Equal(1, collection.Count);
-            Assert.Equal("Abernathy Forest", collection.First().ForestName);
-            Assert.Equal(4, collection.First().DomainControllers.Count);
-            Assert.Equal(7, collection.First().DomainControllers.Sum(dc => dc.Entry.Dc.Backups.Count));
+            ErrorDetails details = GetDetails(ex.InnerException!.Message);
+            Assert.Single(details.Errors);
+
+            Error error = details.Errors[0];
+            Assert.Equal("'ORDER BY' is not supported in subqueries.", error.Message);
         }
     }
 
     [Fact]
-    public async Task WARREN_Test4()
+    public async Task FilterEntityCollectionWithTopAndSkipInSubqueryShouldFailBecauseTopAndSkipInSubqueryIsNotSupportedByCosmosDb()
     {
-        string query = "/forest?$select=DomainControllers($orderby=DateAdded)";
-        ODataQueryOptions<ForestModel> options = ODataHelpers.GetODataQueryOptions<ForestModel>
-        (
-            query,
-            serviceProvider
-        );
-        Test(Get<ForestModel, Forest>(query, options));
-        Test(await GetAsync<ForestModel, Forest>(query, options));
-        Test(await GetUsingCustomNameSpace<ForestModel, Forest>(query, options));
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc($top=1; $skip=2)";
 
-        void Test(ICollection<ForestModel> collection)
+        Test(Assert.Throws<CosmosException>(() => Get<ForestModel, Forest>(query)));
+        Test(await Assert.ThrowsAsync<CosmosException>(() => GetAsync<ForestModel, Forest>(query)));
+        Test(await Assert.ThrowsAsync<CosmosException>(() => GetUsingCustomNameSpace<ForestModel, Forest>(query)));
+
+        static void Test(CosmosException ex)
         {
-            Assert.Equal(3, options.Request.ODataFeature().TotalCount);
-            Assert.Equal(1, collection.Count);
-            Assert.Equal("Abernathy Forest", collection.First().ForestName);
-            Assert.Equal(4, collection.First().DomainControllers.Count);
-            Assert.Equal(7, collection.First().DomainControllers.Sum(dc => dc.Entry.Dc.Backups.Count));
+            ErrorDetails details = GetDetails(ex.InnerException!.Message);
+            Assert.Equal(2, details.Errors.Length);
+
+            List<Error> errors = details.Errors.OrderBy(e => e.Message).ToList();
+            Assert.Equal("'OFFSET LIMIT' clause is not supported in subqueries.", errors[0].Message);
+            Assert.Equal("'ORDER BY' is not supported in subqueries.", errors[1].Message);            
+        }
+    }
+
+    [Fact]
+    public async Task FilterEntityCollectionWithTopAndSkipInSubqueryWithOrderByShouldFailBecauseTopSkipAndOrderByInSubqueryIsNotSupportedByCosmosDb()
+    {
+        const string query = "/forest?$expand=DomainControllers/Entry/Dc($orderby=FullyQualifiedDomainName,Metadata/MetadataType;$top=1;$skip=2)";
+
+        Test(Assert.Throws<CosmosException>(() => Get<ForestModel, Forest>(query)));
+        Test(await Assert.ThrowsAsync<CosmosException>(() => GetAsync<ForestModel, Forest>(query)));
+        Test(await Assert.ThrowsAsync<CosmosException>(() => GetUsingCustomNameSpace<ForestModel, Forest>(query)));
+
+        static void Test(CosmosException ex)
+        {
+            ErrorDetails details = GetDetails(ex.InnerException!.Message);
+            Assert.Equal(2, details.Errors.Length);
+
+            List<Error> errors = details.Errors.OrderBy(e => e.Message).ToList();
+            Assert.Equal("'OFFSET LIMIT' clause is not supported in subqueries.", errors[0].Message);
+            Assert.Equal("'ORDER BY' is not supported in subqueries.", errors[1].Message);
+        }
+    }
+
+    [Fact]
+    public async Task FilterComplexCollectionWithTopAndSkipInSubqueryWithOrderByShouldFailBecauseTopSkipAndOrderByInSubqueryIsNotSupportedByCosmosDb()
+    {
+        const string query = "/forest?$select=DomainControllers($orderby=DateAdded;$top=1;$skip=2)";
+
+        Test(Assert.Throws<CosmosException>(() => Get<ForestModel, Forest>(query)));
+        Test(await Assert.ThrowsAsync<CosmosException>(() => GetAsync<ForestModel, Forest>(query)));
+        Test(await Assert.ThrowsAsync<CosmosException>(() => GetUsingCustomNameSpace<ForestModel, Forest>(query)));
+
+        static void Test(CosmosException ex)
+        {
+            ErrorDetails details = GetDetails(ex.InnerException!.Message);
+            Assert.Equal(2, details.Errors.Length);
+
+            List<Error> errors = details.Errors.OrderBy(e => e.Message).ToList();
+            Assert.Equal("'OFFSET LIMIT' clause is not supported in subqueries.", errors[0].Message);
+            Assert.Equal("'ORDER BY' is not supported in subqueries.", errors[1].Message);
         }
     }
 

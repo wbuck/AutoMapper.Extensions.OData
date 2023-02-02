@@ -53,42 +53,17 @@ namespace AutoMapper.AspNet.OData.Visitors
 
             Type elementType = this.collectionSegment.ElementType;
 
-            Expression testExpr = binding.Expression.GetQueryableExpression(this.pathSegments, lastSegment.QueryOptions, this.context);
-
-            if (lastSegment.QueryOptions?.OrderByClause is not null && !lastSegment.IsCollection)
-            {
-                
-
-                LambdaExpression lambdaExpression = BuildOrderByLambdaExpression(lastSegment);
-                //int count = this.pathSegments.IndexOf(this.collectionSegment) + 1;
-                //Expression lambdaExpression = elementType.GetTypedSelector(this.pathSegments.Skip(count));
-                //var test = MethodInserter.Insert(elementType, lambdaExpression, binding)
-                //    .GetSkipCall(lastSegment.QueryOptions?.Skip)
-                //    .GetTakeCall(lastSegment.QueryOptions?.Top);
-
-                //var test = Expression.Call
-                //(
-                //    LinqMethods.EnumerableOrderByMethod.MakeGenericMethod(elementType, lambdaExpression.Body.Type),
-                //    binding.Expression,
-                //    lambdaExpression
-                //);
-
-                Debugger.Break();
-                //return test;
-            }
-
             Expression expression = binding.Expression.NodeType == ExpressionType.Call
-                ? GetCallExpression(lastSegment)
+                ? GetCallExpression(binding.Expression, lastSegment)
                 : GetMemberAccessExpression(binding.Expression, lastSegment);            
 
             return expression;            
 
-            Expression GetCallExpression(in PathSegment segment) =>
-                TopAndSkipInserter.UpdateExpression
+            Expression GetCallExpression(Expression expression, in PathSegment segment) =>
+                expression.GetQueryableExpression
                 (
-                    binding.Expression,
-                    elementType,
-                    segment.QueryOptions,
+                    this.pathSegments, 
+                    segment.QueryOptions, 
                     this.context
                 );
 
